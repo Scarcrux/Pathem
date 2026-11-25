@@ -1201,7 +1201,6 @@
 "palette.searchFor" = "Zoek naar “%@”";
 "pane.actionsTooltip" = "Acties";
 "pane.back" = "Terug";
-"pane.calculatingSizes" = "(berekenen…)";
 "pane.clearTags" = "Wis labels";
 "pane.columns" = "Kolommen";
 "pane.connectionFailedCode" = "De verbinding is mislukt (code %d)";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "Deselecteren";
 "select.resultOne" = "1 onderdeel geselecteerd";
 "select.resultMany" = "%d onderdelen geselecteerd";
+"kind.folder" = "Mappen";
+"kind.app" = "Apps";
+"kind.image" = "Afbeeldingen";
+"kind.video" = "Video";
+"kind.audio" = "Audio";
+"kind.document" = "Documenten";
+"kind.code" = "Code";
+"kind.archive" = "Archieven";
+"kind.other" = "Overig";
+"summary.heading" = "%d van %d geselecteerd";
+"summary.unmeasured" = "%d mappen nog niet gemeten";
+"summary.approximate" = "Bij benadering: gebaseerd op de eerste %d onderdelen";
+"summary.tooltip" = "Klik voor een overzicht per soort";
+"pane.plusFolderOne" = "+ 1 map";
+"pane.plusFolderMany" = "+ %d mappen";
+"summary.unmeasuredOne" = "1 map nog niet gemeten";

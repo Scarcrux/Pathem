@@ -1201,7 +1201,6 @@
 "palette.searchFor" = "Buscar por “%@”";
 "pane.actionsTooltip" = "Ações";
 "pane.back" = "Voltar";
-"pane.calculatingSizes" = "(calculando…)";
 "pane.clearTags" = "Limpar etiquetas";
 "pane.columns" = "Colunas";
 "pane.connectionFailedCode" = "A conexão falhou (código %d)";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "Desselecionar";
 "select.resultOne" = "1 item selecionado";
 "select.resultMany" = "%d itens selecionados";
+"kind.folder" = "Pastas";
+"kind.app" = "Apps";
+"kind.image" = "Imagens";
+"kind.video" = "Vídeo";
+"kind.audio" = "Áudio";
+"kind.document" = "Documentos";
+"kind.code" = "Código";
+"kind.archive" = "Arquivos compactados";
+"kind.other" = "Outros";
+"summary.heading" = "%d de %d selecionados";
+"summary.unmeasured" = "%d pastas ainda não medidas";
+"summary.approximate" = "Aproximado: com base nos primeiros %d itens";
+"summary.tooltip" = "Clique para ver o detalhamento por tipo";
+"pane.plusFolderOne" = "+ 1 pasta";
+"pane.plusFolderMany" = "+ %d pastas";
+"summary.unmeasuredOne" = "1 pasta ainda não medida";

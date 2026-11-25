@@ -1196,7 +1196,6 @@
 "palette.searchFor" = "「%@」を検索";
 "pane.actionsTooltip" = "アクション";
 "pane.back" = "戻る";
-"pane.calculatingSizes" = "(計算中…)";
 "pane.clearTags" = "タグを消去";
 "pane.columns" = "カラム";
 "pane.connectionFailedCode" = "接続に失敗しました（コード %d）";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "選択解除";
 "select.resultOne" = "1 項目を選択";
 "select.resultMany" = "%d 項目を選択";
+"kind.folder" = "フォルダ";
+"kind.app" = "App";
+"kind.image" = "画像";
+"kind.video" = "ビデオ";
+"kind.audio" = "オーディオ";
+"kind.document" = "書類";
+"kind.code" = "コード";
+"kind.archive" = "アーカイブ";
+"kind.other" = "その他";
+"summary.heading" = "%d/%d 項目を選択";
+"summary.unmeasured" = "%d フォルダのサイズは未計測";
+"summary.approximate" = "概算: 最初の %d 項目に基づく";
+"summary.tooltip" = "クリックして種類別の内訳を表示";
+"pane.plusFolderOne" = "+ 1 フォルダ";
+"pane.plusFolderMany" = "+ %d フォルダ";
+"summary.unmeasuredOne" = "1 フォルダのサイズは未計測";

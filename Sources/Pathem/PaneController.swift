@@ -420,7 +420,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// The constraints that position the location bar above or below the list; swapped
     /// when the position toggles.
     private var pathBarPositionConstraints: [NSLayoutConstraint] = []
-    private let statusLabel = NSTextField(labelWithString: "")
+    private let statusLabel = SummaryStatusLabel(labelWithString: "")
+    /// The selection's kind breakdown: built off the main thread, debounced, and cancelled
+    /// whenever the selection changes. nil until it is built for the current selection.
+    private var summaryTask: Task<Void, Never>?
+    private var latestSummary: SelectionSummary?
+    private let summaryPopover = NSPopover()
     /// A small eye button on the status row that shows/hides hidden files for this pane, like Finder's
     /// Cmd-Shift-period but always visible.
     private let hiddenToggle = NSButton()
@@ -1783,6 +1788,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         statusLabel.font = .systemFont(ofSize: 11)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.onClick = { [weak self] in self?.showSelectionSummary() ?? false }
 
         hiddenToggle.isBordered = false
         hiddenToggle.imagePosition = .imageOnly
@@ -2232,7 +2238,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             if size > 0 || !uncomputed.isEmpty {
                 var sizeText = byteFormatter.string(fromByteCount: size)
                 if !uncomputed.isEmpty {
-                    sizeText += " " + L("pane.calculatingSizes", "(calculating…)")
+                    // Folders whose size is not cached yet are measured in the background and
+                    // folded in when done; until then say how many are missing.
+                    sizeText +=
+                        " "
+                        + String(
+                            format: uncomputed.count == 1
+                                ? L("pane.plusFolderOne", "+ 1 folder")
+                                : L("pane.plusFolderMany", "+ %d folders"), uncomputed.count)
                 }
                 parts.append(sizeText)
             }
@@ -2252,7 +2265,80 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             text += (text.isEmpty ? "" : "   ") + searchNote
         }
         statusLabel.stringValue = text
+        refreshSelectionSummary(selected: selected, total: all.count)
         updateHiddenToggleIcon()  // keep the eye in sync with the current folder's hidden state
+    }
+
+    /// Rebuild the kind breakdown for the current selection: wait 150 ms for the selection to
+    /// settle, then aggregate off the main thread. Any change cancels the pending work.
+    private func refreshSelectionSummary(selected: [FileEntry], total: Int) {
+        summaryTask?.cancel()
+        latestSummary = nil
+        guard !selected.isEmpty else {
+            summaryTask = nil
+            if summaryPopover.isShown { summaryPopover.close() }
+            statusLabel.toolTip = nil
+            return
+        }
+        statusLabel.toolTip = L("summary.tooltip", "Click for a breakdown by kind")
+        let lookup = summaryFolderLookup()
+        summaryTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            guard !Task.isCancelled else { return }
+            let summary = await Task.detached(priority: .userInitiated) {
+                SelectionSummary.summarize(
+                    selected: selected, totalCount: total, folderSize: lookup)
+            }.value
+            guard !Task.isCancelled, let self else { return }
+            self.latestSummary = summary
+            if self.summaryPopover.isShown { self.presentSelectionSummary(summary) }
+        }
+    }
+
+    /// A cached-size lookup that is safe to call off the main thread.
+    private func summaryFolderLookup() -> @Sendable (FileEntry) -> Int64? {
+        let base = currentURL
+        let isRemote = remote != nil
+        return { entry in
+            guard !isRemote, !entry.isDataless else { return nil }
+            let url =
+                entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
+                ?? base.appendingPathComponent(entry.name)
+            return FolderSizeStore.shared.measurement(
+                forPath: url.path, mtime: FolderSizeStore.mtimeKey(of: url))?.bytes
+        }
+    }
+
+    /// Click on the status text: open the breakdown for the current selection. Returns false
+    /// (the click does nothing) when nothing is selected.
+    private func showSelectionSummary() -> Bool {
+        let selected = content.selectedEntries
+        guard !selected.isEmpty else { return false }
+        if summaryPopover.isShown {
+            summaryPopover.close()
+            return true
+        }
+        if let summary = latestSummary {
+            presentSelectionSummary(summary)
+        } else {
+            // Clicked inside the debounce window: build it now.
+            let total = content.entries.count
+            let lookup = summaryFolderLookup()
+            Task { [weak self] in
+                let summary = await Task.detached(priority: .userInitiated) {
+                    SelectionSummary.summarize(
+                        selected: selected, totalCount: total, folderSize: lookup)
+                }.value
+                self?.presentSelectionSummary(summary)
+            }
+        }
+        return true
+    }
+
+    private func presentSelectionSummary(_ summary: SelectionSummary) {
+        SelectionSummaryPopover.show(
+            summaryPopover, summary: summary, accent: ThemeManager.shared.accent,
+            relativeTo: statusLabel, formatBytes: { self.byteFormatter.string(fromByteCount: $0) })
     }
 
     private var flashToken = 0

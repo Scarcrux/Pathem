@@ -1127,7 +1127,6 @@
 "palette.searchFor" = "Search for “%@”";
 "pane.actionsTooltip" = "Actions";
 "pane.back" = "Back";
-"pane.calculatingSizes" = "(calculating…)";
 "pane.clearTags" = "Clear Tags";
 "pane.columns" = "Columns";
 "pane.connectionFailedCode" = "The connection failed (code %d)";
@@ -1899,3 +1898,19 @@
 "select.deselectApply" = "Deselect";
 "select.resultOne" = "1 item selected";
 "select.resultMany" = "%d items selected";
+"kind.folder" = "Folders";
+"kind.app" = "Apps";
+"kind.image" = "Images";
+"kind.video" = "Video";
+"kind.audio" = "Audio";
+"kind.document" = "Documents";
+"kind.code" = "Code";
+"kind.archive" = "Archives";
+"kind.other" = "Other";
+"summary.heading" = "%d of %d selected";
+"summary.unmeasured" = "%d folders not measured yet";
+"summary.approximate" = "Approximate: based on the first %d items";
+"summary.tooltip" = "Click for a breakdown by kind";
+"pane.plusFolderOne" = "+ 1 folder";
+"pane.plusFolderMany" = "+ %d folders";
+"summary.unmeasuredOne" = "1 folder not measured yet";

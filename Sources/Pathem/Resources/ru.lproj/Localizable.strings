@@ -1201,7 +1201,6 @@
 "palette.searchFor" = "Искать «%@»";
 "pane.actionsTooltip" = "Действия";
 "pane.back" = "Назад";
-"pane.calculatingSizes" = "(вычисление…)";
 "pane.clearTags" = "Очистить теги";
 "pane.columns" = "Столбцы";
 "pane.connectionFailedCode" = "Не удалось подключиться (код %d)";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "Снять выделение";
 "select.resultOne" = "Выделен 1 элемент";
 "select.resultMany" = "Выделено элементов: %d";
+"kind.folder" = "Папки";
+"kind.app" = "Приложения";
+"kind.image" = "Изображения";
+"kind.video" = "Видео";
+"kind.audio" = "Аудио";
+"kind.document" = "Документы";
+"kind.code" = "Код";
+"kind.archive" = "Архивы";
+"kind.other" = "Прочее";
+"summary.heading" = "Выделено %d из %d";
+"summary.unmeasured" = "Размер папок не определен: %d";
+"summary.approximate" = "Приблизительно: по первым %d элементам";
+"summary.tooltip" = "Нажмите, чтобы увидеть разбивку по типам";
+"pane.plusFolderOne" = "+ 1 папка";
+"pane.plusFolderMany" = "+ %d папок";
+"summary.unmeasuredOne" = "Размер 1 папки не определен";

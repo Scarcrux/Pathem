@@ -775,6 +775,16 @@ enum PathemApp {
             exit(0)
         }
 
+        // Headless render of the selection summary popover content (PATHEM_SUMMARY_SHOT=1) with
+        // sample data. PATHEM_CAPTURE_APPEARANCE picks light or dark (default dark).
+        if ProcessInfo.processInfo.environment["PATHEM_SUMMARY_SHOT"] != nil {
+            let light = ProcessInfo.processInfo.environment["PATHEM_CAPTURE_APPEARANCE"] == "light"
+            SelectionSummaryPopover.debugRender(
+                to: capturePath("summary.png"),
+                appearance: NSAppearance(named: light ? .aqua : .darkAqua))
+            exit(0)
+        }
+
         // Interactive preview of the real NSPopover, including its material, arrow, focus and
         // cursor-relative placement. Used during visual polish; it stays open until the user picks
         // an action or clicks away, while keeping the underlying demo window available for context.

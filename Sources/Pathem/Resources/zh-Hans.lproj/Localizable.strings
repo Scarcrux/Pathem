@@ -1196,7 +1196,6 @@
 "palette.searchFor" = "搜索“%@”";
 "pane.actionsTooltip" = "操作";
 "pane.back" = "后退";
-"pane.calculatingSizes" = "(计算中…)";
 "pane.clearTags" = "清除标记";
 "pane.columns" = "分栏";
 "pane.connectionFailedCode" = "连接失败（代码 %d）";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "取消选择";
 "select.resultOne" = "已选择 1 项";
 "select.resultMany" = "已选择 %d 项";
+"kind.folder" = "文件夹";
+"kind.app" = "App";
+"kind.image" = "图像";
+"kind.video" = "视频";
+"kind.audio" = "音频";
+"kind.document" = "文稿";
+"kind.code" = "代码";
+"kind.archive" = "归档";
+"kind.other" = "其他";
+"summary.heading" = "已选择 %d 项（共 %d 项）";
+"summary.unmeasured" = "%d 个文件夹尚未计算大小";
+"summary.approximate" = "近似值：基于前 %d 项";
+"summary.tooltip" = "点按查看按种类的明细";
+"pane.plusFolderOne" = "+ 1 个文件夹";
+"pane.plusFolderMany" = "+ %d 个文件夹";
+"summary.unmeasuredOne" = "1 个文件夹尚未计算大小";

@@ -1201,7 +1201,6 @@
 "palette.searchFor" = "搜尋「%@」";
 "pane.actionsTooltip" = "動作";
 "pane.back" = "返回";
-"pane.calculatingSizes" = "（正在計算…）";
 "pane.clearTags" = "清除標籤";
 "pane.columns" = "欄位";
 "pane.connectionFailedCode" = "連線失敗（代碼 %d）";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "取消選取";
 "select.resultOne" = "已選取 1 個項目";
 "select.resultMany" = "已選取 %d 個項目";
+"kind.folder" = "資料夾";
+"kind.app" = "App";
+"kind.image" = "影像";
+"kind.video" = "影片";
+"kind.audio" = "音訊";
+"kind.document" = "文件";
+"kind.code" = "程式碼";
+"kind.archive" = "封存檔";
+"kind.other" = "其他";
+"summary.heading" = "已選取 %d 項（共 %d 項）";
+"summary.unmeasured" = "%d 個資料夾尚未計算大小";
+"summary.approximate" = "近似值：依前 %d 個項目計算";
+"summary.tooltip" = "按一下以查看依種類的明細";
+"pane.plusFolderOne" = "+ 1 個資料夾";
+"pane.plusFolderMany" = "+ %d 個資料夾";
+"summary.unmeasuredOne" = "1 個資料夾尚未計算大小";

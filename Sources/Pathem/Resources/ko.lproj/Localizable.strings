@@ -1201,7 +1201,6 @@
 "palette.searchFor" = "“%@” 검색";
 "pane.actionsTooltip" = "동작";
 "pane.back" = "뒤로";
-"pane.calculatingSizes" = "(계산 중…)";
 "pane.clearTags" = "태그 지우기";
 "pane.columns" = "단";
 "pane.connectionFailedCode" = "연결에 실패했습니다 (코드 %d)";
@@ -1975,3 +1974,19 @@
 "select.deselectApply" = "선택 해제";
 "select.resultOne" = "1개 항목 선택됨";
 "select.resultMany" = "%d개 항목 선택됨";
+"kind.folder" = "폴더";
+"kind.app" = "앱";
+"kind.image" = "이미지";
+"kind.video" = "비디오";
+"kind.audio" = "오디오";
+"kind.document" = "문서";
+"kind.code" = "코드";
+"kind.archive" = "압축 파일";
+"kind.other" = "기타";
+"summary.heading" = "%d/%d개 선택됨";
+"summary.unmeasured" = "폴더 %d개 아직 계산되지 않음";
+"summary.approximate" = "대략값: 처음 %d개 항목 기준";
+"summary.tooltip" = "클릭하면 종류별 내역을 봅니다";
+"pane.plusFolderOne" = "+ 폴더 1개";
+"pane.plusFolderMany" = "+ 폴더 %d개";
+"summary.unmeasuredOne" = "폴더 1개 아직 계산되지 않음";
