@@ -1924,12 +1924,14 @@
 "themes.approve" = "Approuver";
 "themes.approved" = "Approuvé";
 "themes.browse" = "Parcourir";
+"themes.cardLabel" = "%1$@, par %2$@, %3$@";
 "themes.changes" = "Modifications demandées";
 "themes.chooseFile" = "Choisissez le fichier JSON de la soumission.";
 "themes.closePreview" = "Fermer l’aperçu";
 "themes.emptyBrowse" = "Aucun thème correspondant";
 "themes.emptyInstalled" = "Aucun thème installé";
 "themes.emptyReview" = "Aucune soumission";
+"themes.filterAll" = "Tous";
 "themes.invalidListing" = "La fiche ou les crédits sont invalides.";
 "themes.invalidScreenshot" = "Utilisez une à trois captures PNG ou JPEG de 2 Mio et 2400 pixels par côté au maximum. Chaque aperçu exporté doit tenir dans 300 Kio.";
 "themes.invalidTransition" = "Cette action est indisponible pour cette révision.";

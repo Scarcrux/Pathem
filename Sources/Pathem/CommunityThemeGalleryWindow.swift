@@ -1,4 +1,5 @@
 import AppKit
+import ImageIO
 import PathemEngine
 import UniformTypeIdentifiers
 
@@ -6,9 +7,225 @@ private final class GalleryDocumentView: NSView {
     override var isFlipped: Bool { true }
 }
 
+/// Decodes one small thumbnail per theme, only when a card asks for it, and keeps the result.
+@MainActor
+private final class GalleryThumbnails {
+    /// The longest side of a decoded thumbnail in pixels: enough for a card at 2x.
+    nonisolated static let maximumPixels = 400
+    private let cache = NSCache<NSString, CGImage>()
+    private(set) var decoded = 0
+    private(set) var largestSide = 0
+
+    func cached(_ key: String) -> CGImage? { cache.object(forKey: key as NSString) }
+
+    func load(_ data: Data, key: String) async -> CGImage? {
+        if let image = cached(key) { return image }
+        let image = await Task.detached(priority: .userInitiated) {
+            Self.decode(data, maximumPixels: Self.maximumPixels)
+        }.value
+        guard let image else { return nil }
+        if cached(key) == nil {
+            decoded += 1
+            largestSide = max(largestSide, image.width, image.height)
+        }
+        cache.setObject(image, forKey: key as NSString)
+        return image
+    }
+
+    /// ImageIO scales while decoding, so the full-size screenshot is never held in memory.
+    nonisolated static func decode(_ data: Data, maximumPixels: Int) -> CGImage? {
+        let lazily = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, lazily) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maximumPixels,
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+    }
+}
+
+/// A screenshot scaled to fill the card, anchored to its top edge.
+private final class ThemeThumbnailView: NSView {
+    var image: CGImage? { didSet { needsDisplay = true } }
+    /// The theme background, shown until the thumbnail is decoded.
+    var placeholder: NSColor? { didSet { needsDisplay = true } }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let frame = NSBezierPath(
+            roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 5, yRadius: 5)
+        (placeholder ?? .quaternaryLabelColor).setFill()
+        frame.fill()
+        if let image, let context = NSGraphicsContext.current?.cgContext {
+            NSGraphicsContext.saveGraphicsState()
+            frame.addClip()
+            let scale = max(
+                bounds.width / CGFloat(image.width), bounds.height / CGFloat(image.height))
+            let size = CGSize(
+                width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
+            context.interpolationQuality = .high
+            context.draw(
+                image,
+                in: CGRect(
+                    x: bounds.midX - size.width / 2, y: bounds.maxY - size.height,
+                    width: size.width, height: size.height))
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        NSColor.separatorColor.setStroke()
+        frame.lineWidth = 1
+        frame.stroke()
+    }
+}
+
+private final class ThemeBadgeView: NSView {
+    var text = "" {
+        didSet {
+            invalidateIntrinsicContentSize()
+            needsDisplay = true
+        }
+    }
+    private var attributes: [NSAttributedString.Key: Any] {
+        [
+            .font: NSFont.systemFont(ofSize: 10, weight: .medium),
+            .foregroundColor: NSColor.secondaryLabelColor,
+        ]
+    }
+    private var textSize: NSSize { (text as NSString).size(withAttributes: attributes) }
+
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: ceil(textSize.width) + 14, height: 16)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.quaternaryLabelColor.setFill()
+        NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8).fill()
+        (text as NSString).draw(
+            at: NSPoint(x: 7, y: (bounds.height - textSize.height) / 2),
+            withAttributes: attributes)
+    }
+}
+
+private final class ThemeSwatchView: NSView {
+    var color: NSColor? {
+        didSet {
+            isHidden = color == nil
+            needsDisplay = true
+        }
+    }
+
+    override var intrinsicContentSize: NSSize { NSSize(width: 16, height: 16) }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let color else { return }
+        let dot = NSBezierPath(ovalIn: bounds.insetBy(dx: 1, dy: 1))
+        color.setFill()
+        dot.fill()
+        // A dark swatch on a dark card needs a visible edge.
+        NSColor.labelColor.withAlphaComponent(0.35).setStroke()
+        dot.lineWidth = 1
+        dot.stroke()
+    }
+}
+
+private final class ThemeCardView: NSView {
+    var isChosen = false { didSet { needsDisplay = true } }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let outline = NSBezierPath(
+            roundedRect: bounds.insetBy(dx: 1.5, dy: 1.5), xRadius: 9, yRadius: 9)
+        NSColor.controlBackgroundColor.setFill()
+        outline.fill()
+        // The selection ring uses the active Pathem theme's accent.
+        (isChosen ? ThemeManager.shared.accent : NSColor.separatorColor).setStroke()
+        outline.lineWidth = isChosen ? 3 : 1
+        outline.stroke()
+    }
+}
+
+/// One theme in the grid: screenshot, title, creator, appearance badge, and color swatches.
+private final class ThemeCardItem: NSCollectionViewItem {
+    static let identifier = NSUserInterfaceItemIdentifier("ThemeCard")
+    static let size = NSSize(width: 190, height: 194)
+
+    let thumbnail = ThemeThumbnailView()
+    /// Identifies the theme this card shows, so a late thumbnail never lands on a reused card.
+    var key: String?
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let creatorLabel = NSTextField(labelWithString: "")
+    private let badge = ThemeBadgeView()
+    private let background = ThemeSwatchView()
+    private let accent = ThemeSwatchView()
+
+    override func loadView() {
+        let card = ThemeCardView()
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        creatorLabel.font = .systemFont(ofSize: 11)
+        creatorLabel.textColor = .secondaryLabelColor
+        for label in [titleLabel, creatorLabel] {
+            label.lineBreakMode = .byTruncatingTail
+            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            // The card speaks for its parts.
+            label.setAccessibilityElement(false)
+        }
+        let footer = NSStackView()
+        footer.addView(badge, in: .leading)
+        footer.addView(background, in: .trailing)
+        footer.addView(accent, in: .trailing)
+        footer.spacing = 4
+        let stack = NSStackView(views: [thumbnail, titleLabel, creatorLabel, footer])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 3
+        stack.setCustomSpacing(8, after: thumbnail)
+        stack.setCustomSpacing(7, after: creatorLabel)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 9),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 9),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -9),
+            thumbnail.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            thumbnail.heightAnchor.constraint(equalToConstant: 108),
+            titleLabel.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            creatorLabel.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            footer.widthAnchor.constraint(equalTo: stack.widthAnchor),
+        ])
+        card.setAccessibilityElement(true)
+        view = card
+    }
+
+    override var isSelected: Bool {
+        didSet { (view as? ThemeCardView)?.isChosen = isSelected }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        key = nil
+        thumbnail.image = nil
+    }
+
+    func show(_ revision: CommunityThemeRevision, theme: ThemePreset?, key: String) {
+        self.key = key
+        let mode = CommunityThemeGalleryWindow.appearanceName(theme?.appearance ?? .system)
+        titleLabel.stringValue = revision.title
+        creatorLabel.stringValue = revision.creator
+        badge.text = mode
+        background.color = theme.flatMap { ThemeManager.color(fromHex: $0.backgroundHex) }
+        accent.color = theme.flatMap { ThemeManager.color(fromHex: $0.accentHex) }
+        thumbnail.placeholder = background.color
+        view.setAccessibilityLabel(
+            String(
+                format: L("themes.cardLabel", "%1$@, by %2$@, %3$@"),
+                revision.title, revision.creator, mode))
+    }
+}
+
 /// Browse the shared Themes catalog. Debug builds can also run an isolated local gallery.
 @MainActor
-final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
+final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFieldDelegate,
+    NSCollectionViewDataSource, NSCollectionViewDelegate
+{
     /// The published catalog. Fetched only when the user opens the gallery, never at launch.
     static let catalogEndpoint = "https://d3v2l0mmdgkblv.cloudfront.net/catalog.json"
 
@@ -64,8 +281,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         else { throw CommunityThemeError.invalidListing }
         func click(_ action: Selector) throws {
             guard
-                let button = window.actions.arrangedSubviews.compactMap({ $0 as? NSButton })
-                    .first(where: { $0.action == action }),
+                let button = window.actionButtons.first(where: { $0.action == action }),
                 NSApp.sendAction(action, to: button.target, from: button)
             else { throw CommunityThemeError.invalidTransition }
         }
@@ -83,8 +299,8 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     private let apply: (ThemePreset, CommunityThemeRevision.Reference?) -> Void
     private var active: CommunityThemeRevision.Reference?
     private let panel = NSPanel(
-        contentRect: NSRect(x: 0, y: 0, width: 680, height: 625),
-        styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        contentRect: NSRect(x: 0, y: 0, width: 1040, height: 690),
+        styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
     private let scope = NSSegmentedControl(
         labels: CommunityThemeGalleryWindow.sharedEndpoint == nil
             ? [
@@ -93,18 +309,44 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
             ] : [L("themes.browse", "Browse"), L("integrations.installed", "Installed")],
         trackingMode: .selectOne,
         target: nil, action: nil)
+    private let filter = NSSegmentedControl(
+        labels: [
+            L("themes.filterAll", "All"), L("prefs.appearanceLight", "Light"),
+            L("prefs.appearanceDark", "Dark"),
+        ],
+        trackingMode: .selectOne, target: nil, action: nil)
     private let search = NSSearchField()
-    private let listings = NSPopUpButton()
+    private let grid = NSCollectionView()
+    private let gridScroll = NSScrollView()
+    private let empty = NSTextField(labelWithString: "")
+    private let thumbnails = GalleryThumbnails()
+    /// Decoded packages of the cards shown so far, keyed like the thumbnails.
+    private var themes: [String: ThemePreset] = [:]
     private let title = NSTextField(wrappingLabelWithString: "")
     private let details = NSTextField(wrappingLabelWithString: "")
     private let status = NSTextField(wrappingLabelWithString: "")
     private let screenshot = NSImageView()
     private let screenshots = NSPopUpButton()
     private let actions = NSStackView()
+    private var actionButtons: [NSButton] = []
     private var rows: [CommunityThemeRevision] = []
+    private var selectedReference: CommunityThemeRevision.Reference?
     private var selection: CommunityThemeRevision? {
-        let index = listings.indexOfSelectedItem
-        return rows.indices.contains(index) ? rows[index] : nil
+        rows.first { $0.reference == selectedReference }
+    }
+    private var selectedCardFrame: NSRect? {
+        grid.selectionIndexPaths.first.flatMap { grid.layoutAttributesForItem(at: $0)?.frame }
+    }
+    private var appearanceFilter: CommunityThemeGallery.AppearanceFilter {
+        [.all, .light, .dark][max(0, min(2, filter.selectedSegment))]
+    }
+
+    static func appearanceName(_ appearance: Preferences.Appearance) -> String {
+        switch appearance {
+        case .system: L("prefs.appearanceSystem", "System")
+        case .light: L("prefs.appearanceLight", "Light")
+        case .dark: L("prefs.appearanceDark", "Dark")
+        }
     }
 
     init(
@@ -132,13 +374,37 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         panel.title = L("prefs.themes", "Themes")
         panel.delegate = self
         panel.isReleasedWhenClosed = false
+        panel.contentMinSize = NSSize(width: 840, height: 480)
         scope.selectedSegment = 0
         scope.target = self
         scope.action = #selector(scopeChanged)
+        filter.selectedSegment = 0
+        filter.target = self
+        filter.action = #selector(scopeChanged)
+        filter.setAccessibilityLabel(L("prefs.appearanceLabel", "Appearance"))
         search.placeholderString = L("themes.search", "Search titles, creators, and tags")
         search.delegate = self
-        listings.target = self
-        listings.action = #selector(refreshDetail)
+        search.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let layout = NSCollectionViewFlowLayout()
+        layout.itemSize = ThemeCardItem.size
+        layout.minimumInteritemSpacing = 10
+        layout.minimumLineSpacing = 10
+        layout.sectionInset = NSEdgeInsets(top: 2, left: 2, bottom: 10, right: 12)
+        grid.collectionViewLayout = layout
+        grid.register(ThemeCardItem.self, forItemWithIdentifier: ThemeCardItem.identifier)
+        grid.dataSource = self
+        grid.delegate = self
+        grid.isSelectable = true
+        grid.allowsEmptySelection = false
+        grid.allowsMultipleSelection = false
+        grid.backgroundColors = [.clear]
+        grid.setAccessibilityLabel(L("prefs.themes", "Themes"))
+        gridScroll.documentView = grid
+        gridScroll.hasVerticalScroller = true
+        gridScroll.autohidesScrollers = true
+        gridScroll.drawsBackground = false
+        empty.textColor = .secondaryLabelColor
+        empty.font = .systemFont(ofSize: 15)
         screenshots.target = self
         screenshots.action = #selector(showScreenshot)
         screenshot.imageScaling = .scaleProportionallyUpOrDown
@@ -147,50 +413,62 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         screenshot.setAccessibilityLabel(L("themes.screenshot", "Theme screenshot"))
         title.font = .boldSystemFont(ofSize: 17)
         status.textColor = .secondaryLabelColor
+        actions.orientation = .vertical
+        actions.alignment = .leading
         actions.spacing = 8
         let submit = button(L("themes.submit", "Submit Revision…"), #selector(chooseSubmission))
         let done = button(L("common.done", "Done"), #selector(close))
         done.keyEquivalent = "\u{1b}"
         let footer = NSStackView(views: Self.sharedEndpoint == nil ? [submit, done] : [done])
         footer.spacing = 8
+        let header = NSStackView(views: [scope, filter, search])
+        header.spacing = 12
         let stack = NSStackView(views: [
-            scope, search, listings, title, details, status, screenshots, screenshot, actions,
+            title, details, status, actions, screenshots, screenshot,
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 9
-        stack.translatesAutoresizingMaskIntoConstraints = false
         guard let content = panel.contentView else { return }
         let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
         scroll.autohidesScrollers = true
-        scroll.translatesAutoresizingMaskIntoConstraints = false
+        scroll.drawsBackground = false
         let document = GalleryDocumentView()
         document.translatesAutoresizingMaskIntoConstraints = false
         scroll.documentView = document
+        stack.translatesAutoresizingMaskIntoConstraints = false
         document.addSubview(stack)
-        footer.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(scroll)
-        content.addSubview(footer)
+        for view in [header, gridScroll, empty, scroll, footer] as [NSView] {
+            view.translatesAutoresizingMaskIntoConstraints = false
+            content.addSubview(view)
+        }
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: content.topAnchor),
-            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: footer.topAnchor, constant: -8),
+            header.topAnchor.constraint(equalTo: content.topAnchor, constant: 14),
+            header.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            header.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            gridScroll.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 12),
+            gridScroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
+            gridScroll.trailingAnchor.constraint(equalTo: scroll.leadingAnchor, constant: -8),
+            gridScroll.bottomAnchor.constraint(equalTo: footer.topAnchor, constant: -10),
+            empty.centerXAnchor.constraint(equalTo: gridScroll.centerXAnchor),
+            empty.centerYAnchor.constraint(equalTo: gridScroll.centerYAnchor),
+            scroll.topAnchor.constraint(equalTo: gridScroll.topAnchor),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            scroll.bottomAnchor.constraint(equalTo: gridScroll.bottomAnchor),
+            scroll.widthAnchor.constraint(equalToConstant: 360),
             footer.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
             footer.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -12),
             document.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
-            stack.topAnchor.constraint(equalTo: document.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: document.leadingAnchor, constant: 20),
-            stack.trailingAnchor.constraint(equalTo: document.trailingAnchor, constant: -20),
+            stack.topAnchor.constraint(equalTo: document.topAnchor, constant: 2),
+            stack.leadingAnchor.constraint(equalTo: document.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: document.trailingAnchor, constant: -4),
             stack.bottomAnchor.constraint(equalTo: document.bottomAnchor, constant: -8),
-            search.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            listings.widthAnchor.constraint(equalTo: stack.widthAnchor),
             title.widthAnchor.constraint(equalTo: stack.widthAnchor),
             details.widthAnchor.constraint(equalTo: stack.widthAnchor),
             status.widthAnchor.constraint(equalTo: stack.widthAnchor),
             screenshot.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            screenshot.heightAnchor.constraint(equalToConstant: 250),
+            screenshot.heightAnchor.constraint(equalTo: screenshot.widthAnchor, multiplier: 0.64),
         ])
         refresh()
     }
@@ -206,40 +484,88 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
 
     func controlTextDidChange(_ obj: Notification) { refresh() }
 
-    private func refresh(preferred: CommunityThemeRevision.Reference? = nil) {
-        let previous = preferred ?? selection?.reference
-        search.isHidden = scope.selectedSegment != 0
-        switch scope.selectedSegment {
-        case 1: rows = gallery.installed.values.sorted { ($0.title, $0.id) < ($1.title, $1.id) }
-        case 2: rows = gallery.entries.reversed().map(\.revision)
-        default: rows = gallery.discover(search.stringValue)
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int)
+        -> Int
+    { rows.count }
+
+    /// Called only for cards near the visible area, so this is where a thumbnail is decoded.
+    func collectionView(
+        _ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath
+    ) -> NSCollectionViewItem {
+        let item = collectionView.makeItem(
+            withIdentifier: ThemeCardItem.identifier, for: indexPath)
+        guard let card = item as? ThemeCardItem, rows.indices.contains(indexPath.item) else {
+            return item
         }
-        listings.removeAllItems()
-        for row in rows {
-            listings.addItem(
-                withTitle: "\(row.title) · \(row.creator) · \(row.id) · v\(row.version)")
+        let revision = rows[indexPath.item]
+        let key = "\(revision.id)@\(revision.version)"
+        let theme = themes[key] ?? (try? revision.theme())
+        themes[key] = theme
+        card.show(revision, theme: theme, key: key)
+        if let image = thumbnails.cached(key) {
+            card.thumbnail.image = image
+        } else if let data = revision.screenshots.first {
+            Task { [weak card, thumbnails] in
+                let image = await thumbnails.load(data, key: key)
+                if card?.key == key { card?.thumbnail.image = image }
+            }
         }
-        if !rows.isEmpty {
-            listings.selectItem(at: rows.firstIndex { $0.reference == previous } ?? 0)
-        }
-        listings.isHidden = rows.isEmpty
+        return item
+    }
+
+    func collectionView(
+        _ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>
+    ) {
+        guard let index = indexPaths.first?.item, rows.indices.contains(index) else { return }
+        selectedReference = rows[index].reference
         refreshDetail()
     }
 
-    @objc private func refreshDetail() {
+    private func refresh(preferred: CommunityThemeRevision.Reference? = nil) {
+        let previous = preferred ?? selectedReference
+        search.isHidden = scope.selectedSegment == 2
+        filter.isHidden = scope.selectedSegment == 2
+        switch scope.selectedSegment {
+        case 1:
+            rows = gallery.installedThemes(search.stringValue, appearance: appearanceFilter)
+        case 2: rows = gallery.entries.reversed().map(\.revision)
+        default: rows = gallery.discover(search.stringValue, appearance: appearanceFilter)
+        }
+        let index = rows.firstIndex { $0.reference == previous } ?? 0
+        selectedReference = rows.indices.contains(index) ? rows[index].reference : nil
+        grid.reloadData()
+        if selectedReference != nil {
+            let chosen: Set<IndexPath> = [IndexPath(item: index, section: 0)]
+            grid.selectionIndexPaths = chosen
+            // Lay the grid out first, or there is no card frame to scroll to.
+            grid.layoutSubtreeIfNeeded()
+            if let frame = selectedCardFrame { grid.scrollToVisible(frame.insetBy(dx: 0, dy: -8)) }
+        }
+        refreshDetail()
+    }
+
+    private func refreshDetail() {
         for view in actions.arrangedSubviews { actions.removeView(view) }
+        actionButtons = []
         screenshots.removeAllItems()
         screenshot.image = nil
         screenshot.isHidden = selection == nil
         screenshots.isHidden = selection == nil
+        empty.isHidden = selection != nil
         guard let revision = selection else {
-            title.stringValue =
-                [
+            // A search or filter that hides every installed theme is "no match", not "none".
+            let narrowed =
+                scope.selectedSegment == 1 && !gallery.installed.isEmpty
+            empty.stringValue =
+                narrowed
+                ? L("themes.emptyBrowse", "No matching themes")
+                : [
                     L("themes.emptyBrowse", "No matching themes"),
                     L("themes.emptyInstalled", "No installed themes"),
                     L("themes.emptyReview", "No submissions"),
                 ][
                     scope.selectedSegment]
+            title.stringValue = ""
             details.stringValue = ""
             status.stringValue = ""
             return
@@ -270,7 +596,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
             states.append(L("themes.active", "Active") + " v\(active.version)")
         }
         if withdrawn { states.append(L("themes.withdrawn", "Withdrawn")) }
-        actions.addArrangedSubview(
+        addAction(
             button(L("menu.group.preview", "Preview"), #selector(previewSelection)))
         switch scope.selectedSegment {
         case 2:
@@ -281,39 +607,39 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
             } else {
                 states.append(L("themes.pending", "Pending review"))
                 if !withdrawn {
-                    actions.addArrangedSubview(
+                    addAction(
                         button(
                             L("themes.approve", L("themes.approve", "Approve")) + "…",
                             #selector(approve)))
-                    actions.addArrangedSubview(
+                    addAction(
                         button(
                             L("themes.reject", L("themes.reject", "Reject")) + "…",
                             #selector(reject)))
                 }
             }
             if !withdrawn {
-                actions.addArrangedSubview(
+                addAction(
                     button(
                         L("themes.withdraw", L("themes.withdraw", "Withdraw")) + "…",
                         #selector(confirmWithdrawal)))
             }
         case 1:
-            actions.addArrangedSubview(
+            addAction(
                 button(L("common.apply", "Apply"), #selector(applySelection)))
-            actions.addArrangedSubview(
+            addAction(
                 button(
                     L("themes.uninstall", L("themes.uninstall", "Uninstall")) + "…",
                     #selector(confirmUninstall)))
         default:
             if let installed, installed.version < revision.version {
-                actions.addArrangedSubview(
+                addAction(
                     button(L("themes.update", "Update"), #selector(installSelection)))
             } else if installed == nil {
-                actions.addArrangedSubview(
+                addAction(
                     button(L("integrations.cliInstall", "Install"), #selector(installSelection)))
             }
             if installed != nil {
-                actions.addArrangedSubview(
+                addAction(
                     button(L("themes.applyInstalled", "Apply Installed"), #selector(applySelection))
                 )
             }
@@ -325,6 +651,20 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         let index = screenshots.indexOfSelectedItem
         guard let revision = selection, revision.screenshots.indices.contains(index) else { return }
         screenshot.image = NSImage(data: revision.screenshots[index])
+    }
+
+    /// Actions sit in rows of two, so long localized titles still fit the detail column.
+    private func addAction(_ control: NSButton) {
+        actionButtons.append(control)
+        if let row = actions.arrangedSubviews.last as? NSStackView,
+            row.arrangedSubviews.count < 2
+        {
+            row.addArrangedSubview(control)
+        } else {
+            let row = NSStackView(views: [control])
+            row.spacing = 8
+            actions.addArrangedSubview(row)
+        }
     }
 
     private func button(_ label: String, _ action: Selector) -> NSButton {
@@ -577,7 +917,7 @@ extension CommunityThemeGalleryWindow {
             refresh()
         }
         func hasAction(_ title: String) -> Bool {
-            actions.arrangedSubviews.contains { ($0 as? NSButton)?.title == title }
+            actionButtons.contains { $0.title == title }
         }
 
         switch phase {
@@ -595,8 +935,8 @@ extension CommunityThemeGalleryWindow {
                 "Native gallery is visible and accepts search focus")
             func click(_ title: String) throws {
                 guard
-                    let control = actions.arrangedSubviews.compactMap({ $0 as? NSButton })
-                        .first(where: { $0.title == title }), control.isEnabled
+                    let control = actionButtons.first(where: { $0.title == title }),
+                    control.isEnabled
                 else { throw GallerySmokeFailure(message: "Missing action \(title)") }
                 control.performClick(nil)
             }
@@ -707,6 +1047,72 @@ extension CommunityThemeGalleryWindow {
             try checkChrome(.system)
         default:
             throw GallerySmokeFailure(message: "Unknown fixture phase")
+        }
+    }
+}
+
+extension CommunityThemeGalleryWindow {
+    /// Draws the window's content offscreen. `state` is `key=value` pairs joined by `;`:
+    /// `appearance` (light or dark), `scope` (segment index), `search`, and `select` (theme id).
+    func renderShot(to output: URL, state: String) async throws {
+        var options: [String: String] = [:]
+        for pair in state.split(separator: ";") {
+            let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+            if parts.count == 2 { options[parts[0]] = parts[1] }
+        }
+        let appearance = NSAppearance(named: options["appearance"] == "dark" ? .darkAqua : .aqua)
+        panel.appearance = appearance
+        configure()
+        guard let content = panel.contentView else {
+            throw GallerySmokeFailure(message: "Missing content view")
+        }
+        content.layoutSubtreeIfNeeded()
+        try applyShotState(options)
+        content.layoutSubtreeIfNeeded()
+        try await Task.sleep(nanoseconds: 1_500_000_000)
+        content.layoutSubtreeIfNeeded()
+        guard let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds),
+            let context = NSGraphicsContext(bitmapImageRep: bitmap)
+        else { throw GallerySmokeFailure(message: "No bitmap") }
+        // The content view does not draw the window background, so paint it first.
+        appearance?.performAsCurrentDrawingAppearance {
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = context
+            NSColor.windowBackgroundColor.setFill()
+            NSRect(origin: .zero, size: bitmap.size).fill()
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        content.cacheDisplay(in: content.bounds, to: bitmap)
+        // Evidence for the lazy thumbnails: how many were decoded, of how many cards, and how
+        // large the largest one is.
+        print(
+            "community-gallery-shot: cards=\(rows.count) selected=\(selection?.id ?? "none") "
+                + "selectedVisible=\(selectedCardFrame.map(grid.visibleRect.contains) ?? false) "
+                + "thumbnails=\(thumbnails.decoded) largestSide=\(thumbnails.largestSide)")
+        guard let png = bitmap.representation(using: .png, properties: [:]) else {
+            throw GallerySmokeFailure(message: "No PNG")
+        }
+        try png.write(to: output)
+    }
+
+    private func applyShotState(_ options: [String: String]) throws {
+        for id in (options["install"] ?? "").split(separator: ",") {
+            guard let revision = gallery.discover().first(where: { $0.id == id }) else {
+                throw GallerySmokeFailure(message: "No theme \(id)")
+            }
+            try mutate { try $0.install(revision.reference) }
+        }
+        if let segment = options["scope"].flatMap(Int.init), segment < scope.segmentCount {
+            scope.selectedSegment = segment
+        }
+        filter.selectedSegment = ["light": 1, "dark": 2][options["filter"] ?? ""] ?? 0
+        search.stringValue = options["search"] ?? ""
+        refresh()
+        if let id = options["select"] {
+            guard let revision = rows.first(where: { $0.id == id }) else {
+                throw GallerySmokeFailure(message: "No theme \(id)")
+            }
+            refresh(preferred: revision.reference)
         }
     }
 }

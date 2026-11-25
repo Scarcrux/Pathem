@@ -1924,12 +1924,14 @@
 "themes.approve" = "承認";
 "themes.approved" = "承認済み";
 "themes.browse" = "探す";
+"themes.cardLabel" = "%1$@、作者: %2$@、%3$@";
 "themes.changes" = "修正依頼済み";
 "themes.chooseFile" = "提出用の JSON ファイルを選んでください。";
 "themes.closePreview" = "プレビューを閉じる";
 "themes.emptyBrowse" = "一致するテーマがありません";
 "themes.emptyInstalled" = "インストール済みのテーマがありません";
 "themes.emptyReview" = "提出はありません";
+"themes.filterAll" = "すべて";
 "themes.invalidListing" = "掲載情報またはクレジットの項目が無効です。";
 "themes.invalidScreenshot" = "PNG または JPEG の画像を1〜3枚選んでください。各画像は2 MiB 以下、各辺2400ピクセル以下で、書き出し後は300 KiB 以下です。";
 "themes.invalidTransition" = "このリビジョンでは操作を実行できません。";

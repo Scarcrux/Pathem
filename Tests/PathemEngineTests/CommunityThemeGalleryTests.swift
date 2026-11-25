@@ -51,6 +51,82 @@ struct CommunityThemeGalleryTests {
         return output as Data
     }
 
+    private func listing(
+        _ id: String, _ title: String, creator: String = "Pathem contributors",
+        _ appearance: Preferences.Appearance, tags: [String]
+    ) throws -> CommunityThemeRevision {
+        CommunityThemeRevision(
+            id: id, version: 1, title: title, summary: "A theme.", creator: creator,
+            license: "MIT", source: nil, tags: tags,
+            package: try ThemePackage.encode(
+                ThemePreset(
+                    name: title, appearance: appearance, accentHex: "#336699",
+                    backgroundHex: appearance == .system ? "" : "#101820")),
+            screenshots: [])
+    }
+
+    @Test func appearanceFilterReadsThePackageAndCombinesWithSearch() throws {
+        let themes = [
+            try listing("delft", "Delft", .light, tags: ["light", "blue"]),
+            try listing("kiln", "Kiln", creator: "Ada", .light, tags: ["warm"]),
+            try listing("smithy", "Smithy", .dark, tags: ["dark", "warm"]),
+            // The control: the tag and the title both say light, the package says dark.
+            try listing("lightless", "Lightless", .dark, tags: ["light"]),
+            try listing("graphite", "Graphite", .system, tags: ["neutral"]),
+        ]
+        func ids(_ query: String, _ filter: CommunityThemeGallery.AppearanceFilter) -> [String] {
+            CommunityThemeGallery.matching(themes, query: query, appearance: filter).map(\.id)
+        }
+        #expect(themes.map(\.appearance) == [.light, .light, .dark, .dark, .system])
+        #expect(ids("", .all) == ["delft", "kiln", "smithy", "lightless", "graphite"])
+        #expect(ids("", .light) == ["delft", "kiln"])
+        #expect(ids("", .dark) == ["smithy", "lightless"])
+        // Search still reads tags, and each filter narrows the same search differently.
+        #expect(ids("light", .all) == ["delft", "lightless"])
+        #expect(ids("light", .light) == ["delft"])
+        #expect(ids("light", .dark) == ["lightless"])
+        #expect(ids("warm", .light) == ["kiln"])
+        #expect(ids("warm", .dark) == ["smithy"])
+        #expect(ids("ada WARM", .light) == ["kiln"])
+        #expect(ids("ada", .dark).isEmpty)
+        #expect(ids("neutral", .light).isEmpty && ids("neutral", .dark).isEmpty)
+    }
+
+    @Test func appearanceFilterAppliesToBrowseAndInstalled() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-gallery-filter-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = folder.appendingPathComponent("gallery.json")
+        let light = try CommunityThemeGallery.submission(
+            at: fixture.appendingPathComponent("v1.submission.json"))
+        #expect(light.appearance == .light)
+        var dark = try ThemePackage.decode(light.package)
+        dark.appearance = .dark
+        let night = CommunityThemeRevision(
+            id: "tidal-night", version: 1, title: "Tidal Night", summary: light.summary,
+            creator: light.creator, license: light.license, source: light.source,
+            tags: ["light"], package: try ThemePackage.encode(dark),
+            screenshots: light.screenshots)
+        let gallery = try CommunityThemeGallery.update(at: store) { gallery in
+            for revision in [light, night] {
+                try gallery.submit(revision)
+                try gallery.review(
+                    revision.reference, outcome: .approved, reviewer: "Reviewer", note: "Fine")
+                try gallery.install(revision.reference)
+            }
+        }
+        #expect(gallery.discover().map(\.id) == ["tidal-marsh", "tidal-night"])
+        #expect(gallery.discover(appearance: .light).map(\.id) == ["tidal-marsh"])
+        #expect(gallery.discover(appearance: .dark).map(\.id) == ["tidal-night"])
+        #expect(gallery.discover("tidal", appearance: .dark).map(\.id) == ["tidal-night"])
+        #expect(gallery.discover("marsh", appearance: .dark).isEmpty)
+        #expect(gallery.installedThemes().map(\.id) == ["tidal-marsh", "tidal-night"])
+        #expect(gallery.installedThemes(appearance: .light).map(\.id) == ["tidal-marsh"])
+        #expect(gallery.installedThemes("night", appearance: .dark).map(\.id) == ["tidal-night"])
+        #expect(gallery.installedThemes("night", appearance: .light).isEmpty)
+    }
+
     @Test func sanitizedScreenshotUsesThePreferredFormatAndRoundTripsThroughTheCatalog() throws {
         let expected = try #require(expectedScreenshotType)
         let v1 = try CommunityThemeGallery.submission(

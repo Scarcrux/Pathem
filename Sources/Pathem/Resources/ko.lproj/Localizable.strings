@@ -1924,12 +1924,14 @@
 "themes.approve" = "승인";
 "themes.approved" = "승인됨";
 "themes.browse" = "둘러보기";
+"themes.cardLabel" = "%1$@, 제작: %2$@, %3$@";
 "themes.changes" = "수정 요청됨";
 "themes.chooseFile" = "제출용 JSON 파일을 선택하세요.";
 "themes.closePreview" = "미리보기 닫기";
 "themes.emptyBrowse" = "일치하는 테마 없음";
 "themes.emptyInstalled" = "설치된 테마 없음";
 "themes.emptyReview" = "제출 없음";
+"themes.filterAll" = "모두";
 "themes.invalidListing" = "등록 정보 또는 제작자 표시가 올바르지 않습니다.";
 "themes.invalidScreenshot" = "PNG 또는 JPEG 화면을 1~3개 선택하세요. 각 파일은 2 MiB 이하, 한 변은 2400픽셀 이하이며 내보낸 미리보기는 300 KiB 이하여야 합니다.";
 "themes.invalidTransition" = "이 리비전에서는 해당 작업을 사용할 수 없습니다.";

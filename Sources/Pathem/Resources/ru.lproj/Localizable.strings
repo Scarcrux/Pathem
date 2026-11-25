@@ -1924,12 +1924,14 @@
 "themes.approve" = "Одобрить";
 "themes.approved" = "Одобрено";
 "themes.browse" = "Обзор";
+"themes.cardLabel" = "%1$@, автор: %2$@, %3$@";
 "themes.changes" = "Запрошены изменения";
 "themes.chooseFile" = "Выберите JSON-файл заявки.";
 "themes.closePreview" = "Закрыть предпросмотр";
 "themes.emptyBrowse" = "Подходящих тем нет";
 "themes.emptyInstalled" = "Установленных тем нет";
 "themes.emptyReview" = "Заявок нет";
+"themes.filterAll" = "Все";
 "themes.invalidListing" = "Поля карточки или сведения об авторстве недействительны.";
 "themes.invalidScreenshot" = "Выберите от 1 до 3 снимков PNG или JPEG до 2 МиБ и 2400 пикселей на сторону. Экспортированный предпросмотр должен занимать не более 300 КиБ.";
 "themes.invalidTransition" = "Для этой ревизии действие недоступно.";

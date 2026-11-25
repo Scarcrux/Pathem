@@ -1924,12 +1924,14 @@
 "themes.approve" = "批准";
 "themes.approved" = "已批准";
 "themes.browse" = "浏览";
+"themes.cardLabel" = "%1$@，作者：%2$@，%3$@";
 "themes.changes" = "已请求修改";
 "themes.chooseFile" = "选择提交用的 JSON 文件。";
 "themes.closePreview" = "关闭预览";
 "themes.emptyBrowse" = "没有匹配的主题";
 "themes.emptyInstalled" = "没有已安装的主题";
 "themes.emptyReview" = "没有提交";
+"themes.filterAll" = "全部";
 "themes.invalidListing" = "条目或署名字段无效。";
 "themes.invalidScreenshot" = "请选择 1 到 3 张 PNG 或 JPEG 截图。每张不超过 2 MiB、每边不超过 2400 像素，且导出的预览不超过 300 KiB。";
 "themes.invalidTransition" = "此修订版无法执行该操作。";

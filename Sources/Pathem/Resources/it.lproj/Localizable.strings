@@ -1924,12 +1924,14 @@
 "themes.approve" = "Approva";
 "themes.approved" = "Approvato";
 "themes.browse" = "Esplora";
+"themes.cardLabel" = "%1$@, di %2$@, %3$@";
 "themes.changes" = "Modifiche richieste";
 "themes.chooseFile" = "Scegli il file JSON dell’invio.";
 "themes.closePreview" = "Chiudi anteprima";
 "themes.emptyBrowse" = "Nessun tema corrispondente";
 "themes.emptyInstalled" = "Nessun tema installato";
 "themes.emptyReview" = "Nessun invio";
+"themes.filterAll" = "Tutti";
 "themes.invalidListing" = "La scheda o i dati di attribuzione non sono validi.";
 "themes.invalidScreenshot" = "Usa da una a tre schermate PNG o JPEG da massimo 2 MiB e 2400 pixel per lato. Ogni anteprima esportata deve rientrare in 300 KiB.";
 "themes.invalidTransition" = "L’azione non è disponibile per questa revisione.";

@@ -51,6 +51,11 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
 
     public var reference: Reference { Reference(id: id, version: version) }
 
+    /// The appearance the theme package declares, or nil when the package does not decode.
+    public var appearance: Preferences.Appearance? {
+        (try? ThemePackage.decode(package))?.appearance
+    }
+
     public func theme() throws -> ThemePreset {
         var preset = try ThemePackage.decode(package)
         preset.name = title
@@ -197,7 +202,14 @@ public struct CommunityThemeGallery: Codable, Sendable {
 
     public init() {}
 
-    public func discover(_ query: String = "") -> [CommunityThemeRevision] {
+    /// Narrows a list of themes by the appearance their package declares.
+    public enum AppearanceFilter: Sendable, CaseIterable {
+        case all, light, dark
+    }
+
+    public func discover(_ query: String = "", appearance: AppearanceFilter = .all)
+        -> [CommunityThemeRevision]
+    {
         var latest: [String: CommunityThemeRevision] = [:]
         for entry in entries where entry.retainedOnly != true && entry.review?.outcome == .approved
         {
@@ -207,13 +219,40 @@ public struct CommunityThemeGallery: Codable, Sendable {
             else { continue }
             latest[revision.id] = revision
         }
+        return Self.matching(Array(latest.values), query: query, appearance: appearance)
+            .sorted { ($0.title, $0.id) < ($1.title, $1.id) }
+    }
+
+    /// Installed themes, optionally narrowed the same way as `discover`.
+    public func installedThemes(_ query: String = "", appearance: AppearanceFilter = .all)
+        -> [CommunityThemeRevision]
+    {
+        Self.matching(Array(installed.values), query: query, appearance: appearance)
+            .sorted { ($0.title, $0.id) < ($1.title, $1.id) }
+    }
+
+    /// The revisions that match every search term and the appearance filter, in their given
+    /// order. Search reads the title, creator, and tags; the appearance filter reads only the
+    /// theme package, so a dark theme tagged "light" is still a dark theme.
+    public static func matching(
+        _ revisions: [CommunityThemeRevision], query: String = "",
+        appearance: AppearanceFilter = .all
+    ) -> [CommunityThemeRevision] {
         let terms = query.split(whereSeparator: \.isWhitespace)
-        return latest.values.filter { revision in
+        return revisions.filter { revision in
             let fields = [revision.title, revision.creator] + revision.tags
-            return terms.allSatisfy { term in
-                fields.contains { $0.localizedStandardContains(String(term)) }
+            guard
+                terms.allSatisfy({ term in
+                    fields.contains { $0.localizedStandardContains(String(term)) }
+                })
+            else { return false }
+            // Decode the package only for themes the search kept.
+            switch appearance {
+            case .all: return true
+            case .light: return revision.appearance == .light
+            case .dark: return revision.appearance == .dark
             }
-        }.sorted { ($0.title, $0.id) < ($1.title, $1.id) }
+        }
     }
 
     public mutating func submit(_ revision: CommunityThemeRevision) throws {

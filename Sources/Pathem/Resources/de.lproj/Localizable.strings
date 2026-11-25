@@ -1924,12 +1924,14 @@
 "themes.approve" = "Genehmigen";
 "themes.approved" = "Genehmigt";
 "themes.browse" = "Entdecken";
+"themes.cardLabel" = "%1$@, von %2$@, %3$@";
 "themes.changes" = "Änderungen angefordert";
 "themes.chooseFile" = "Wähle eine JSON-Datei für die Einreichung.";
 "themes.closePreview" = "Vorschau schließen";
 "themes.emptyBrowse" = "Keine passenden Designs";
 "themes.emptyInstalled" = "Keine installierten Designs";
 "themes.emptyReview" = "Keine Einreichungen";
+"themes.filterAll" = "Alle";
 "themes.invalidListing" = "Eintrag oder Urheberangaben sind ungültig.";
 "themes.invalidScreenshot" = "Verwende ein bis drei PNG- oder JPEG-Bilder mit bis zu 2 MiB und 2400 Pixeln pro Seite. Exportierte Vorschaubilder dürfen höchstens 300 KiB groß sein.";
 "themes.invalidTransition" = "Die Aktion ist für diese Revision nicht verfügbar.";

@@ -2788,4 +2788,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
   status = "done"
   note = "Trigger: the community catalog had no public web view, so themes could only be seen inside the app. Change: scripts/build_site_themes.py generates pathem.app/themes/ from the catalog (validated as untrusted input, every text escaped, every screenshot re-encoded to metadata-free WebP under a content-hash name). Built from the 13-theme seed catalog: 26 images, about 1.0 MB, page 26 KB, no inline style or script and no CSP loosening. Evidence: test/site_themes_test.py (hostile title and summary inert, bad id and color rejected, HEIC/PNG/JPEG all become WebP, rebuild byte-identical, drift controls seen red) and a headless Chrome render at 1440 and 390 px under the site CSP with zero violations. Not yet done: rebuild from the live catalog once the seed is published there (make themes), then deploy."
   issue = 0
+
+[[mission]]
+  id = "m-38a8e0cf"
+  title = "Themes window: visual card grid with an appearance filter"
+  status = "done"
+  note = "Trigger: the in-app Themes window listed themes as one popup row each, so 16 or more themes could not be compared visually. Change: the popup is replaced by a card grid (first screenshot, title, creator, Light or Dark badge, background and accent swatches) beside the existing detail and actions, with an All / Light / Dark filter that reads the theme package rather than tags and combines with search in Browse and Installed. Thumbnails decode lazily for cards near the visible area, capped at 400 pixels. Evidence: a failing-first engine test for appearance x search with a control (a dark package tagged light), the full engine suite, the existing gallery smoke phases, and offscreen renders in light and dark from a loopback copy of the seed catalog (9 of 16 thumbnails decoded on open). Not verified: VoiceOver, arrow keys and mouse selection on a live window, and the translations by a native reader."
+  issue = 0
 # <<< commandem roadmap <<<

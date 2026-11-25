@@ -80,6 +80,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
             || launchEnvironment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
             || launchEnvironment["PATHEM_COMMUNITY_GALLERY_TEST"] != nil
+            || launchEnvironment["PATHEM_COMMUNITY_GALLERY_SHOT"] != nil
         #else
         let configurationTest = false
         #endif
@@ -309,6 +310,31 @@ enum PathemApp {
                 print("community-gallery-\(phase): FAIL: \(error.localizedDescription)")
                 exit(1)
             }
+        }
+        if let output = launchEnvironment["PATHEM_COMMUNITY_GALLERY_SHOT"] {
+            // Renders the Themes window to a PNG from the store in the scratch config folder.
+            // It makes no catalog request: fill the store first, for example with
+            // `pathem-theme-catalog <store> sync <loopback endpoint>`.
+            guard launchEnvironment["PATHEM_COMMUNITY_GALLERY"] == "1",
+                let store = CommunityThemeGalleryWindow.storeURL
+            else {
+                print("COMMUNITY GALLERY SHOT: local gallery configuration required")
+                exit(64)
+            }
+            Task { @MainActor in
+                do {
+                    try await browser.settings.makeCommunityGallery(at: store).renderShot(
+                        to: URL(fileURLWithPath: output),
+                        state: launchEnvironment["PATHEM_COMMUNITY_GALLERY_SHOT_STATE"] ?? "")
+                    print("community-gallery-shot: PASS \(output)")
+                    exit(0)
+                } catch {
+                    print("community-gallery-shot: FAIL: \(error.localizedDescription)")
+                    exit(1)
+                }
+            }
+            app.run()
+            exit(1)
         }
         if ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == "themes" {
             browser.installToolbarIfNeeded()

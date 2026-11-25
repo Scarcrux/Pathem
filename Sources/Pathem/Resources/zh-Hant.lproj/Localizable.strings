@@ -1924,12 +1924,14 @@
 "themes.approve" = "核准";
 "themes.approved" = "已核准";
 "themes.browse" = "瀏覽";
+"themes.cardLabel" = "%1$@，作者：%2$@，%3$@";
 "themes.changes" = "已要求修改";
 "themes.chooseFile" = "選擇提交用的 JSON 檔案。";
 "themes.closePreview" = "關閉預覽";
 "themes.emptyBrowse" = "沒有相符的主題";
 "themes.emptyInstalled" = "沒有已安裝的主題";
 "themes.emptyReview" = "沒有提交項目";
+"themes.filterAll" = "全部";
 "themes.invalidListing" = "項目或署名欄位無效。";
 "themes.invalidScreenshot" = "請選擇 1 到 3 張 PNG 或 JPEG 截圖。每張不超過 2 MiB、每邊不超過 2400 像素，且匯出的預覽不超過 300 KiB。";
 "themes.invalidTransition" = "此修訂版無法執行該操作。";

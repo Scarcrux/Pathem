@@ -86,6 +86,18 @@ PATHEM_CONFIG_DIR="$TMPDIR/gallery-review" PATHEM_COMMUNITY_GALLERY_TEST=stage \
   .build/debug/Pathem > .build/gallery-stage.log 2>&1
 ```
 
+To render the Themes window itself, fill a scratch store from a loopback catalog and use the render hook. The hook makes no catalog request, and it needs a debug build and a temporary configuration directory. `PATHEM_COMMUNITY_GALLERY_SHOT_STATE` takes `key=value` pairs joined by `;`: `appearance` (light or dark), `scope` (segment index), `filter` (light or dark), `search`, `select` (a theme id) and `install` (comma-separated ids). The log line reports how many thumbnails were decoded and their largest side.
+
+```sh
+.build/debug/pathem-theme-catalog "$PATHEM_CONFIG_DIR/shared-community-themes.json" \
+  sync "http://127.0.0.1:$port/catalog.json"
+PATHEM_COMMUNITY_GALLERY=1 PATHEM_DEMO=1 \
+  PATHEM_SHARED_THEME_CATALOG="http://127.0.0.1:$port/catalog.json" \
+  PATHEM_COMMUNITY_GALLERY_SHOT="$TMPDIR/themes-window.png" \
+  PATHEM_COMMUNITY_GALLERY_SHOT_STATE="appearance=dark;filter=dark;search=warm" \
+  .build/debug/Pathem
+```
+
 The three-process run also generated `gallery-detail.png` in the isolated `gallery-e2e-…` configuration directory. For the view matrix, the app rendered each revision with four appearance variants. Three synthetic gradient PNGs were copied into the isolated demo's Lisbon folder before capture. The fixture JPEGs use the List and Icon captures cropped above the status bar.
 
 ```sh

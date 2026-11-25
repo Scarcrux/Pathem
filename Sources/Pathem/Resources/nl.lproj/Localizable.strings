@@ -1924,12 +1924,14 @@
 "themes.approve" = "Goedkeuren";
 "themes.approved" = "Goedgekeurd";
 "themes.browse" = "Bladeren";
+"themes.cardLabel" = "%1$@, door %2$@, %3$@";
 "themes.changes" = "Wijzigingen gevraagd";
 "themes.chooseFile" = "Kies het JSON-bestand van de inzending.";
 "themes.closePreview" = "Voorbeeld sluiten";
 "themes.emptyBrowse" = "Geen passende thema’s";
 "themes.emptyInstalled" = "Geen geïnstalleerde thema’s";
 "themes.emptyReview" = "Geen inzendingen";
+"themes.filterAll" = "Alle";
 "themes.invalidListing" = "De vermelding of naamsvermelding is ongeldig.";
 "themes.invalidScreenshot" = "Gebruik één tot drie PNG- of JPEG-afbeeldingen van maximaal 2 MiB en 2400 pixels per zijde. Een geëxporteerd voorbeeld mag maximaal 300 KiB zijn.";
 "themes.invalidTransition" = "Deze actie is voor deze revisie niet beschikbaar.";
