@@ -289,6 +289,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Confirmations shown as a popover at the pointer (move/copy conflicts, Trash) rather than
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
+    let filteredSheet = FilteredTransferSheet()  // Copy / Move / Trash Matching…
     let deviceWatcher = DeviceWatcher()  // owns the USB-phone poll timer + name cache (feeds the sidebar)
     var layoutsMenu: NSMenu { menuInstaller.layoutsMenu }
     var savedViewsMenu: NSMenu { menuInstaller.savedViewsMenu }

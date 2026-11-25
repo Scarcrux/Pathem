@@ -397,7 +397,7 @@ extension TransientSurfaceSample {
                 b.presentCompare([], leftURL: file.deletingLastPathComponent(), rightURL: file)
                 return b
             },
-            mount("m55", "BrowserViewController.swift:926") { _, _ in
+            mount("m55", "BrowserViewController.swift:927") { _, _ in
                 // Return target/action is intercepted; only the real Cancel executes.
                 // Exercise the exact production UI without constructing a callback
                 // that can touch Keychain or the owner's folder-handler default.
@@ -528,7 +528,7 @@ extension TransientSurfaceSample {
                 }
                 return b
             },
-            mount("m67", "BrowserViewController+CommandRegistry.swift:192") { _, _ in
+            mount("m67", "BrowserViewController+CommandRegistry.swift:211") { _, _ in
                 b.commands.perform("tools.transfers")
                 return b
             },

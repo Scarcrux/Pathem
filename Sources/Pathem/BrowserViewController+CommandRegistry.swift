@@ -35,6 +35,25 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.transfer(move: true)
         }
+        let canFilterTransfer: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.entries.isEmpty
+        }
+        add(
+            "files.copyMatching", L("bvc.cmd.copyMatching", "Copy Matching…"),
+            keywords: ["filter copy", "advanced copy", "copy by pattern", "copy only"],
+            enabled: canFilterTransfer
+        ) { [weak self] in self?.showFilteredTransfer(.copy) }
+        add(
+            "files.moveMatching", L("bvc.cmd.moveMatching", "Move Matching…"),
+            keywords: ["filter move", "advanced move", "move by pattern", "move only"],
+            enabled: canFilterTransfer
+        ) { [weak self] in self?.showFilteredTransfer(.move) }
+        add(
+            "files.trashMatching", L("bvc.cmd.trashMatching", "Trash Matching…"),
+            keywords: ["filter delete", "advanced delete", "delete matching", "trash by pattern"],
+            enabled: canFilterTransfer
+        ) { [weak self] in self?.showFilteredTransfer(.trash) }
         add(
             "files.openInThisPane", L("bvc.cmd.openInThisPane", "Open in This Pane"),
             enabled: { [weak self] in self?.openInThisPaneTarget() != nil }

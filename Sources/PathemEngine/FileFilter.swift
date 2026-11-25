@@ -5,18 +5,32 @@ import Foundation
 /// (folder/file/image/video/audio/document/archive/code), and size comparisons like
 /// `size:>10mb`, `size:<=1kb`. Parsed once, then matched per entry. Pure, so it's tested.
 public struct FileFilter: Sendable {
-    public enum Kind: String, Sendable, CaseIterable {
+    public enum Kind: String, Sendable, CaseIterable, Codable {
         case folder, file, image, video, audio, document, archive, code
 
         var extensions: Set<String> {
             switch self {
             case .folder, .file: return []
-            case .image: return ["jpg", "jpeg", "png", "gif", "heic", "heif", "webp", "tiff", "tif", "bmp", "raw", "cr2", "nef", "arw", "svg"]
-            case .video: return ["mp4", "mov", "m4v", "avi", "mkv", "webm", "wmv", "flv", "mpg", "mpeg"]
+            case .image:
+                return [
+                    "jpg", "jpeg", "png", "gif", "heic", "heif", "webp", "tiff", "tif", "bmp",
+                    "raw", "cr2", "nef", "arw", "svg",
+                ]
+            case .video:
+                return ["mp4", "mov", "m4v", "avi", "mkv", "webm", "wmv", "flv", "mpg", "mpeg"]
             case .audio: return ["mp3", "m4a", "wav", "aac", "flac", "aiff", "aif", "ogg", "opus"]
-            case .document: return ["pdf", "doc", "docx", "txt", "md", "rtf", "pages", "key", "numbers", "xls", "xlsx", "ppt", "pptx", "csv", "epub"]
+            case .document:
+                return [
+                    "pdf", "doc", "docx", "txt", "md", "rtf", "pages", "key", "numbers", "xls",
+                    "xlsx", "ppt", "pptx", "csv", "epub",
+                ]
             case .archive: return ["zip", "tar", "gz", "tgz", "bz2", "7z", "rar", "xz", "dmg"]
-            case .code: return ["swift", "c", "h", "cpp", "cc", "hpp", "m", "mm", "js", "ts", "jsx", "tsx", "py", "rb", "go", "rs", "java", "kt", "sh", "json", "yaml", "yml", "toml", "html", "css", "sql"]
+            case .code:
+                return [
+                    "swift", "c", "h", "cpp", "cc", "hpp", "m", "mm", "js", "ts", "jsx", "tsx",
+                    "py", "rb", "go", "rs", "java", "kt", "sh", "json", "yaml", "yml", "toml",
+                    "html", "css", "sql",
+                ]
             }
         }
     }
@@ -42,7 +56,8 @@ public struct FileFilter: Sendable {
         guard !piece.isEmpty else { return nil }
         let lower = piece.lowercased()
         if lower.hasPrefix("ext:") {
-            let value = String(lower.dropFirst(4)).trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            let value = String(lower.dropFirst(4)).trimmingCharacters(
+                in: CharacterSet(charactersIn: "."))
             return value.isEmpty ? .name(piece) : .ext(value)
         }
         if lower.hasPrefix("kind:") {
@@ -63,12 +78,24 @@ public struct FileFilter: Sendable {
     static func parseSize(_ text: String) -> Token? {
         var rest = Substring(text)
         let op: Op
-        if rest.hasPrefix(">=") { op = .ge; rest = rest.dropFirst(2) }
-        else if rest.hasPrefix("<=") { op = .le; rest = rest.dropFirst(2) }
-        else if rest.hasPrefix(">") { op = .gt; rest = rest.dropFirst(1) }
-        else if rest.hasPrefix("<") { op = .lt; rest = rest.dropFirst(1) }
-        else if rest.hasPrefix("=") { op = .eq; rest = rest.dropFirst(1) }
-        else { op = .ge }  // a bare "size:10mb" means "at least"
+        if rest.hasPrefix(">=") {
+            op = .ge
+            rest = rest.dropFirst(2)
+        } else if rest.hasPrefix("<=") {
+            op = .le
+            rest = rest.dropFirst(2)
+        } else if rest.hasPrefix(">") {
+            op = .gt
+            rest = rest.dropFirst(1)
+        } else if rest.hasPrefix("<") {
+            op = .lt
+            rest = rest.dropFirst(1)
+        } else if rest.hasPrefix("=") {
+            op = .eq
+            rest = rest.dropFirst(1)
+        } else {
+            op = .ge
+        }  // a bare "size:10mb" means "at least"
         let scalars = rest
         let digits = scalars.prefix { $0.isNumber || $0 == "." }
         guard let number = Double(digits), number >= 0 else { return nil }
@@ -95,7 +122,8 @@ public struct FileFilter: Sendable {
         case .name(let needle):
             return entry.name.localizedCaseInsensitiveContains(needle)
         case .ext(let wanted):
-            return !entry.isDirectory && (entry.name as NSString).pathExtension.lowercased() == wanted
+            return !entry.isDirectory
+                && (entry.name as NSString).pathExtension.lowercased() == wanted
         case .kind(let kind):
             switch kind {
             case .folder: return entry.isDirectory

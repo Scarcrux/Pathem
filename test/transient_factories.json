@@ -93,7 +93,7 @@
     },
     {
       "id": "f08",
-      "site": "Sources/Pathem/PathemApp.swift:2458:16:runModal",
+      "site": "Sources/Pathem/PathemApp.swift:2478:16:runModal",
       "file": "Sources/Pathem/PathemApp.swift",
       "caller": "applicationShouldTerminate",
       "maker": "makeTransferQuitConfirmation",
@@ -425,7 +425,7 @@
     },
     {
       "id": "f32",
-      "site": "Sources/Pathem/BrowserViewController.swift:926:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController.swift:927:30:presentSheet",
       "file": "Sources/Pathem/BrowserViewController.swift",
       "caller": "resetPathemData",
       "maker": "makeResetDialog",

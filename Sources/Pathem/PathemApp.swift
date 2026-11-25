@@ -1104,6 +1104,18 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }
 
+        // Copy Matching sheet + a real filtered copy over the demo workspace
+        // (PATHEM_FILTER_SHOT=<output dir>, with PATHEM_DEMO=1).
+        if let shotDir = ProcessInfo.processInfo.environment["PATHEM_FILTER_SHOT"], let demoLayout {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                browser.debugNavigateActive(to: demoLayout.root.appendingPathComponent("Downloads"))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+                browser.runFilterShot(into: shotDir) { exit(0) }
+            }
+        }
+
         // Find-as-you-type bar in each mode over the demo Downloads folder
         // (PATHEM_TYPEAHEAD_SHOT=<output dir>, with PATHEM_DEMO=1).
         if let shotDir = ProcessInfo.processInfo.environment["PATHEM_TYPEAHEAD_SHOT"],
@@ -1882,6 +1894,14 @@ enum PathemApp {
                 L("menu.storage", "Storage"),
                 [
                     commandItem("Back Up To…", "files.backupTo")
+                ]))
+        fileMenu.addItem(
+            submenu(
+                L("menu.filteredOps", "Matching Files"),
+                [
+                    commandItem("Copy Matching…", "files.copyMatching"),
+                    commandItem("Move Matching…", "files.moveMatching"),
+                    commandItem("Trash Matching…", "files.trashMatching"),
                 ]))
         // Delete
         fileMenu.addItem(.separator())
