@@ -3,7 +3,7 @@ import Foundation
 /// Compress and extract archives by shelling OUT OF PROCESS to the BSD-licensed
 /// command-line tools that ship with macOS (`/usr/bin/zip`, `/usr/bin/tar`,
 /// `/usr/bin/ditto`) — never a GPL library, and untrusted-archive parsing stays
-/// out of the Full-Disk-Access process. macOS's `tar` is bsdtar on libarchive, which
+/// out of the app (crash isolation, not a TCC boundary). macOS's `tar` is bsdtar on libarchive, which
 /// reads (and writes) 7-Zip and reads RAR natively, so no third-party tools are needed.
 public enum Archiver {
     public enum ArchiveError: Error, Sendable {
@@ -42,8 +42,12 @@ public enum Archiver {
     /// Zip the given items (which must share a parent folder) into `destination`.
     /// `.DS_Store` and `__MACOSX` are always excluded; `excludeGit` also drops
     /// `.git` directories for a clean source archive.
-    public static func compress(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
-        guard let parent = urls.first?.deletingLastPathComponent() else { throw ArchiveError.nothingToCompress }
+    public static func compress(_ urls: [URL], to destination: URL, excludeGit: Bool = false)
+        async throws
+    {
+        guard let parent = urls.first?.deletingLastPathComponent() else {
+            throw ArchiveError.nothingToCompress
+        }
         // Prefix each name with "./" so a file named "-foo" isn't read as a zip option
         // (zip stores the "./" -prefixed name without the leading "./").
         let names = urls.map { "./\($0.lastPathComponent)" }
@@ -61,13 +65,18 @@ public enum Archiver {
     /// `compress` assumes one shared parent and would silently miss the rest, so when the items span
     /// folders, stage them into a temp directory first -- hardlinked where possible (instant, no extra
     /// bytes), copied for directories or cross-volume items -- then archive that into a clean flat zip.
-    public static func compressItems(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
+    public static func compressItems(_ urls: [URL], to destination: URL, excludeGit: Bool = false)
+        async throws
+    {
         guard !urls.isEmpty else { throw ArchiveError.nothingToCompress }
         let parents = Set(urls.map { $0.deletingLastPathComponent().standardizedFileURL.path })
-        if parents.count == 1 { return try await compress(urls, to: destination, excludeGit: excludeGit) }
+        if parents.count == 1 {
+            return try await compress(urls, to: destination, excludeGit: excludeGit)
+        }
 
         let fm = FileManager.default
-        let staging = fm.temporaryDirectory.appendingPathComponent("pathem-archive-\(UUID().uuidString)")
+        let staging = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-archive-\(UUID().uuidString)")
         try fm.createDirectory(at: staging, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: staging) }
         var used = Set<String>()
@@ -90,11 +99,17 @@ public enum Archiver {
 
     /// Create a 7-Zip archive from items sharing a parent. bsdtar (libarchive) writes 7z
     /// natively from the `.7z` extension, so no third-party tool is needed.
-    public static func compress7z(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
-        guard let parent = urls.first?.deletingLastPathComponent() else { throw ArchiveError.nothingToCompress }
+    public static func compress7z(_ urls: [URL], to destination: URL, excludeGit: Bool = false)
+        async throws
+    {
+        guard let parent = urls.first?.deletingLastPathComponent() else {
+            throw ArchiveError.nothingToCompress
+        }
         let names = urls.map(\.lastPathComponent)
         guard !names.isEmpty else { throw ArchiveError.nothingToCompress }
-        var args = ["-a", "-c", "-f", destination.path, "--exclude", ".DS_Store", "--exclude", "__MACOSX"]
+        var args = [
+            "-a", "-c", "-f", destination.path, "--exclude", ".DS_Store", "--exclude", "__MACOSX",
+        ]
         if excludeGit { args += ["--exclude", ".git"] }
         args += ["-C", parent.path] + names
         let (_, status, err) = try await RemoteRunner.run("/usr/bin/tar", args)
@@ -134,14 +149,17 @@ public enum Archiver {
     /// detect whether an extracted archive mount changed and needs writing back.
     public static func snapshot(of directory: URL) -> [String: String] {
         let root = directory.standardizedFileURL.path
-        let flat = FlatEnumerator.entries(of: directory, includingHidden: true, includeFolders: true)
+        let flat = FlatEnumerator.entries(
+            of: directory, includingHidden: true, includeFolders: true)
         var map: [String: String] = [:]
         for entry in flat.entries {
             guard let location = entry.location else { continue }
             let full = (location as NSString).appendingPathComponent(entry.name)
             guard full.hasPrefix(root) else { continue }
             let rel = String(full.dropFirst(root.count))
-            map[rel] = entry.isDirectory ? "dir" : "\(entry.size)|\(entry.modificationDate?.timeIntervalSince1970 ?? 0)"
+            map[rel] =
+                entry.isDirectory
+                ? "dir" : "\(entry.size)|\(entry.modificationDate?.timeIntervalSince1970 ?? 0)"
         }
         return map
     }
@@ -150,7 +168,9 @@ public enum Archiver {
     private static func tarCreateFlags(_ lowerName: String) -> [String]? {
         if lowerName.hasSuffix(".tar") { return ["-c"] }
         if lowerName.hasSuffix(".tar.gz") || lowerName.hasSuffix(".tgz") { return ["-c", "-z"] }
-        if lowerName.hasSuffix(".tar.bz2") || lowerName.hasSuffix(".tbz") || lowerName.hasSuffix(".tbz2") {
+        if lowerName.hasSuffix(".tar.bz2") || lowerName.hasSuffix(".tbz")
+            || lowerName.hasSuffix(".tbz2")
+        {
             return ["-c", "-j"]
         }
         if lowerName.hasSuffix(".tar.xz") || lowerName.hasSuffix(".txz") { return ["-c", "-J"] }
@@ -165,15 +185,19 @@ public enum Archiver {
     public static func repack(from directory: URL, into archive: URL) async throws {
         let lower = archive.lastPathComponent.lowercased()
         let tmp = archive.deletingLastPathComponent()
-            .appendingPathComponent(".pathem-repack-\(UUID().uuidString)-\(archive.lastPathComponent)")
+            .appendingPathComponent(
+                ".pathem-repack-\(UUID().uuidString)-\(archive.lastPathComponent)")
         let result: (Data, Int32, String)
         if lower.hasSuffix(".zip") {
-            result = try await RemoteRunner.run("/usr/bin/zip", ["-r", "-X", "-q", tmp.path, "."], cwd: directory)
+            result = try await RemoteRunner.run(
+                "/usr/bin/zip", ["-r", "-X", "-q", tmp.path, "."], cwd: directory)
         } else if let flags = tarCreateFlags(lower) {
-            result = try await RemoteRunner.run("/usr/bin/tar", flags + ["-f", tmp.path, "-C", directory.path, "."])
+            result = try await RemoteRunner.run(
+                "/usr/bin/tar", flags + ["-f", tmp.path, "-C", directory.path, "."])
         } else if lower.hasSuffix(".7z") {
             // -a picks the 7z writer from the temp file's .7z suffix.
-            result = try await RemoteRunner.run("/usr/bin/tar", ["-a", "-c", "-f", tmp.path, "-C", directory.path, "."])
+            result = try await RemoteRunner.run(
+                "/usr/bin/tar", ["-a", "-c", "-f", tmp.path, "-C", directory.path, "."])
         } else {
             throw ArchiveError.unsupported(archive.lastPathComponent)
         }
@@ -191,7 +215,8 @@ public enum Archiver {
         var order: [String] = []
         for raw in paths {
             let path = raw.hasPrefix("./") ? String(raw.dropFirst(2)) : raw
-            let segments = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+            let segments = path.split(separator: "/", omittingEmptySubsequences: true).map(
+                String.init)
             guard let first = segments.first else { continue }
             if isDir[first] == nil { order.append(first) }
             isDir[first] = (isDir[first] ?? false) || segments.count > 1 || path.hasSuffix("/")

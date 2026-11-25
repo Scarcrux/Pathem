@@ -2,8 +2,8 @@ import Foundation
 
 /// A saved remote server (FTP / FTPS / SFTP). Stored as config-as-data
 /// (connections.json); passwords are NOT kept here (they belong in the Keychain
-/// or are prompted on connect). Networking happens out-of-process, never in the
-/// Full-Disk-Access app process.
+/// or are prompted on connect). Networking happens out-of-process (crash isolation; not a
+/// privilege boundary, see RemoteProvider).
 public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public enum Proto: String, Codable, Sendable, CaseIterable {
         case ftp, ftps, sftp, webdav, webdavs, s3, azure, adb, afc

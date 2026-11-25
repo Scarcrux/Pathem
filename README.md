@@ -141,7 +141,7 @@ peers, and status, pause or resume any torrent, and remove one keeping or deleti
 its files. Magnet links fetch their metadata from peers first (ut_metadata), then
 download like any torrent. Downloads persist and resume across restarts. All of the
 peer and network code runs in a separate `pathem-torrentd` process, so it never runs
-inside the Full-Disk-Access app, the same model Pathem uses for its other risky work.
+inside the app itself, the same model Pathem uses for its other risky work (crash isolation, not a separate privilege boundary).
 Pathem also seeds: connections are bidirectional, so it serves pieces to peers (an
 "Up" column shows the upload rate) and accepts incoming peers. The engine (tracker
 client, peer wire protocol, metadata exchange, SHA-1 piece verification, sparse file
@@ -181,12 +181,15 @@ Jumping to the last row costs about the same as jumping to the tenth.
 Pathem needs Full Disk Access to be a real file manager, so it treats that access
 carefully. Anything that parses untrusted input, talks to the network, or drives
 an external tool, the S3/WebDAV/SFTP/FTP backends, archive extraction, and the
-iOS-device (AFC) browser, runs **out-of-process** in a short-lived helper, not in
-the app that holds your grant. There is no embedded scripting engine and no
+iOS-device (AFC) browser, runs **out-of-process** in a short-lived helper, so a crash or a parser bug
+doesn't take the app down and protocol parsing stays out of it. This is crash
+isolation, not a privilege boundary: on macOS the helpers are currently attributed
+to Pathem for privacy permissions, including Full Disk Access. There is no embedded scripting engine and no
 in-process third-party code, so the app keeps a **clean Hardened Runtime with no
 opt-outs** (no `allow-jit`, no `disable-library-validation`). If code-backed
 extensions ever land, they are out-of-process Swift helpers, signed and
-crash-isolated, that inherit none of the app's access. Credentials go to tools
+crash-isolated. A stronger isolation model is planned before third-party
+extensions ship. Credentials go to tools
 over stdin, never on a command line, and remote paths and names are escaped so a
 crafted filename can't smuggle a shell or protocol option (there are tests for
 each of these).

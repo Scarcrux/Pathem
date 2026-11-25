@@ -90,7 +90,7 @@ let package = Package(
 
         // Out-of-process helper that browses a paired iOS device over AFC (usbmux +
         // lockdown + TLS + AFC). The app invokes this binary so untrusted device parsing
-        // stays out of the Full-Disk-Access process. Bundled + signed by package.sh.
+        // stays out of the app (crash isolation, not a TCC boundary). Bundled + signed by package.sh.
         .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
 
         // The `pathem` CLI: the stable reveal/open seam for Finder-handoff integrations. Resolves a

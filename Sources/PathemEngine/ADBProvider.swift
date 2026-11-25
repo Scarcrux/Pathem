@@ -16,11 +16,13 @@ public enum DeviceTools {
         }
         return nil
     }
-    public static var adb: String? { find(["adb"], extra: ["~/Library/Android/sdk/platform-tools"]) }
+    public static var adb: String? {
+        find(["adb"], extra: ["~/Library/Android/sdk/platform-tools"])
+    }
 }
 
 /// Android device backend: drives `adb` as a subprocess (USB debugging), so device access
-/// stays out of the Full-Disk-Access process. The connection's `host` carries the adb
+/// stays out of the app (crash isolation, not a TCC boundary). The connection's `host` carries the adb
 /// serial. Listings use `ls -1ap` (one name per line, "/" suffix marks directories), which
 /// is robust across toybox/busybox where a columnar `ls -l` parser would be fragile.
 public struct ADBProvider: RemoteProvider {
@@ -50,7 +52,9 @@ public struct ADBProvider: RemoteProvider {
         guard status == 0 else { throw RemoteError.device(code: status, message: clean(err)) }
     }
 
-    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String)
+        async throws
+    {
         try await mutate(connection.host, "mkdir -p \(quote(path))")
     }
 
@@ -60,7 +64,9 @@ public struct ADBProvider: RemoteProvider {
         try await mutate(connection.host, "rm -rf \(quote(path))")
     }
 
-    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
+        async throws
+    {
         try await mutate(connection.host, "mv -f \(quote(from)) \(quote(to))")
     }
 
@@ -105,7 +111,9 @@ public enum ADBListParser {
             let name = isDirectory ? String(line.dropLast()) : line
             guard !name.isEmpty else { continue }
             entries.append(
-                FileEntry(name: name, isDirectory: isDirectory, size: 0, modificationDate: nil, location: location))
+                FileEntry(
+                    name: name, isDirectory: isDirectory, size: 0, modificationDate: nil,
+                    location: location))
         }
         return entries
     }

@@ -2,7 +2,7 @@ import Foundation
 import PathemEngine
 
 // Out-of-process helper for browsing a paired iOS device over AFC. The app invokes this
-// (never the AFC stack in the Full-Disk-Access process), like it shells out to curl/sftp.
+// (the AFC stack stays out of the app for crash isolation, not a TCC boundary), like it shells out to curl/sftp.
 // Usage:
 //   pathem-afc ls    <udid> <path>            -> JSON [{name,dir,size}] on stdout
 //   pathem-afc pull  <udid> <remote> <local>
@@ -47,7 +47,9 @@ do {
     switch command {
     case "ls":
         guard args.count >= 3 else { fail("ls needs a path") }
-        let entries = try session.list(args[2]).map { JSONEntry(name: $0.name, dir: $0.isDirectory, size: $0.size) }
+        let entries = try session.list(args[2]).map {
+            JSONEntry(name: $0.name, dir: $0.isDirectory, size: $0.size)
+        }
         let json = try JSONEncoder().encode(entries)
         FileHandle.standardOutput.write(json)
     case "pull":

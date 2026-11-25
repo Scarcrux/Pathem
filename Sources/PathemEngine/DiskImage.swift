@@ -1,7 +1,7 @@
 import Foundation
 
 /// Mounting disk images, out-of-process via `hdiutil` (so untrusted-image parsing stays
-/// out of the Full-Disk-Access process, like archives). Ejecting a volume is a Workspace
+/// out of the app, like archives). Ejecting a volume is a Workspace
 /// call in the app layer; this is just the attach side. The plist parser is pure/tested.
 public enum DiskImage {
     public enum DiskImageError: Error, Sendable {
@@ -19,7 +19,8 @@ public enum DiskImage {
     ) async throws -> URL {
         guard !items.isEmpty else { throw DiskImageError.noItems }
         let fm = FileManager.default
-        let staging = fm.temporaryDirectory.appendingPathComponent("pathem-dmg-\(UUID().uuidString)")
+        let staging = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-dmg-\(UUID().uuidString)")
         try fm.createDirectory(at: staging, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: staging) }
         for item in items {

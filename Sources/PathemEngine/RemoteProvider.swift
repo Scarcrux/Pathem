@@ -11,22 +11,30 @@ public enum RemoteError: Error, Sendable {
 }
 
 /// The seam between the browser and remote networking. Implementations run the
-/// actual protocol work OUT OF PROCESS (never in the Full-Disk-Access app
-/// process). The UI (panes) only ever talks to this protocol, so a backend can
+/// actual protocol work OUT OF PROCESS (crash isolation, and protocol parsing
+/// kept out of the app). Helpers started with Foundation.Process are, on macOS, very
+/// likely attributed to Pathem for privacy (TCC) permissions including Full Disk
+/// Access, so this is not a privilege boundary. A stronger model is planned before
+/// third-party extensions ship. The UI (panes) only ever talks to this protocol, so a backend can
 /// be swapped (curl now; a signed XPC helper with libssh2 for SFTP later)
 /// without touching the browser.
 public protocol RemoteProvider: Sendable {
-    func list(_ connection: RemoteConnection, path: String, password: String) async throws -> [FileEntry]
-    func download(_ connection: RemoteConnection, remotePath: String, to localFile: URL, password: String)
+    func list(_ connection: RemoteConnection, path: String, password: String) async throws
+        -> [FileEntry]
+    func download(
+        _ connection: RemoteConnection, remotePath: String, to localFile: URL, password: String)
         async throws
-    func upload(_ localFile: URL, to connection: RemoteConnection, remotePath: String, password: String)
+    func upload(
+        _ localFile: URL, to connection: RemoteConnection, remotePath: String, password: String)
         async throws
     /// Create a directory at `path`.
     func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws
     /// Delete a file or (empty) directory at `path`.
-    func remove(_ connection: RemoteConnection, path: String, isDirectory: Bool, password: String) async throws
+    func remove(_ connection: RemoteConnection, path: String, isDirectory: Bool, password: String)
+        async throws
     /// Rename/move `from` to `to`.
-    func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws
+    func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
+        async throws
 }
 
 /// Picks the right out-of-process backend for a connection's protocol. The UI
@@ -75,28 +83,37 @@ public struct CurlFTPProvider: RemoteProvider {
     ) async throws {
         try requireFTP(connection)
         let (_, status, err) = try await run(
-            connection, password, ["--ftp-create-dirs", "-T", localFile.path, endpoint(connection, remotePath)])
+            connection, password,
+            ["--ftp-create-dirs", "-T", localFile.path, endpoint(connection, remotePath)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
-    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String)
+        async throws
+    {
         try await quote(["MKD \(try ftpArg(path))"], on: connection, password: password)
     }
 
     public func remove(
         _ connection: RemoteConnection, path: String, isDirectory: Bool, password: String
     ) async throws {
-        try await quote(["\(isDirectory ? "RMD" : "DELE") \(try ftpArg(path))"], on: connection, password: password)
+        try await quote(
+            ["\(isDirectory ? "RMD" : "DELE") \(try ftpArg(path))"], on: connection,
+            password: password)
     }
 
-    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
+        async throws
+    {
         try await quote(
-            ["RNFR \(try ftpArg(from))", "RNTO \(try ftpArg(to))"], on: connection, password: password)
+            ["RNFR \(try ftpArg(from))", "RNTO \(try ftpArg(to))"], on: connection,
+            password: password)
     }
 
     /// Run raw FTP commands via curl's `-Q`. A bare URL is required, so we target the
     /// root; the commands carry the absolute paths.
-    private func quote(_ commands: [String], on c: RemoteConnection, password: String) async throws {
+    private func quote(_ commands: [String], on c: RemoteConnection, password: String) async throws
+    {
         try requireFTP(c)
         var opArgs: [String] = []
         for command in commands { opArgs += ["-Q", command] }
@@ -120,7 +137,8 @@ public struct CurlFTPProvider: RemoteProvider {
         // Defensive: RemoteProviders.make never routes SFTP here, but this provider
         // is public and could be constructed directly.
         if c.proto == .sftp {
-            throw RemoteError.unsupported("CurlFTPProvider handles FTP/FTPS only; use SFTPProvider for SFTP")
+            throw RemoteError.unsupported(
+                "CurlFTPProvider handles FTP/FTPS only; use SFTPProvider for SFTP")
         }
         guard c.hasValidHost else {
             throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never shell out to a smuggled authority
@@ -132,7 +150,10 @@ public struct CurlFTPProvider: RemoteProvider {
         // Percent-encode each path segment so spaces, #, ?, etc. in names don't
         // break the URL (slashes are preserved as separators).
         let encoded = clean.split(separator: "/", omittingEmptySubsequences: false)
-            .map { String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String($0) }
+            .map {
+                String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+                    ?? String($0)
+            }
             .joined(separator: "/")
         return "ftp://\(c.host):\(c.effectivePort)\(encoded)"  // ftp:// + --ssl-reqd handles explicit FTPS
     }
@@ -146,7 +167,8 @@ public struct CurlFTPProvider: RemoteProvider {
             "-q", "-s", "--show-error", "--globoff", "--proto", "=ftp,ftps",
             "--connect-timeout", "20", "-K", "-",
         ]
-        return try await Self.runCurl(base + RemoteLimits.curlArgs + tls(c) + opArgs, input: Self.credentials(c, password))
+        return try await Self.runCurl(
+            base + RemoteLimits.curlArgs + tls(c) + opArgs, input: Self.credentials(c, password))
     }
 
     private func tls(_ c: RemoteConnection) -> [String] {
@@ -175,7 +197,9 @@ public struct CurlFTPProvider: RemoteProvider {
         -> (Data, Int32, String)
     {
         let curl = "/usr/bin/curl"
-        guard FileManager.default.isExecutableFile(atPath: curl) else { throw RemoteError.curlMissing }
+        guard FileManager.default.isExecutableFile(atPath: curl) else {
+            throw RemoteError.curlMissing
+        }
         return try await RemoteRunner.run(curl, args, input: input)
     }
 }
@@ -198,7 +222,8 @@ enum RemoteRunner {
     ) async throws -> (Data, Int32, String) {
         let box = ProcessBox()
         return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<(Data, Int32, String), Error>) in
+            try await withCheckedThrowingContinuation {
+                (cont: CheckedContinuation<(Data, Int32, String), Error>) in
                 DispatchQueue.global(qos: .userInitiated).async {
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: executable)
@@ -235,7 +260,9 @@ enum RemoteRunner {
                             box.finish()  // release the process; disarm the SIGKILL escalation
                             let (o, e) = sink.snapshot()
                             cont.resume(
-                                returning: (o, proc.terminationStatus, String(decoding: e, as: UTF8.self)))
+                                returning: (
+                                    o, proc.terminationStatus, String(decoding: e, as: UTF8.self)
+                                ))
                         }
                     }
 
@@ -339,8 +366,16 @@ private final class OutputSink: @unchecked Sendable {
     private let lock = NSLock()
     private var out = Data()
     private var err = Data()
-    func appendOut(_ d: Data) { lock.lock(); out.append(d); lock.unlock() }
-    func appendErr(_ d: Data) { lock.lock(); err.append(d); lock.unlock() }
+    func appendOut(_ d: Data) {
+        lock.lock()
+        out.append(d)
+        lock.unlock()
+    }
+    func appendErr(_ d: Data) {
+        lock.lock()
+        err.append(d)
+        lock.unlock()
+    }
     func snapshot() -> (Data, Data) {
         lock.lock()
         defer { lock.unlock() }

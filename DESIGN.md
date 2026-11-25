@@ -603,10 +603,22 @@ Lua, hence no JavaScriptCore). The native automation surface is App Intents and
 Shortcuts (pure Swift, future-proof) over the same command registry, plus
 NSServices. If code-backed extensions are ever needed, they are out-of-process
 Swift helpers speaking line-delimited JSON over stdin/stdout (or a real XPC
-service later), each signed with the app's Team ID and notarized, crash-isolated,
-and inheriting none of the app's TCC grants. Never load in-process third-party
-bundles: disable-library-validation is process-global and would hand any loaded
-library the app's Full Disk Access. Never build in-process native viewer or VFS
+service later), each signed with the app's Team ID and notarized, and
+crash-isolated. Out of process is about crash isolation and keeping parsing code
+out of the app, not about privileges: on macOS a helper launched with
+`Foundation.Process` is very likely attributed to Pathem for privacy (TCC)
+permissions, including Full Disk Access, so today a helper can reach whatever the
+app can. A stronger isolation model (for example XPC services with their own
+identity and entitlements, or a sandboxed helper that is handed only the files it
+needs) is planned before any third-party extension ships; it is to be designed.
+Never load in-process third-party bundles: disable-library-validation is
+process-global and would hand any loaded library the app's Full Disk Access.
+
+The current signature gate is weaker than it sounds. `ExtensionHost` reads the
+Team ID metadata with `codesign -dv`, which reports what the signature claims but
+does not verify it. This must change before release: the gate has to run a real
+verification (`codesign --verify` or `SecStaticCodeCheckValidity` against a
+designated requirement) and pin the signing identity. The plan is to be designed. Never build in-process native viewer or VFS
 plugins; cover viewing through QuickLook and built-ins. Design the contributes
 manifest schema now (commands, columns, viewers, menu items, keybindings,
 themes) so a future Swift extension can slot in without breaking the config
@@ -669,7 +681,7 @@ built (gated off), each behind the engine where the logic is testable:
   (Cmd-Shift-A).
 - 6 (seam only): `ExtensionManifest` (the stable "contributes" schema), the
   line-delimited-JSON `ExtensionProtocol`, and `ExtensionHost` (discover, validate,
-  Team-ID signature gate, out-of-process invoke with a timeout and crash isolation),
+  Team-ID metadata gate (not yet a verified signature check, see above), out-of-process invoke with a timeout and crash isolation),
   with `pathem-ext-example` as the reference helper. Fully unit-tested end to end.
   The app loader stays OFF unless `PATHEM_ENABLE_EXTENSIONS=1`, so no shipping build
   exposes any extension surface until real demand justifies enabling it.

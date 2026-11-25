@@ -592,7 +592,7 @@ folder badges, once deferred here, shipped in Round 7.)
 A full torrent system, built as our own native Swift engine rather than bundling a
 foreign binary (matching the Swift-only ethos of the AFC client). The engine is
 `TorrentKit`; the network/peer code runs out-of-process in `pathem-torrentd`, so it
-stays out of the Full-Disk-Access app, consistent with the AFC and extension model.
+stays out of the app (crash isolation, not a TCC boundary), consistent with the AFC and extension model.
 
 - **Engine (`TorrentKit`, unit-tested)** -- SHIPPED. Bencode + `.torrent` metadata +
   magnet; HTTP tracker client (announce, compact/dict peers); peer wire protocol
@@ -792,7 +792,7 @@ Cloud-**aware**, not cloud-mounting (verified on this machine).
   (evict) command.
 - **Remote transfer (Pro / fast-follow):** an async `FileProvider` engine seam
   with S3 / WebDAV / SFTP networking in an **out-of-process signed XPC helper**,
-  never in the Full-Disk-Access process. No FUSE, ever.
+  never in the app process. No FUSE, ever.
 
 ## Fast-follow (post-v1.0)
 
@@ -998,4 +998,4 @@ Non-sandboxed + Full Disk Access; clean Hardened Runtime (no
 disable-library-validation, no allow-jit); Swift-only extensions, no in-process
 foreign bundles, no embedded scripting; stdlib-first; MIT; on-device semantic
 search stays free forever. Cloud/remote networking lives out-of-process, never in
-the FDA process. Bundled dependencies stay permissive; never copy GPL code.
+the app process. Bundled dependencies stay permissive; never copy GPL code.

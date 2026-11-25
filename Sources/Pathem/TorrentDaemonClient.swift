@@ -9,7 +9,7 @@ extension Notification.Name {
 /// The app-side driver for the out-of-process torrent daemon (`pathem-torrentd`). Spawns the
 /// helper on first use, sends commands as line-delimited JSON on its stdin, and reads the status
 /// events it streams back on stdout. Keeping the peer/network code in a separate process matches
-/// Pathem's model of not running risky network parsing inside the Full-Disk-Access app.
+/// Pathem's model of not running risky network parsing inside the app (crash isolation, not a TCC boundary).
 ///
 /// One shared instance per app; the daemon stays alive while the app runs and its downloads
 /// persist across restarts (the daemon checkpoints resume data itself).
@@ -54,9 +54,12 @@ final class TorrentDaemonClient {
         streamTask = nil
         continuation?.finish()
         continuation = nil
-        guard let path = Self.helperPath(), let stateDir = ConfigStore.directory() else { return false }
+        guard let path = Self.helperPath(), let stateDir = ConfigStore.directory() else {
+            return false
+        }
         let torrentsState = stateDir.appendingPathComponent("Torrents", isDirectory: true)
-        try? FileManager.default.createDirectory(at: torrentsState, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(
+            at: torrentsState, withIntermediateDirectories: true)
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: path)
@@ -141,8 +144,12 @@ final class TorrentDaemonClient {
         send(.init(op: .add, id: nextCommandID(), magnet: uri, savePath: savePath))
     }
 
-    func pause(_ infoHash: String) { send(.init(op: .pause, id: nextCommandID(), infoHash: infoHash)) }
-    func resume(_ infoHash: String) { send(.init(op: .resume, id: nextCommandID(), infoHash: infoHash)) }
+    func pause(_ infoHash: String) {
+        send(.init(op: .pause, id: nextCommandID(), infoHash: infoHash))
+    }
+    func resume(_ infoHash: String) {
+        send(.init(op: .resume, id: nextCommandID(), infoHash: infoHash))
+    }
 
     func remove(_ infoHash: String, deleteData: Bool) {
         send(.init(op: deleteData ? .removeData : .remove, id: nextCommandID(), infoHash: infoHash))
@@ -151,9 +158,14 @@ final class TorrentDaemonClient {
     func requestList() { send(.init(op: .list, id: nextCommandID())) }
 
     /// Set global speed caps in bytes/second (0 = unlimited) and the seeding/encryption/µTP/VPN toggles.
-    func setLimits(down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool, bindToVPN: Bool) {
-        send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up,
-            superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP, bindToVPN: bindToVPN))
+    func setLimits(
+        down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool, bindToVPN: Bool
+    ) {
+        send(
+            .init(
+                op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up,
+                superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP,
+                bindToVPN: bindToVPN))
     }
 
     /// Request a torrent's file list (answered via onFiles).
@@ -207,7 +219,9 @@ final class TorrentDaemonClient {
             let changed = bindToVPN != vpn || vpnInterface != event.vpnInterface
             bindToVPN = vpn
             vpnInterface = event.vpnInterface
-            if changed { NotificationCenter.default.post(name: .torrentVPNStateChanged, object: nil) }
+            if changed {
+                NotificationCenter.default.post(name: .torrentVPNStateChanged, object: nil)
+            }
         }
         if let torrents = event.torrents {
             self.torrents = torrents
