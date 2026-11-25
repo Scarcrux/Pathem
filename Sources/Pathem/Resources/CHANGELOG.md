@@ -5,6 +5,18 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.5 - 2026-11-25
+- Themes for everyone: open Settings, Appearance, Themes… to browse the community gallery as a grid of cards, filter it by Light or Dark, and install a theme in one click. The gallery is downloaded only when you open it.
+- 27 community themes at launch, including six with their own icon sets: Folio, Gilt Lacquer, Gumdrop, Neon Circuit, Spun Sugar and Dracula.
+- Share your own theme from the same window.
+- Import now accepts VS Code .jsonc theme files as well as iTerm2 presets.
+- The built-in Dracula theme moved to the community gallery, with its own icons. If you were using it, your colors stay the same.
+- A theme's file icons now stay in place when icon previews are on, in every view. Photos, videos and PDFs still show real previews.
+- Copying or moving a folder to another disk keeps hard links between the files inside it.
+- Date columns now fit a full date in your language.
+- The settings window is called Settings everywhere, and typing Preferences in the command palette still finds it.
+- Theme credits for ported color palettes are now listed in About.
+
 ## 0.9.4 - 2026-11-20
 - Pathem now quits normally while the Full Disk Access guide is open, including when you log out, restart or another app asks it to quit, so a waiting update can install. The guide is now a panel over the window instead of a sheet.
 
