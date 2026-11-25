@@ -2209,6 +2209,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-24: Themes ships in every build (26beafb), which supersedes the beta update-path note above. Trigger: owner approved removing the beta plumbing. The build flag is gone from the app, packaging, release script, Makefile and e2e runner; CI packages once and always runs both Themes loopback scenarios. A static test with red controls pins the single catalog fetch entry point to the gallery button, so nothing fetches at launch (proven from source, not from an observed launch). Import also accepts .jsonc (fac193d). Not yet verified: the packaged e2e run and the Settings buttons on screen."
     at = "2026-11-24T20:04:09Z"
 
+  [[mission.comment]]
+    text = "2026-11-25: 0.9.5 (build 29) released and verified externally (feed names 0.9.5/29, DMG A9, app A1-A6/A10/A11 incl. theme palette notices, EdDSA A7; gate 69 pass, 1 known skip; packaged 17/17 incl. Themes loopback). Ships Themes in every build: community gallery card grid with Light/Dark filter, HEIC screenshots, themed icons over QuickLook icons, .jsonc import, built-in Dracula retired (colors kept) into a catalog flagship, palette license notices, Settings naming with palette aliases, hard links kept in copies, date column sizing, launch constraint fixes. The 27-theme catalog (6 icon flagships, Dracula under MIT) is published to CloudFront with 5-minute caching, and the web gallery pathem.app/themes is regenerated from it. Design work by Fable and Sonnet agents, Codex for earlier batches; each change reviewed before landing."
+    at = "2026-11-25T07:59:57Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
