@@ -8,6 +8,19 @@ public enum RemoteError: Error, Sendable {
     case sftpMissing
     case device(code: Int32, message: String)
     case deviceToolMissing(String)  // the named CLI (adb) isn't installed
+    /// A phone that can't be browsed yet, with the specific reason so the UI can say what to do.
+    case deviceState(DeviceIssue)
+}
+
+/// Why an Android device can't be browsed, mapped from the adb server's own answers.
+public enum DeviceIssue: Sendable, Equatable {
+    /// No adb server is running and no adb binary was found to start one.
+    case adbMissing
+    /// The phone has not allowed USB debugging for this Mac.
+    case unauthorized
+    case offline
+    /// The serial is not connected (unplugged since the list was drawn).
+    case notFound(String)
 }
 
 /// The seam between the browser and remote networking. Implementations run the
@@ -218,7 +231,7 @@ public struct CurlFTPProvider: RemoteProvider {
 enum RemoteRunner {
     nonisolated static func run(
         _ executable: String, _ args: [String], input: String? = nil, env: [String: String]? = nil,
-        cwd: URL? = nil
+        cwd: URL? = nil, onStderr: (@Sendable (Data) -> Void)? = nil
     ) async throws -> (Data, Int32, String) {
         let box = ProcessBox()
         return try await withTaskCancellationHandler {
@@ -247,7 +260,12 @@ enum RemoteRunner {
                     }
                     err.fileHandleForReading.readabilityHandler = { h in
                         let d = h.availableData
-                        if d.isEmpty { h.readabilityHandler = nil } else { sink.appendErr(d) }
+                        if d.isEmpty {
+                            h.readabilityHandler = nil
+                        } else {
+                            sink.appendErr(d)
+                            onStderr?(d)
+                        }
                     }
 
                     // Fires once, on a background queue, when the direct child is reaped

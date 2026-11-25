@@ -2171,3 +2171,8 @@
 "activity.toggle" = "Aktivität ein- oder ausblenden";
 "activity.undo" = "Rückgängig";
 "prefs.keepActivityLog" = "Aktivitätsprotokoll führen";
+
+"device.androidAdbMissing" = "Installiere die Android Platform-Tools (brew install android-platform-tools) und aktiviere USB-Debugging.";
+"device.androidUnauthorized" = "Entsperre das Telefon und erlaube USB-Debugging für diesen Mac.";
+"device.androidOffline" = "Das Telefon ist offline. Stecke das Kabel erneut ein und entsperre das Telefon.";
+"device.androidNotFound" = "Das Android-Gerät ist nicht mehr verbunden. Prüfe das Kabel und USB-Debugging.";

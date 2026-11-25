@@ -344,14 +344,14 @@
         "runtime_fixture": "Runtime error.localizedDescription fixture: permission error with a 255-character filename. Declared stress fixture, not a universal maximum error length. No file metadata change."
       }
     },
-    "Sources/Pathem/PaneController.swift:3310:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:3330:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:3301:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:3321:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
       "sample": {
@@ -368,14 +368,14 @@
         "runtime_fixture": "Runtime failed-item count fixture: 999999. Do not write tags."
       }
     },
-    "Sources/Pathem/PaneController.swift:3324:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:3344:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:3320:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:3340:21:NSAlert"
       ],
       "reason": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
       "sample": {
@@ -536,14 +536,14 @@
       "reason": "Caller title and optional error description, standard OK only. Fixture: archive path with 255-character filename and permission error. No archive operation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:237:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:249:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:231:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:243:21:NSAlert"
       ],
       "reason": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -1083,25 +1083,25 @@
       ],
       "reason": "Transfer progress, pause and cancellation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/TransferQueueController.swift:102:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/TransferQueueController.swift:111:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+        "Sources/Pathem/TransferQueueController.swift:79:18:NSWindow"
       ],
       "reason": "Transfer queue and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/TransferQueueController.swift:109:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/TransferQueueController.swift:118:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+        "Sources/Pathem/TransferQueueController.swift:79:18:NSWindow"
       ],
       "reason": "Transfer queue and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1274,7 +1274,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+        "Sources/Pathem/TransferQueueController.swift:79:18:NSWindow"
       ],
       "reason": "Registered transfers command invokes TransferQueueController.showWindow; that method has its own physical window row. Both paths retained."
     },
@@ -1487,25 +1487,25 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PaneController.swift:3004:9:show": {
+    "Sources/Pathem/PaneController.swift:3024:9:show": {
       "class": "C",
       "kind": "system sharing picker",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:3003:22:NSSharingServicePicker"
+        "Sources/Pathem/PaneController.swift:3023:22:NSSharingServicePicker"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PaneController.swift:2777:9:begin": {
+    "Sources/Pathem/PaneController.swift:2797:9:begin": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:2774:21:NSOpenPanel"
+        "Sources/Pathem/PaneController.swift:2794:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -3064,56 +3064,56 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2700:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2720:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2702,
+          "line": 2722,
           "expression": "sortButton.menu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2726:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2746:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2728,
+          "line": 2748,
           "expression": "actionButton.menu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2740:23:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2760:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2812,
+          "line": 2832,
           "expression": "item.submenu = openWith"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2793:25:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2813:25:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2795,
+          "line": 2815,
           "expression": "headerItem.submenu = headerSub"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2847:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2867:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2831,
+          "line": 2851,
           "expression": "tagsItem.submenu = makeTagsSubmenu()"
         }
       ],
@@ -3124,7 +3124,7 @@
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 1896,
+          "line": 1916,
           "expression": "toolbarStack.menu = headerMenu"
         }
       ],

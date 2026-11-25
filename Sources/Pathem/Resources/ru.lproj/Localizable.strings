@@ -2171,3 +2171,8 @@
 "activity.toggle" = "Показать или скрыть действия";
 "activity.undo" = "Отменить";
 "prefs.keepActivityLog" = "Вести журнал действий";
+
+"device.androidAdbMissing" = "Установите Android Platform-Tools (brew install android-platform-tools) и включите отладку по USB.";
+"device.androidUnauthorized" = "Разблокируйте телефон и разрешите отладку по USB для этого Mac.";
+"device.androidOffline" = "Телефон вне сети. Переподключите кабель и разблокируйте телефон.";
+"device.androidNotFound" = "Устройство Android больше не подключено. Проверьте кабель и отладку по USB.";

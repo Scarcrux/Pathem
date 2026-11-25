@@ -182,8 +182,8 @@
     },
     {
       "id": "b09",
-      "site": "Sources/Pathem/PaneController.swift:3310:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3301:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3330:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3321:21:NSAlert",
       "source_sha256": "276cf9b7eaaa25a48df438a5eb11bd4ca5727556f390fc27a164fc25ee474809",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
@@ -203,8 +203,8 @@
     },
     {
       "id": "b10",
-      "site": "Sources/Pathem/PaneController.swift:3324:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3320:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3344:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3340:21:NSAlert",
       "source_sha256": "e905d42c1d775804ddb147ed3e8c937fc1e1843b570e4a215afb306ffa1dba90",
       "sheet": true,
       "fixture": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
@@ -405,8 +405,8 @@
     },
     {
       "id": "b21",
-      "site": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:237:9:beginSheetModal",
-      "builder": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:231:21:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:249:9:beginSheetModal",
+      "builder": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:243:21:NSAlert",
       "source_sha256": "2fa2856197e35f74d2410670a11b139a76c2a77980e4636c12f75e9f60cc243f",
       "sheet": true,
       "fixture": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",

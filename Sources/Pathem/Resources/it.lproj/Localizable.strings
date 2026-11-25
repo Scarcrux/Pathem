@@ -2171,3 +2171,8 @@
 "activity.toggle" = "Mostra o nascondi attività";
 "activity.undo" = "Annulla";
 "prefs.keepActivityLog" = "Conserva un registro delle attività";
+
+"device.androidAdbMissing" = "Installa Android Platform-Tools (brew install android-platform-tools) e attiva il debug USB.";
+"device.androidUnauthorized" = "Sblocca il telefono e consenti il debug USB per questo Mac.";
+"device.androidOffline" = "Il telefono non è in linea. Ricollega il cavo e sblocca il telefono.";
+"device.androidNotFound" = "Il dispositivo Android non è più collegato. Controlla il cavo e il debug USB.";

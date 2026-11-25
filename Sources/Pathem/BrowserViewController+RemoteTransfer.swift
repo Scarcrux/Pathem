@@ -28,7 +28,6 @@ extension BrowserViewController {
             entries.count, ctx.connection.host)
         openPanel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let dir = openPanel.url, let self else { return }
-            let provider = RemoteProviders.make(for: ctx.connection.proto)
             var destinations = RemoteDownloadDestination(in: dir)
             let items = entries.compactMap { entry -> TransferQueueController.Item? in
                 let remotePath = PaneController.joinRemote(ctx.path, entry.name)
@@ -36,8 +35,11 @@ extension BrowserViewController {
                 // hostile FTP/SFTP/WebDAV server can't smuggle "../" and write outside the chosen
                 // folder. Skip a name that has no safe last component (e.g. "..").
                 guard let local = destinations.reserve(for: entry.name) else { return nil }
+                let (provider, progress) = Self.transferProvider(
+                    ctx.connection.proto, size: entry.size)
                 return TransferQueueController.Item(
-                    name: local.lastPathComponent, totalBytes: entry.size, progressFile: local
+                    name: local.lastPathComponent, totalBytes: entry.size, progressFile: local,
+                    progress: progress
                 ) {
                     try await provider.download(
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
@@ -88,14 +90,12 @@ extension BrowserViewController {
                     "Folder upload isn’t supported yet, so only the files in this drop will be uploaded."
                 ))
         }
-        let provider = RemoteProviders.make(for: connection.proto)
         let items = files.map { url -> TransferQueueController.Item in
             let dest = PaneController.joinRemote(remotePath, url.lastPathComponent)
             let size = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
-            // No local target to poll for an upload, so progressFile is nil (indeterminate bar);
-            // totalBytes is still carried for the queue's summary.
+            let (provider, progress) = Self.transferProvider(connection.proto, size: size)
             return TransferQueueController.Item(
-                name: url.lastPathComponent, totalBytes: size, progressFile: nil
+                name: url.lastPathComponent, totalBytes: size, progress: progress
             ) {
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
@@ -114,6 +114,18 @@ extension BrowserViewController {
             pane?.refreshRemote()  // show the newly uploaded files
             self?.reportTransfer(failures, cancelled: cancelled, verb: "upload")
         }
+    }
+
+    private static func transferProvider(
+        _ proto: RemoteConnection.Proto, size: Int64
+    ) -> (RemoteProvider, Progress?) {
+        guard proto == .adb else { return (RemoteProviders.make(for: proto), nil) }
+        let progress = Progress(totalUnitCount: size)
+        let provider = ADBProvider { completed, total in
+            if total > 0 { progress.totalUnitCount = total }
+            progress.completedUnitCount = completed
+        }
+        return (provider, progress)
     }
 
     private static let sessionScratch: SessionScratch = {
@@ -258,6 +270,26 @@ extension BrowserViewController {
                 ? String(
                     format: L("bvc.deviceFailedCode", "The device connection failed (code %d)"),
                     code) : message
+        case .deviceState(let issue):
+            switch issue {
+            case .adbMissing:
+                return L(
+                    "device.androidAdbMissing",
+                    "Install Android platform-tools (brew install android-platform-tools) and enable USB debugging."
+                )
+            case .unauthorized:
+                return L(
+                    "device.androidUnauthorized",
+                    "Unlock the phone and allow USB debugging for this Mac.")
+            case .offline:
+                return L(
+                    "device.androidOffline",
+                    "The phone is offline. Unplug and reconnect the cable, then unlock the phone.")
+            case .notFound:
+                return L(
+                    "device.androidNotFound",
+                    "The Android device is no longer connected. Check the cable and USB debugging.")
+            }
         case .deviceToolMissing(let tool):
             return String(
                 format: L(

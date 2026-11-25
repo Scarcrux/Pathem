@@ -17,6 +17,7 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         /// A local file whose growing size tracks progress (downloads write here). nil for
         /// uploads, where there's no local target to poll, so the bar stays indeterminate.
         var progressFile: URL? = nil
+        var progress: Progress? = nil
         let run: () async throws -> Void
     }
 
@@ -26,16 +27,21 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         let id = UUID()
         let name: String
         let batch: UUID
-        let totalBytes: Int64
+        var totalBytes: Int64
         let progressFile: URL?
+        let progress: Progress?
         let run: () async throws -> Void
         var state: State = .queued
         var transferred: Int64 = 0  // updated by the poll timer while running
-        init(name: String, batch: UUID, totalBytes: Int64, progressFile: URL?, run: @escaping () async throws -> Void) {
+        init(
+            name: String, batch: UUID, totalBytes: Int64, progressFile: URL?,
+            progress: Progress? = nil, run: @escaping () async throws -> Void
+        ) {
             self.name = name
             self.batch = batch
             self.totalBytes = totalBytes
             self.progressFile = progressFile
+            self.progress = progress
             self.run = run
         }
     }
@@ -72,7 +78,8 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
     override init() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 780, height: 320),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
+            defer: true)
         super.init()
         window.title = L("queue.title", "Transfers")
         window.delegate = self
@@ -94,7 +101,9 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         batches[batchID] = Batch(remaining: items.count, completion: completion)
         jobs.append(
             contentsOf: items.map {
-                Job(name: $0.name, batch: batchID, totalBytes: $0.totalBytes, progressFile: $0.progressFile, run: $0.run)
+                Job(
+                    name: $0.name, batch: batchID, totalBytes: $0.totalBytes,
+                    progressFile: $0.progressFile, progress: $0.progress, run: $0.run)
             })
         statusLabel.stringValue = title
         table.reloadData()
@@ -114,7 +123,10 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
     private func pump() {
         guard currentJob == nil else { return }  // one at a time
-        guard !isPaused else { updateStatus(); return }  // hold the queue; don't start the next
+        guard !isPaused else {
+            updateStatus()
+            return
+        }  // hold the queue; don't start the next
         guard let next = jobs.first(where: { $0.state == .queued }) else {
             updateStatus()
             return
@@ -127,28 +139,32 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         currentTask = Task { @MainActor in
             var failure: Error?
             do { try await next.run() } catch { failure = error }
-            self.finish(next, failure: Task.isCancelled ? nil : failure, cancelled: Task.isCancelled)
+            self.finish(
+                next, failure: Task.isCancelled ? nil : failure, cancelled: Task.isCancelled)
         }
     }
 
-    /// While a pollable job runs, poll its output file's size and refresh its row so the
-    /// per-job progress bar advances. Only downloads (which write a known local file) are
-    /// pollable; uploads have no local target, so their bar stays indeterminate.
+    /// Poll explicit protocol progress or a growing download file and refresh the job row.
     private func startProgressTimer(for job: Job) {
         progressTimer?.invalidate()
         progressTimer = nil
-        guard job.progressFile != nil, job.totalBytes > 0 else { return }
+        guard job.progress != nil || (job.progressFile != nil && job.totalBytes > 0) else { return }
         // Capture only `self` (a Sendable @MainActor class); re-fetch the job from currentJob
         // inside so no non-Sendable value crosses into the @Sendable timer block.
-        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) {
+            [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, let job = self.currentJob, job.state == .running,
-                    let file = job.progressFile
-                else { return }
-                let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-                job.transferred = Int64(size)
+                guard let self, let job = self.currentJob, job.state == .running else { return }
+                if let progress = job.progress, progress.totalUnitCount > 0 {
+                    job.totalBytes = progress.totalUnitCount
+                    job.transferred = progress.completedUnitCount
+                } else if let file = job.progressFile {
+                    let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                    job.transferred = Int64(size)
+                }
                 if let row = self.jobs.firstIndex(where: { $0 === job }) {
-                    self.table.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+                    self.table.reloadData(
+                        forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
                 }
             }
         }
@@ -222,15 +238,17 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
     /// already reported and was discarded). Clears any partial download so it restarts clean.
     private func retry(_ job: Job) {
         guard job.state == .failed || job.state == .cancelled else { return }
+        job.progress?.completedUnitCount = 0
         if let partial = job.progressFile { try? FileManager.default.removeItem(at: partial) }
         let batchID = UUID()
         batches[batchID] = Batch(
-            remaining: 1, completion: { [weak self] failures, cancelled in
+            remaining: 1,
+            completion: { [weak self] failures, cancelled in
                 self?.onRetryComplete?(failures, cancelled)
             })
         let fresh = Job(
             name: job.name, batch: batchID, totalBytes: job.totalBytes,
-            progressFile: job.progressFile, run: job.run)
+            progressFile: job.progressFile, progress: job.progress, run: job.run)
         if let index = jobs.firstIndex(where: { $0 === job }) {
             jobs[index] = fresh
         } else {
@@ -266,7 +284,8 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
     private func updateStatus() {
         let active = jobs.filter { $0.state == .queued || $0.state == .running }.count
         if isPaused && active > 0 {
-            statusLabel.stringValue = String(format: L("queue.paused", "Paused (%d waiting)"), active)
+            statusLabel.stringValue = String(
+                format: L("queue.paused", "Paused (%d waiting)"), active)
         } else if active == 0 {
             statusLabel.stringValue = L("queue.idle", "No active transfers")
         } else {
@@ -288,7 +307,8 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         isPaused = true  // hold the queue so the retried job stays queued instead of running
         let batchID = UUID()
         batches[batchID] = Batch(remaining: 1, completion: { _, _ in })
-        let job = Job(name: "smoke-retry", batch: batchID, totalBytes: 0, progressFile: nil, run: {})
+        let job = Job(
+            name: "smoke-retry", batch: batchID, totalBytes: 0, progressFile: nil, run: {})
         job.state = .failed
         jobs.append(job)
         let failedBefore = jobs.contains { $0.name == "smoke-retry" && $0.state == .failed }
@@ -317,11 +337,18 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         retryButton.title = L("queue.retry", "Retry Failed")
         retryButton.target = self
         retryButton.action = #selector(retryFailed)
-        let cancelButton = NSButton(title: L("queue.cancel", "Cancel"), target: self, action: #selector(cancelSelected))
-        let cancelAllButton = NSButton(title: L("queue.cancelAll", "Cancel All"), target: self, action: #selector(cancelAll))
-        let clearButton = NSButton(title: L("queue.clear", "Clear Finished"), target: self, action: #selector(clearFinished))
-        let clearAllButton = NSButton(title: L("queue.clearAll", "Clear All"), target: self, action: #selector(clearAll))
-        for button in [pauseButton, retryButton, cancelButton, cancelAllButton, clearButton, clearAllButton] {
+        let cancelButton = NSButton(
+            title: L("queue.cancel", "Cancel"), target: self, action: #selector(cancelSelected))
+        let cancelAllButton = NSButton(
+            title: L("queue.cancelAll", "Cancel All"), target: self, action: #selector(cancelAll))
+        let clearButton = NSButton(
+            title: L("queue.clear", "Clear Finished"), target: self,
+            action: #selector(clearFinished))
+        let clearAllButton = NSButton(
+            title: L("queue.clearAll", "Clear All"), target: self, action: #selector(clearAll))
+        for button in [
+            pauseButton, retryButton, cancelButton, cancelAllButton, clearButton, clearAllButton,
+        ] {
             button.bezelStyle = .rounded
         }
 
@@ -370,7 +397,9 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
     func numberOfRows(in tableView: NSTableView) -> Int { jobs.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < jobs.count else { return nil }
         let job = jobs[row]
         let id = NSUserInterfaceItemIdentifier("cell")
@@ -397,7 +426,8 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
             return cell
         }
         // Status column: a determinate bar for a running, pollable (download) job; else text.
-        if job.state == .running, job.totalBytes > 0, job.progressFile != nil {
+        if job.state == .running, job.totalBytes > 0, job.progressFile != nil || job.progress != nil
+        {
             return progressCell(for: job, in: tableView)
         }
         cell.textField?.stringValue = statusText(job.state)
@@ -468,7 +498,9 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
     // MARK: Drag to reorder
 
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int)
+        -> NSPasteboardWriting?
+    {
         guard row < jobs.count, jobs[row].state == .queued else { return nil }  // only reorder pending
         let item = NSPasteboardItem()
         item.setString("\(row)", forType: Self.dragType)

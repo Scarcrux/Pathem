@@ -90,6 +90,8 @@ is faster.)
   Shared Key and reject bad credentials, in addition to the parser unit tests. Saved
   sites carry color labels, groups, per-site path bookmarks, and a paired local folder.
   Every network backend runs out-of-process.
+- Browse Android devices and transfer files over USB using Android platform-tools and
+  USB debugging. Authorize the Mac on the phone, then select it in the Devices sidebar.
 - Git-aware. Files in a repository show status badges (modified, staged,
   untracked), and "Reclaim in Repo" tells regenerable build output (safe to
   clean) from precious untracked data (worth backing up).

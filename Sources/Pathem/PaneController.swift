@@ -1521,6 +1521,26 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 ? String(
                     format: L("pane.deviceFailedCode", "The device connection failed (code %d)"),
                     code) : message
+        case .deviceState(let issue):
+            switch issue {
+            case .adbMissing:
+                return L(
+                    "device.androidAdbMissing",
+                    "Install Android platform-tools (brew install android-platform-tools) and enable USB debugging."
+                )
+            case .unauthorized:
+                return L(
+                    "device.androidUnauthorized",
+                    "Unlock the phone and allow USB debugging for this Mac.")
+            case .offline:
+                return L(
+                    "device.androidOffline",
+                    "The phone is offline. Unplug and reconnect the cable, then unlock the phone.")
+            case .notFound:
+                return L(
+                    "device.androidNotFound",
+                    "The Android device is no longer connected. Check the cable and USB debugging.")
+            }
         case .deviceToolMissing(let tool):
             return String(
                 format: L(

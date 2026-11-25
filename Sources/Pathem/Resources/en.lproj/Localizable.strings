@@ -2222,3 +2222,8 @@
 "activity.toggle" = "Toggle Activity";
 "activity.undo" = "Undo";
 "prefs.keepActivityLog" = "Keep an activity log";
+
+"device.androidAdbMissing" = "Install Android platform-tools (brew install android-platform-tools) and enable USB debugging.";
+"device.androidUnauthorized" = "Unlock the phone and allow USB debugging for this Mac.";
+"device.androidOffline" = "The phone is offline. Unplug and reconnect the cable, then unlock the phone.";
+"device.androidNotFound" = "The Android device is no longer connected. Check the cable and USB debugging.";

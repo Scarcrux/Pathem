@@ -2171,3 +2171,8 @@
 "activity.toggle" = "Mostrar ou ocultar atividade";
 "activity.undo" = "Desfazer";
 "prefs.keepActivityLog" = "Manter um registro de atividades";
+
+"device.androidAdbMissing" = "Instale o Android Platform-Tools (brew install android-platform-tools) e ative a depuração USB.";
+"device.androidUnauthorized" = "Desbloqueie o telefone e permita a depuração USB neste Mac.";
+"device.androidOffline" = "O telefone está offline. Reconecte o cabo e desbloqueie o telefone.";
+"device.androidNotFound" = "O dispositivo Android não está mais conectado. Verifique o cabo e a depuração USB.";

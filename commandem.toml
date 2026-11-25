@@ -2846,3 +2846,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
   note = "Enable explicit operations on otherwise inaccessible files through an approved helper. Verify connection identity, per-connection authorization and path safety before adding any privileged launch or key prompt. Keep unprivileged fixture evidence separate from packaged Developer ID acceptance."
   issue = 0
 # <<< commandem roadmap <<<
+
+[[mission]]
+  id = "m-8a8b2b75"
+  title = "Android device transfers over the local ADB server"
+  status = "now"
+  note = "The CLI listing only supplies names. Use native sync framing in the signed pathem-adb helper for sizes, modification dates and progress. Verify protocol framing, device state, cancellation and destination preservation on a loopback fake server. Match setup instructions to USB debugging and platform-tools."
+  issue = 0
+# <<< commandem roadmap <<<

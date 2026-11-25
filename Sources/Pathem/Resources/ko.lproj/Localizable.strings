@@ -2171,3 +2171,8 @@
 "activity.toggle" = "활동 표시 또는 숨기기";
 "activity.undo" = "실행 취소";
 "prefs.keepActivityLog" = "활동 로그 유지";
+
+"device.androidAdbMissing" = "Android 플랫폼 도구(brew install android-platform-tools)를 설치하고 USB 디버깅을 켜십시오.";
+"device.androidUnauthorized" = "휴대전화의 잠금을 해제하고 이 Mac의 USB 디버깅을 허용하십시오.";
+"device.androidOffline" = "휴대전화가 오프라인입니다. 케이블을 다시 연결하고 잠금을 해제하십시오.";
+"device.androidNotFound" = "Android 기기가 연결되어 있지 않습니다. 케이블과 USB 디버깅을 확인하십시오.";

@@ -2171,3 +2171,8 @@
 "activity.toggle" = "アクティビティを表示または非表示";
 "activity.undo" = "取り消す";
 "prefs.keepActivityLog" = "アクティビティログを保存";
+
+"device.androidAdbMissing" = "Android Platform-Tools（brew install android-platform-tools）をインストールし、USB デバッグを有効にしてください。";
+"device.androidUnauthorized" = "スマートフォンのロックを解除し、この Mac の USB デバッグを許可してください。";
+"device.androidOffline" = "スマートフォンがオフラインです。ケーブルをつなぎ直してロックを解除してください。";
+"device.androidNotFound" = "Android デバイスが接続されていません。ケーブルと USB デバッグを確認してください。";

@@ -7,12 +7,42 @@ import Foundation
 public enum DeviceDiscovery {
     /// Attached Android devices via `adb devices -l` (empty when adb isn't installed).
     public static func androidDevices() async -> [RemoteConnection] {
+        // The native adb server client first (real model names, and phones that still need USB
+        // debugging allowed are listed too, so browsing them explains what to do). A missing or
+        // broken helper falls back to the adb CLI below.
+        if let native = await nativeAndroidDevices() { return native }
         guard let adb = DeviceTools.adb,
             let (data, status, _) = try? await RemoteRunner.run(adb, ["devices", "-l"]), status == 0
         else { return [] }
         return parseADBDevices(String(decoding: data, as: UTF8.self)).map { serial, model in
             RemoteConnection(name: model ?? serial, proto: .adb, host: serial, path: "/sdcard")
         }
+    }
+
+    /// Devices from the `pathem-adb` helper. Ready and unauthorized phones are listed (offline
+    /// ones are transient and skipped). Nil when the helper can't answer, so the caller falls
+    /// back to the CLI; an empty list when no adb exists at all.
+    static func nativeAndroidDevices(
+        helper: String? = ADBProvider.helperPath(), environment: [String: String]? = nil
+    ) async -> [RemoteConnection]? {
+        guard let helper,
+            let (data, status, _) = try? await RemoteRunner.run(
+                helper, ["devices"], env: environment)
+        else { return nil }
+        if status == ADBError.exitCodeMissing { return [] }
+        guard status == 0,
+            let devices = try? JSONDecoder().decode([ADBDeviceRow].self, from: data)
+        else { return nil }
+        return devices.filter { $0.state == "device" || $0.state == "unauthorized" }.map {
+            RemoteConnection(
+                name: $0.model ?? $0.serial, proto: .adb, host: $0.serial, path: "/sdcard")
+        }
+    }
+
+    struct ADBDeviceRow: Decodable {
+        let serial: String
+        let state: String
+        let model: String?
     }
 
     /// UDIDs of USB-attached iOS devices, via our native usbmux client (no third-party tool).

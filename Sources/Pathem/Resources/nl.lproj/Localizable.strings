@@ -2171,3 +2171,8 @@
 "activity.toggle" = "Toon of verberg activiteit";
 "activity.undo" = "Ongedaan maken";
 "prefs.keepActivityLog" = "Houd een activiteitenlogboek bij";
+
+"device.androidAdbMissing" = "Installeer Android Platform-Tools (brew install android-platform-tools) en schakel USB-foutopsporing in.";
+"device.androidUnauthorized" = "Ontgrendel de telefoon en sta USB-foutopsporing voor deze Mac toe.";
+"device.androidOffline" = "De telefoon is offline. Sluit de kabel opnieuw aan en ontgrendel de telefoon.";
+"device.androidNotFound" = "Het Android-apparaat is niet meer verbonden. Controleer de kabel en USB-foutopsporing.";

@@ -2171,3 +2171,8 @@
 "activity.toggle" = "显示或隐藏活动";
 "activity.undo" = "撤销";
 "prefs.keepActivityLog" = "保留活动日志";
+
+"device.androidAdbMissing" = "请安装 Android 平台工具（brew install android-platform-tools）并启用 USB 调试。";
+"device.androidUnauthorized" = "解锁手机，并允许这台 Mac 进行 USB 调试。";
+"device.androidOffline" = "手机已离线。请重新连接线缆，然后解锁手机。";
+"device.androidNotFound" = "Android 设备已断开连接。请检查线缆和 USB 调试设置。";

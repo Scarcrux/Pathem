@@ -57,11 +57,10 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
 - **SFTP accepts a new server's host key on first connect without asking.** A key that
   later changes is still rejected. A proper "new host key, accept?" prompt is planned.
 - **iPhone and iPad browsing needs the device unlocked** while Pathem talks to it.
-- **Android phones in MTP mode are not supported.** Pathem has no native MTP stack. A
-  phone with USB debugging on can be reached through the `adb` command-line tool when
-  Android platform-tools are installed; Pathem runs that tool and does not bundle it.
-  That adb-driven backend is basic today (names only in listings) and an upgrade is in
-  progress.
+- **Android browsing requires USB debugging and Android platform-tools.** Connect a
+  phone with a data-capable cable, unlock it, and allow this Mac when Android asks.
+  Pathem lists file sizes and dates and streams transfers over the local adb server.
+  Native MTP browsing is planned.
 
 ## macOS platform limits
 

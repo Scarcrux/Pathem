@@ -1115,7 +1115,7 @@
             "id": "cloud-devices",
             "title": "Cloud files, external disks, and mobile devices",
             "category": "connect",
-            "description": "Understand online-only files, mounted volumes, iOS access, and the current Android/MTP limitation.",
+            "description": "Understand online-only files, mounted volumes, and how to connect iOS and Android devices.",
             "keywords": [
                 "iCloud",
                 "Dropbox",
@@ -1178,8 +1178,8 @@
                     "title": "Recognize mobile-device boundaries",
                     "paragraphs": [
                         "iPhone and iPad access uses a separate AFC helper and depends on a connected, trusted/paired device and the content iOS exposes. It is not unrestricted access to the phone's filesystem; individual apps and device state can limit available documents.",
-                        "The currently documented mainline build does not provide Android MTP browsing. An Android phone using MTP is not an ordinary mounted macOS disk and may not appear in Finder either. Do not assume a USB cable or a sidebar refresh will add missing protocol support.",
-                        "For an Android connection, first verify the cable can carry data and the phone's chosen USB mode. If the device does not expose a mounted volume, use a trusted MTP-capable workflow or another supported transfer route. Do not format the phone or enable unrelated developer/security settings as a substitute for missing MTP support."
+                        "For Android, install Android platform-tools on the Mac (for example, brew install android-platform-tools). Enable Developer options and USB debugging on the phone, then connect with a data-capable USB cable.",
+                        "Unlock the phone and allow USB debugging for this Mac when Android asks. Select the phone in Devices in the sidebar and browse or transfer files. Native MTP browsing is planned."
                     ],
                     "note": "Physical-device and provider availability must be checked on your actual setup. A simulated or unit-tested device path is not proof of compatibility with every phone, cable, or OS version."
                 }
@@ -1857,7 +1857,7 @@
                         "Some Finder features are partial. Pathem sends files through the system AirDrop sheet and has no AirDrop window of its own. It shows the Services menu and can run Shortcuts, but not Finder's Quick Actions menu. Download Now and Remove Download appear only for iCloud Drive items, not for Dropbox, OneDrive, Google Drive or Box, whose own Finder badges and actions are not shown.",
                         "Permissions come from macOS. Full Disk Access must be added by hand in System Settings, and the Desktop, Documents, Downloads, removable-disk and network-volume prompts are macOS's. Pathem cannot answer them for you.",
                         "System Integrity Protection blocks changes to protected system locations for every app. Pathem has no privileged mode yet, so changing a file you do not own fails; Change Owner hands you a sudo command in the terminal instead.",
-                        "Devices: iPhone and iPad need the device unlocked and trusted. Android MTP is not supported. An adb-driven Android backend exists for phones with USB debugging and Android platform-tools installed, and an upgrade is in progress.",
+                        "Devices: iPhone and iPad need the device unlocked and trusted. Android browsing uses adb with USB debugging and Android platform-tools. Native MTP browsing is planned.",
                         "Search: This Mac and smart locations such as Recents and tags depend on Spotlight's index, so unindexed or excluded volumes are missing. Searching a chosen folder does not depend on Spotlight. Pathem keeps no always-on file-name index of its own."
                     ]
                 },

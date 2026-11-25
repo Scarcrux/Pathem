@@ -92,6 +92,7 @@ let package = Package(
         // lockdown + TLS + AFC). The app invokes this binary so untrusted device parsing
         // stays out of the app (crash isolation, not a TCC boundary). Bundled + signed by package.sh.
         .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
+        .executableTarget(name: "pathem-adb", dependencies: ["PathemEngine"]),
 
         // The `pathem` CLI: the stable reveal/open seam for Finder-handoff integrations. Resolves a
         // path and asks the app to act on it via the pathem:// URL scheme. Bundled by package.sh as
