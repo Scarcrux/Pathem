@@ -2121,3 +2121,13 @@
 "ext.optIn" = "Extensies vereisen PATHEM_ENABLE_EXTENSIONS=1.";
 "ext.pending" = "Handtekening geverifieerd · Goedkeuring vereist";
 "ext.settings" = "Extensies";
+"bvc.cmd.pinFolderTree" = "Vastzetten in mapstructuur";
+"bvc.cmd.unpinFolderTree" = "Losmaken uit mapstructuur";
+"bvc.cmd.revealFolderTree" = "Toon in mapstructuur";
+"menu.files.pinToFolderTree" = "Vastzetten in mapstructuur";
+"menu.files.unpinFromFolderTree" = "Losmaken uit mapstructuur";
+"menu.view.revealInFolderTree" = "Toon in mapstructuur";
+"foldertree.paneLeft" = "Linkerpaneel";
+"foldertree.paneRight" = "Rechterpaneel";
+"foldertree.paneTop" = "Bovenste paneel";
+"foldertree.paneBottom" = "Onderste paneel";

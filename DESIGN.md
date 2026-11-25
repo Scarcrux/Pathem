@@ -686,6 +686,17 @@ built (gated off), each behind the engine where the logic is testable:
   The app loader stays OFF unless `PATHEM_ENABLE_EXTENSIONS=1`, so no shipping build
   exposes any extension surface until real demand justifies enabling it.
 
+Later additions:
+
+- Folder tree depth: the optional tree column has several roots: Home, each
+  mounted volume, and folders the user pins with "Pin to Folder Tree" (pins are
+  shortcuts; Home or a volume still owns the pane locations under it).
+  `FolderTreeState` (engine, Codable with decode defaults) persists the pins and
+  the expanded folders (capped), restored shallowest first. "Reveal in Folder
+  Tree" selects a folder without navigating. Tree folders are drop targets that
+  reuse the sidebar's move or copy rule and transfer path, and small symbols
+  mark where each pane is.
+
 Two confirmed-bug adversarial-review passes (customization layer, then the
 palette/AI glue) have been run against this code.
 

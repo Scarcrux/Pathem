@@ -121,6 +121,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var showFolderTree: Bool
     /// The folder tree column's width in points.
     public var folderTreeWidth: Double
+    /// The folder tree's pinned folders and remembered expansion.
+    public var folderTreeState: FolderTreeState
     /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
     /// Liquid-Glass look) instead of full-color brand glyphs (Google Drive, AirDrop, etc.).
     public var monochromeSidebarIcons: Bool
@@ -226,6 +228,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         autosaveMarkup: Bool = false,
         compactSidebar: Bool = false, stackPanesVertically: Bool = false,
         showFolderTree: Bool = false, folderTreeWidth: Double = FolderTree.defaultWidth,
+        folderTreeState: FolderTreeState = FolderTreeState(),
         monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
@@ -312,6 +315,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.stackPanesVertically = stackPanesVertically
         self.showFolderTree = showFolderTree
         self.folderTreeWidth = folderTreeWidth
+        self.folderTreeState = folderTreeState
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
         self.downloadSuggestionsEnabled = downloadSuggestionsEnabled
@@ -371,6 +375,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         folderTreeWidth =
             FolderTree.clampedWidth(
                 try c.decodeIfPresent(Double.self, forKey: .folderTreeWidth) ?? d.folderTreeWidth)
+        folderTreeState =
+            try c.decodeIfPresent(FolderTreeState.self, forKey: .folderTreeState)
+            ?? d.folderTreeState
         monochromeSidebarIcons =
             try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons)
             ?? d.monochromeSidebarIcons

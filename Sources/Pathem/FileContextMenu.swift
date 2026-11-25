@@ -48,7 +48,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
         "files.getInfo", "files.calculateSize", "files.share", "files.download", "files.offload",
         "files.reveal",
-        "files.revealInPathem", "files.ejectVolume",
+        "files.revealInPathem", "files.pinToFolderTree", "files.ejectVolume",
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
@@ -182,6 +182,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.share", L("list.share", "Share…")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
+        ("files.pinToFolderTree", L("bvc.cmd.pinFolderTree", "Pin to Folder Tree")),
         ("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume")),
         ("files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture")),
         ("files.rename", L("list.rename", "Rename…")),
@@ -415,6 +416,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !allTorrents  // only for .torrent selections
                 case "files.createTorrent":
                     item.isHidden = urls.count != 1  // make a torrent from one file/folder
+                case "files.pinToFolderTree":
+                    // A folder (or the folder on screen, from the background menu); never files.
+                    item.isHidden = !(singleFolder || urls.isEmpty)
                 case "files.revealInPathem":
                     // Only meaningful when the selection lives outside the folder on screen (search,
                     // smart folders, flat view, recents). In a normal listing you're already in its

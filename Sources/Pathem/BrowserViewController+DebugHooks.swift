@@ -252,6 +252,144 @@ extension BrowserViewController {
         }
     }
 
+    /// Scripted check of the folder tree's roots, pins, persistence, markers, reveal command,
+    /// drop target and context menu against real panes (PATHEM_LAYOUT_SHOTS). Leaves one pin
+    /// and the expansion in place so the renders that follow show them; `debugFolderTreeCleanup`
+    /// removes the pin. Prints one FOLDERTREE line per check.
+    func debugFolderTreeDepthCheck(done: @escaping () -> Void) {
+        func report(_ name: String, _ ok: Bool, _ detail: String = "") {
+            print("FOLDERTREE: \(ok ? "PASS" : "FAIL") \(name) \(detail)")
+        }
+        let fm = FileManager.default
+        guard let left = leftTabs.activePane, let right = rightTabs.activePane,
+            let pinTarget = FolderTree.subfolders(of: left.currentURL, includingHidden: false)
+                .folders.first
+        else {
+            report("depth-setup", false)
+            done()
+            return
+        }
+        prefs.showFolderTree = true
+        applyPreferences()
+        setActiveSide(leftTabs, pane: left)
+        let roots = folderTree.debugRootNames
+        report(
+            "roots-home-then-volumes",
+            roots.first == L("breadcrumb.home", "Home") && roots.contains("Macintosh HD"),
+            roots.joined(separator: ","))
+
+        // Pin through the command path, then see it as a root and in the saved preferences.
+        left.navigate(to: pinTarget.url.deletingLastPathComponent())
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            let menuBefore = self.folderTree.debugMenuTitles(for: left.currentURL)
+            report(
+                "context-menu-offers-pin",
+                menuBefore.contains(L("bvc.cmd.pinFolderTree", "Pin to Folder Tree")),
+                menuBefore.joined(separator: "|"))
+            self.folderTree.pin(pinTarget.url)
+            report(
+                "pin-adds-root-and-persists",
+                self.folderTree.debugRootNames.last == pinTarget.name
+                    && self.prefs.folderTreeState.isPinned(pinTarget.url)
+                    && self.folderTree.isPinned(pinTarget.url),
+                self.folderTree.debugRootNames.joined(separator: ","))
+            let saved = Self.preferencesURL.flatMap { try? Data(contentsOf: $0) }
+                .flatMap { try? JSONDecoder().decode(Preferences.self, from: $0) }
+            report(
+                "pin-written-to-config", saved?.folderTreeState.isPinned(pinTarget.url) == true)
+
+            // Both panes' locations carry a marker (and they differ in the demo).
+            left.navigate(to: pinTarget.url)
+            self.setActiveSide(self.rightTabs, pane: right)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                let marks = self.folderTree.debugMarks
+                let slots = Set(marks.values.flatMap { $0 })
+                report(
+                    "both-panes-marked", slots == [0, 1],
+                    "\(marks) \(self.folderTree.debugGeometry)")
+
+                // Expansion persists: a fresh controller restored from the saved state reopens it.
+                let expanded = self.prefs.folderTreeState.expanded
+                report("expansion-recorded", !expanded.isEmpty, "\(expanded.count) folders")
+                let reborn = FolderTreeController(
+                    home: self.demoLayout?.root ?? fm.homeDirectoryForCurrentUser,
+                    volumes: { [] })
+                reborn.restore(self.prefs.folderTreeState)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    let rows = reborn.debugVisibleRows().map {
+                        $0.trimmingCharacters(in: .whitespaces)
+                    }
+                    report(
+                        "expansion-restored-after-relaunch",
+                        rows.contains(pinTarget.name) && rows.count > 3,
+                        rows.prefix(8).joined(separator: ","))
+
+                    // Reveal command: select a folder in the tree without navigating.
+                    let before = self.rightTabs.activePane?.currentURL
+                    self.folderTree.reveal(left.currentURL)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        report(
+                            "reveal-selects-without-navigating",
+                            self.folderTree.debugSelectedPath
+                                == left.currentURL.standardizedFileURL.path
+                                && self.rightTabs.activePane?.currentURL == before)
+
+                        // Dropping files onto a tree folder reaches the drop hook, move or copy.
+                        let board = NSPasteboard.withUniqueName()
+                        let file = pinTarget.url.appendingPathComponent(".depth-check-source")
+                        fm.createFile(atPath: file.path, contents: Data("x".utf8))
+                        board.writeObjects([file as NSURL])
+                        var delivered: [(Bool, String)] = []
+                        let original = self.folderTree.onDropFiles
+                        self.folderTree.onDropFiles = { _, folder, move in
+                            delivered.append((move, folder.lastPathComponent))
+                        }
+                        if let window = self.view.window {
+                            let info = TransferDraggingInfo(board, window: window)
+                            self.folderTree.dragMovesByDefault = false
+                            let copyOp = self.folderTree.debugDrop(
+                                info, onto: pinTarget.url, accept: true)
+                            self.folderTree.dragMovesByDefault = true
+                            let moveOp = self.folderTree.debugDrop(
+                                info, onto: pinTarget.url, accept: true)
+                            info.draggingSourceOperationMask = []
+                            let refused = self.folderTree.debugDrop(
+                                info, onto: pinTarget.url, accept: true)
+                            report(
+                                "drop-on-tree-folder-uses-drop-policy",
+                                copyOp == .copy && moveOp == .move && refused.isEmpty
+                                    && delivered.map(\.0) == [false, true]
+                                    && delivered.allSatisfy { $0.1 == pinTarget.name },
+                                "\(copyOp.rawValue) \(moveOp.rawValue) \(delivered)")
+                        } else {
+                            report("drop-on-tree-folder-uses-drop-policy", false, "no window")
+                        }
+                        self.folderTree.onDropFiles = original
+                        board.releaseGlobally()
+                        try? fm.removeItem(at: file)
+
+                        let menuAfter = self.folderTree.debugMenuTitles(for: pinTarget.url)
+                        report(
+                            "context-menu-offers-unpin-once-pinned",
+                            menuAfter.contains(
+                                L("bvc.cmd.unpinFolderTree", "Unpin from Folder Tree")),
+                            menuAfter.joined(separator: "|"))
+                        done()
+                    }
+                }
+            }
+        }
+    }
+
+    /// Undo what `debugFolderTreeDepthCheck` left behind (the pin and expansion).
+    func debugFolderTreeCleanup() {
+        for path in prefs.folderTreeState.pinned {
+            folderTree.unpin(URL(fileURLWithPath: path))
+        }
+        prefs.folderTreeState = FolderTreeState()
+        saveConfig(prefs, to: Self.preferencesURL)
+    }
+
     /// Render the pane arrangements (side by side, stacked, stacked with the terminal drawer)
     /// in light and dark through the same preference path the menu uses
     /// (PATHEM_LAYOUT_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.

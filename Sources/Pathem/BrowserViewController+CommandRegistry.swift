@@ -802,6 +802,24 @@ extension BrowserViewController {
             keywords: ["folder tree", "navigation tree", "directory tree", "hierarchy"]
         ) { [weak self] in self?.toggleFolderTree() }
         add(
+            "files.pinToFolderTree", L("bvc.cmd.pinFolderTree", "Pin to Folder Tree"),
+            keywords: ["pin folder", "favorite folder", "folder tree root", "add to tree"],
+            enabled: { [weak self] in self?.folderTreePinTarget != nil }
+        ) { [weak self] in self?.pinToFolderTree() }
+        add(
+            "files.unpinFromFolderTree", L("bvc.cmd.unpinFolderTree", "Unpin from Folder Tree"),
+            keywords: ["unpin folder", "remove from tree", "folder tree root"],
+            enabled: { [weak self] in
+                guard let self, let folder = self.folderTreePinTarget else { return false }
+                return self.folderTree.isPinned(folder)
+            }
+        ) { [weak self] in self?.unpinFromFolderTree() }
+        add(
+            "view.revealInFolderTree", L("bvc.cmd.revealFolderTree", "Reveal in Folder Tree"),
+            keywords: ["show in tree", "locate in tree", "folder tree", "find in tree"],
+            enabled: { [weak self] in self?.folderTreeTarget(forReveal: true) != nil }
+        ) { [weak self] in self?.revealInFolderTree() }
+        add(
             "view.stackPanes", L("bvc.cmd.stackPanes", "Stack Panes Vertically"),
             keywords: [
                 "horizontal split", "top and bottom", "layout", "stacked", "side by side",

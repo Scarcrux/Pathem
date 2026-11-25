@@ -2121,3 +2121,13 @@
 "ext.optIn" = "擴充功能需要 PATHEM_ENABLE_EXTENSIONS=1。";
 "ext.pending" = "簽章已驗證 · 需要核准";
 "ext.settings" = "擴充功能";
+"bvc.cmd.pinFolderTree" = "釘選到檔案夾樹狀圖";
+"bvc.cmd.unpinFolderTree" = "從檔案夾樹狀圖取消釘選";
+"bvc.cmd.revealFolderTree" = "在檔案夾樹狀圖中顯示";
+"menu.files.pinToFolderTree" = "釘選到檔案夾樹狀圖";
+"menu.files.unpinFromFolderTree" = "從檔案夾樹狀圖取消釘選";
+"menu.view.revealInFolderTree" = "在檔案夾樹狀圖中顯示";
+"foldertree.paneLeft" = "左側面板";
+"foldertree.paneRight" = "右側面板";
+"foldertree.paneTop" = "上方面板";
+"foldertree.paneBottom" = "下方面板";

@@ -2121,3 +2121,13 @@
 "ext.optIn" = "확장 기능에는 PATHEM_ENABLE_EXTENSIONS=1이 필요합니다.";
 "ext.pending" = "서명 확인됨 · 승인 필요";
 "ext.settings" = "확장 기능";
+"bvc.cmd.pinFolderTree" = "폴더 트리에 고정";
+"bvc.cmd.unpinFolderTree" = "폴더 트리에서 고정 해제";
+"bvc.cmd.revealFolderTree" = "폴더 트리에서 보기";
+"menu.files.pinToFolderTree" = "폴더 트리에 고정";
+"menu.files.unpinFromFolderTree" = "폴더 트리에서 고정 해제";
+"menu.view.revealInFolderTree" = "폴더 트리에서 보기";
+"foldertree.paneLeft" = "왼쪽 패널";
+"foldertree.paneRight" = "오른쪽 패널";
+"foldertree.paneTop" = "위쪽 패널";
+"foldertree.paneBottom" = "아래쪽 패널";

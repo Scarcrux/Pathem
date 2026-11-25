@@ -27,6 +27,8 @@ enum MenuIcons {
         case "files.offload": return "icloud.slash"
         case "files.reveal": return "arrow.up.forward.square"
         case "files.revealInPathem": return "dot.viewfinder"
+        case "files.pinToFolderTree", "files.unpinFromFolderTree": return "pin"
+        case "view.revealInFolderTree": return "sidebar.squares.left"
         case "files.rename": return "pencil"
         case "files.trash": return "trash"
         case "files.newFolder": return "folder.badge.plus"

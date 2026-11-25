@@ -2121,3 +2121,13 @@
 "ext.optIn" = "Las extensiones requieren PATHEM_ENABLE_EXTENSIONS=1.";
 "ext.pending" = "Firma verificada · Requiere aprobación";
 "ext.settings" = "Extensiones";
+"bvc.cmd.pinFolderTree" = "Fijar en el árbol de carpetas";
+"bvc.cmd.unpinFolderTree" = "Quitar del árbol de carpetas";
+"bvc.cmd.revealFolderTree" = "Mostrar en el árbol de carpetas";
+"menu.files.pinToFolderTree" = "Fijar en el árbol de carpetas";
+"menu.files.unpinFromFolderTree" = "Quitar del árbol de carpetas";
+"menu.view.revealInFolderTree" = "Mostrar en el árbol de carpetas";
+"foldertree.paneLeft" = "Panel izquierdo";
+"foldertree.paneRight" = "Panel derecho";
+"foldertree.paneTop" = "Panel superior";
+"foldertree.paneBottom" = "Panel inferior";

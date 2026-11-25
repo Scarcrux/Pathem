@@ -2121,3 +2121,13 @@
 "ext.optIn" = "機能拡張には PATHEM_ENABLE_EXTENSIONS=1 が必要です。";
 "ext.pending" = "署名確認済み · 承認が必要";
 "ext.settings" = "機能拡張";
+"bvc.cmd.pinFolderTree" = "フォルダツリーに固定";
+"bvc.cmd.unpinFolderTree" = "フォルダツリーから固定解除";
+"bvc.cmd.revealFolderTree" = "フォルダツリーで表示";
+"menu.files.pinToFolderTree" = "フォルダツリーに固定";
+"menu.files.unpinFromFolderTree" = "フォルダツリーから固定解除";
+"menu.view.revealInFolderTree" = "フォルダツリーで表示";
+"foldertree.paneLeft" = "左ペイン";
+"foldertree.paneRight" = "右ペイン";
+"foldertree.paneTop" = "上ペイン";
+"foldertree.paneBottom" = "下ペイン";

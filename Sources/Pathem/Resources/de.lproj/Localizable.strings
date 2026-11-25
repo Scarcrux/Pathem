@@ -2121,3 +2121,13 @@
 "ext.optIn" = "Erweiterungen erfordern PATHEM_ENABLE_EXTENSIONS=1.";
 "ext.pending" = "Signatur geprüft · Genehmigung erforderlich";
 "ext.settings" = "Erweiterungen";
+"bvc.cmd.pinFolderTree" = "An Ordnerbaum anheften";
+"bvc.cmd.unpinFolderTree" = "Von Ordnerbaum lösen";
+"bvc.cmd.revealFolderTree" = "Im Ordnerbaum zeigen";
+"menu.files.pinToFolderTree" = "An Ordnerbaum anheften";
+"menu.files.unpinFromFolderTree" = "Von Ordnerbaum lösen";
+"menu.view.revealInFolderTree" = "Im Ordnerbaum zeigen";
+"foldertree.paneLeft" = "Linker Bereich";
+"foldertree.paneRight" = "Rechter Bereich";
+"foldertree.paneTop" = "Oberer Bereich";
+"foldertree.paneBottom" = "Unterer Bereich";

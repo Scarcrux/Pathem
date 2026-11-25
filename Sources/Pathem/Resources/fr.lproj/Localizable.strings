@@ -2121,3 +2121,13 @@
 "ext.optIn" = "Les extensions nécessitent PATHEM_ENABLE_EXTENSIONS=1.";
 "ext.pending" = "Signature vérifiée · Approbation requise";
 "ext.settings" = "Extensions";
+"bvc.cmd.pinFolderTree" = "Épingler à l’arborescence";
+"bvc.cmd.unpinFolderTree" = "Détacher de l’arborescence";
+"bvc.cmd.revealFolderTree" = "Afficher dans l’arborescence";
+"menu.files.pinToFolderTree" = "Épingler à l’arborescence";
+"menu.files.unpinFromFolderTree" = "Détacher de l’arborescence";
+"menu.view.revealInFolderTree" = "Afficher dans l’arborescence";
+"foldertree.paneLeft" = "Volet gauche";
+"foldertree.paneRight" = "Volet droit";
+"foldertree.paneTop" = "Volet supérieur";
+"foldertree.paneBottom" = "Volet inférieur";

@@ -188,7 +188,12 @@ extension BrowserViewController {
 
     /// Show or hide the folder tree to match the preference, and keep it on the active folder.
     func applyFolderTree() {
+        folderTree.dragMovesByDefault = prefs.dragMovesByDefault
         folderTree.includesHidden = prefs.showHiddenByDefault
+        if prefs.showFolderTree, !folderTreeRestored {
+            folderTreeRestored = true
+            folderTree.restore(prefs.folderTreeState)
+        }
         splitLayout.setFolderTree(
             visible: prefs.showFolderTree, width: CGFloat(prefs.folderTreeWidth))
         syncFolderTree()
@@ -199,8 +204,12 @@ extension BrowserViewController {
     func syncFolderTree() {
         guard prefs.showFolderTree, let pane = activePane, pane.smartListingTitle == nil,
             !pane.isRemote
-        else { return }
+        else {
+            updateFolderTreeMarks()
+            return
+        }
         folderTree.reveal(pane.currentURL)
+        updateFolderTreeMarks()
     }
 
     func toggleStackedPanes() {

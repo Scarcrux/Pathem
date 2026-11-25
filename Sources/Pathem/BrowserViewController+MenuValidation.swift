@@ -89,6 +89,13 @@ extension BrowserViewController {
             return commands.command(locked ? "tab.unlock" : "tab.lock")?.isEnabled() ?? true
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.folderTree": menuItem.state = prefs.showFolderTree ? .on : .off
+        case "files.pinToFolderTree":
+            // One toggle entry: it reads Unpin once the folder is already a tree root.
+            if let folder = folderTreePinTarget, folderTree.isPinned(folder) {
+                menuItem.title = L("bvc.cmd.unpinFolderTree", "Unpin from Folder Tree")
+            } else {
+                menuItem.title = L("bvc.cmd.pinFolderTree", "Pin to Folder Tree")
+            }
         case "view.stackPanes": menuItem.state = prefs.stackPanesVertically ? .on : .off
         case "pairs.follow": menuItem.state = followPairedFolders ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off

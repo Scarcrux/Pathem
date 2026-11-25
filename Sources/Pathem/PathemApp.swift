@@ -362,13 +362,18 @@ enum PathemApp {
             browser.view.layoutSubtreeIfNeeded()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 browser.debugFolderTreeFollowCheck {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        browser.debugRenderLayoutShots(toDir: dir) { exit(0) }
+                    browser.debugFolderTreeDepthCheck {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            browser.debugRenderLayoutShots(toDir: dir) {
+                                browser.debugFolderTreeCleanup()
+                                exit(0)
+                            }
+                        }
                     }
                 }
             }
             // In-process render: no desktop activation or Screen Recording needed.
-            RunLoop.main.run(until: Date().addingTimeInterval(55))
+            RunLoop.main.run(until: Date().addingTimeInterval(75))
             exit(1)
         }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_TABPOWER_SHOT"] {
@@ -1822,6 +1827,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Remove Custom Icon", "files.removeCustomIcon"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
+        fileMenu.addItem(commandItem("Pin to Folder Tree", "files.pinToFolderTree"))
         fileMenu.addItem(commandItem("Download Now", "files.download"))
         fileMenu.addItem(commandItem("Remove Download", "files.offload"))
         // Organize
@@ -2035,6 +2041,7 @@ enum PathemApp {
                     commandItem("Compact Sidebar", "view.compactSidebar"),
                     commandItem("Stack Panes Vertically", "view.stackPanes"),
                     commandItem("Show Folder Tree", "view.folderTree"),
+                    commandItem("Reveal in Folder Tree", "view.revealInFolderTree"),
                     commandItem("Sync Browsing", "view.syncBrowsing"),
                     commandItem("Follow Paired Folder", "pairs.follow"),
                     commandItem("Vim Navigation", "nav.vimMode"),

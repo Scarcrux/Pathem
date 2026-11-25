@@ -2121,3 +2121,13 @@
 "ext.optIn" = "Для расширений требуется PATHEM_ENABLE_EXTENSIONS=1.";
 "ext.pending" = "Подпись проверена · Требуется одобрение";
 "ext.settings" = "Расширения";
+"bvc.cmd.pinFolderTree" = "Закрепить в дереве папок";
+"bvc.cmd.unpinFolderTree" = "Открепить от дерева папок";
+"bvc.cmd.revealFolderTree" = "Показать в дереве папок";
+"menu.files.pinToFolderTree" = "Закрепить в дереве папок";
+"menu.files.unpinFromFolderTree" = "Открепить от дерева папок";
+"menu.view.revealInFolderTree" = "Показать в дереве папок";
+"foldertree.paneLeft" = "Левая панель";
+"foldertree.paneRight" = "Правая панель";
+"foldertree.paneTop" = "Верхняя панель";
+"foldertree.paneBottom" = "Нижняя панель";

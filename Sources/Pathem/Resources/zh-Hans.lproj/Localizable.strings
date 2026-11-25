@@ -2121,3 +2121,13 @@
 "ext.optIn" = "扩展需要 PATHEM_ENABLE_EXTENSIONS=1。";
 "ext.pending" = "签名已验证 · 需要批准";
 "ext.settings" = "扩展";
+"bvc.cmd.pinFolderTree" = "固定到文件夹树";
+"bvc.cmd.unpinFolderTree" = "从文件夹树取消固定";
+"bvc.cmd.revealFolderTree" = "在文件夹树中显示";
+"menu.files.pinToFolderTree" = "固定到文件夹树";
+"menu.files.unpinFromFolderTree" = "从文件夹树取消固定";
+"menu.view.revealInFolderTree" = "在文件夹树中显示";
+"foldertree.paneLeft" = "左窗格";
+"foldertree.paneRight" = "右窗格";
+"foldertree.paneTop" = "上窗格";
+"foldertree.paneBottom" = "下窗格";
