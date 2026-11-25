@@ -1933,3 +1933,14 @@
 "export.formatTSV" = "TSV (tab-separated)";
 "export.formatText" = "Plain text (aligned columns)";
 "export.formatHTML" = "HTML table";
+
+"ext.approve" = "Approve";
+"ext.approved" = "Signature verified · Approved";
+"ext.disable" = "Disable";
+"ext.empty" = "No extensions installed.";
+"ext.invalid" = "Invalid signature, manifest, or duplicate extension ID.";
+"ext.isolation" = "Isolated extension launch could not be verified on this macOS version. Extensions are disabled.";
+"ext.noCommands" = "No commands declared.";
+"ext.optIn" = "Extensions require PATHEM_ENABLE_EXTENSIONS=1.";
+"ext.pending" = "Signature verified · Approval required";
+"ext.settings" = "Extensions";

@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV（定位字元分隔）";
 "export.formatText" = "純文字（對齊欄位）";
 "export.formatHTML" = "HTML 表格";
+
+"ext.approve" = "核准";
+"ext.approved" = "簽章已驗證 · 已核准";
+"ext.disable" = "停用";
+"ext.empty" = "尚未安裝擴充功能。";
+"ext.invalid" = "簽章或資訊清單無效，或擴充功能 ID 重複。";
+"ext.isolation" = "無法驗證此 macOS 版本上的隔離啟動。擴充功能已停用。";
+"ext.noCommands" = "未宣告指令。";
+"ext.optIn" = "擴充功能需要 PATHEM_ENABLE_EXTENSIONS=1。";
+"ext.pending" = "簽章已驗證 · 需要核准";
+"ext.settings" = "擴充功能";

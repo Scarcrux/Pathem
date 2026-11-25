@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// A validated, on-disk extension: its parsed manifest and the folder it lives in. Loading
@@ -5,6 +6,7 @@ import Foundation
 public struct LoadedExtension: Sendable, Equatable {
     public let manifest: ExtensionManifest
     public let directory: URL
+    public let signature: ExtensionSignature?
     public var executableURL: URL { directory.appendingPathComponent(manifest.executable) }
 }
 
@@ -21,6 +23,8 @@ public enum ExtensionHost {
     public struct Policy: Sendable {
         /// Require the helper to be code-signed with the manifest's declared Team ID.
         public var requireSignature: Bool
+        var requireHandshake: Bool { requireSignature || testHandshake }
+        var testHandshake = false
         /// Kill a helper (and fail the call) if it doesn't answer within this window.
         public var timeout: Duration
 
@@ -42,12 +46,23 @@ public enum ExtensionHost {
         case incompatibleHostVersion(needs: String)
         case executableMissing(String)
         case notSigned(expectedTeamID: String)
+        case invalidSignature
+        case approvalRequired
+        case isolationUnavailable
+        case outputLimit
+        case busy
+        case protocolMismatch
+        case remoteFailure(ExtensionProtocol.Failure)
         case launchFailed(String)
         case helperCrashed(status: Int32, stderr: String)
         case malformedResponse(String)
         case handlerError(String)
         case timedOut
     }
+
+    public static var isolationAvailable: Bool { ExtensionExecution.isolated }
+
+    private static let executionSlots = DispatchSemaphore(value: 4)
 
     static let manifestFilename = "manifest.json"
 
@@ -60,16 +75,21 @@ public enum ExtensionHost {
         let fm = FileManager.default
         guard
             let subdirs = try? fm.contentsOfDirectory(
-                at: directory, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                at: directory, includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles])
         else { return [] }
         var loaded: [LoadedExtension] = []
         for sub in subdirs {
-            guard (try? sub.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
+            guard (try? sub.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
+                continue
+            }
             if let ext = try? load(sub, hostVersion: hostVersion, policy: policy) {
                 loaded.append(ext)
             }
         }
-        return loaded.sorted { $0.manifest.id < $1.manifest.id }
+        let grouped = Dictionary(grouping: loaded, by: { $0.manifest.id })
+        return grouped.values.filter { $0.count == 1 }.compactMap(\.first)
+            .sorted { $0.manifest.id < $1.manifest.id }
     }
 
     /// Read, decode, and validate a single extension bundle. Throws (without running
@@ -80,15 +100,21 @@ public enum ExtensionHost {
         _ bundleDir: URL, hostVersion: String, policy: Policy = .production
     ) throws -> LoadedExtension {
         let fm = FileManager.default
-        guard (try? bundleDir.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else {
+        let info = try bundleDir.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard info.isDirectory == true, info.isSymbolicLink != true else {
             throw ExtensionError.notADirectory
         }
         let manifestURL = bundleDir.appendingPathComponent(manifestFilename)
-        guard let data = try? Data(contentsOf: manifestURL) else {
+        guard (try? requireUnlinkedPath(manifestFilename, in: bundleDir)) != nil,
+            let file = try? openRegularFile(manifestURL)
+        else {
             throw ExtensionError.missingManifest
         }
+        defer { try? file.close() }
+        let data = try file.read(upToCount: 128 * 1024 + 1) ?? Data()
         let manifest: ExtensionManifest
         do {
+            try ExtensionProtocol.checkJSON(data, limit: 128 * 1024)
             manifest = try JSONDecoder().decode(ExtensionManifest.self, from: data)
         } catch {
             throw ExtensionError.invalidManifest(String(describing: error))
@@ -99,63 +125,151 @@ public enum ExtensionHost {
             throw ExtensionError.incompatibleHostVersion(needs: needs)
         }
 
-        let ext = LoadedExtension(manifest: manifest, directory: bundleDir)
-        guard fm.isExecutableFile(atPath: ext.executableURL.path) else {
+        try requireUnlinkedPath(manifest.executable, in: bundleDir)
+        let executable = bundleDir.appendingPathComponent(manifest.executable)
+        guard fm.isExecutableFile(atPath: executable.path) else {
             throw ExtensionError.executableMissing(manifest.executable)
         }
-        if policy.requireSignature {
-            let expected = manifest.teamID ?? ""
-            let actual = CodeSignature.teamID(of: ext.executableURL)
-            guard !expected.isEmpty, actual == expected else {
-                throw ExtensionError.notSigned(expectedTeamID: expected)
-            }
+        let signature = policy.requireSignature ? try ExtensionSignature.verify(executable) : nil
+        if let signature, let asserted = manifest.teamID, asserted != signature.teamID {
+            throw ExtensionError.notSigned(expectedTeamID: asserted)
         }
-        return ext
+        return LoadedExtension(manifest: manifest, directory: bundleDir, signature: signature)
     }
 
-    /// Run one handler in the helper out-of-process and return its result. Builds a single
-    /// JSON request line, feeds it to the helper's stdin, and reads one JSON response line
-    /// from stdout. The helper is launched with a minimal environment (it inherits none of
-    /// the host's), and is killed if it exceeds the policy timeout.
+    private static func openRegularFile(_ url: URL) throws -> FileHandle {
+        let fd = open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK)
+        guard fd >= 0 else { throw ExtensionError.executableMissing(url.lastPathComponent) }
+        var info = stat()
+        guard fstat(fd, &info) == 0, info.st_mode & S_IFMT == S_IFREG else {
+            close(fd)
+            throw ExtensionError.executableMissing(url.lastPathComponent)
+        }
+        return FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+    }
+
+    private static func stageExecutable(_ source: URL, at destination: URL) throws {
+        let input = try openRegularFile(source)
+        let fd = open(destination.path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0o500)
+        guard fd >= 0 else {
+            throw ExtensionError.launchFailed("Could not stage the extension executable.")
+        }
+        let output = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+        defer {
+            try? input.close()
+            try? output.close()
+        }
+        var total = 0
+        while let chunk = try input.read(upToCount: 64 * 1024), !chunk.isEmpty {
+            total += chunk.count
+            guard total <= 128 * 1024 * 1024 else {
+                throw ExtensionError.launchFailed("Extension executable exceeds the size limit.")
+            }
+            try output.write(contentsOf: chunk)
+        }
+    }
+
+    private static func requireUnlinkedPath(_ path: String, in root: URL) throws {
+        var current = root
+        let pieces = path.split(separator: "/")
+        for (index, piece) in pieces.enumerated() {
+            current.appendPathComponent(String(piece))
+            let values = try current.resourceValues(
+                forKeys: [.isSymbolicLinkKey, .isDirectoryKey, .isRegularFileKey])
+            let expected = index == pieces.count - 1 ? values.isRegularFile : values.isDirectory
+            guard values.isSymbolicLink != true && expected == true else {
+                throw ExtensionError.executableMissing(path)
+            }
+        }
+    }
+
     public static func invoke(
         _ ext: LoadedExtension, handler: String, arguments: [String: JSONValue] = [:],
-        context: ExtensionProtocol.Context? = nil, policy: Policy = .production
+        context: ExtensionProtocol.Context? = nil, policy: Policy = .production,
+        approval: ExtensionApproval? = nil
     ) async throws -> JSONValue {
-        let request = ExtensionProtocol.Request(handler: handler, arguments: arguments, context: context)
-        let line = try ExtensionProtocol.encodeLine(request)
-        // A deliberately spare environment: the helper gets a PATH and nothing else from us.
-        let env = ["PATH": "/usr/bin:/bin"]
-
-        let data: Data
-        let status: Int32
-        let stderr: String
-        do {
-            (data, status, stderr) = try await withTimeout(policy.timeout) {
-                try await RemoteRunner.run(
-                    ext.executableURL.path, [], input: String(decoding: line, as: UTF8.self), env: env)
+        try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                continuation.resume(
+                    with: Result {
+                        try invokeSync(
+                            ext, handler: handler, arguments: arguments, context: context,
+                            policy: policy, approval: approval)
+                    })
             }
-        } catch is TimedOut {
-            throw ExtensionError.timedOut
-        } catch {
-            throw ExtensionError.launchFailed(String(describing: error))
+        }
+    }
+
+    private static func invokeSync(
+        _ ext: LoadedExtension, handler: String, arguments: [String: JSONValue],
+        context: ExtensionProtocol.Context?, policy: Policy, approval: ExtensionApproval?
+    ) throws -> JSONValue {
+        guard executionSlots.wait(timeout: .now()) == .success else {
+            throw ExtensionError.busy
+        }
+        defer { executionSlots.signal() }
+        let fm = FileManager.default
+        if policy.requireSignature {
+            guard let approval, approval.matches(ext) else {
+                throw ExtensionError.approvalRequired
+            }
+            guard isolationAvailable else { throw ExtensionError.isolationUnavailable }
+            guard
+                let current = try? load(
+                    ext.directory, hostVersion: ext.manifest.minHostVersion ?? "0"),
+                approval.matches(current)
+            else { throw ExtensionError.approvalRequired }
+        }
+        try requireUnlinkedPath(ext.manifest.executable, in: ext.directory)
+        let work = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-extension-" + UUID().uuidString)
+        try fm.createDirectory(
+            at: work, withIntermediateDirectories: false,
+            attributes: [.posixPermissions: 0o700])
+        defer { try? fm.removeItem(at: work) }
+        let data = work.appendingPathComponent("data")
+        try fm.createDirectory(
+            at: data, withIntermediateDirectories: false,
+            attributes: [.posixPermissions: 0o700])
+        let executable = work.appendingPathComponent("helper")
+        try stageExecutable(ext.executableURL, at: executable)
+
+        func exchange(_ request: ExtensionProtocol.Request) throws -> ExtensionProtocol.Response {
+            if policy.requireSignature {
+                guard try ExtensionSignature.verify(executable) == approval?.signature else {
+                    throw ExtensionError.approvalRequired
+                }
+            }
+            let input = try ExtensionProtocol.encodeLine(request)
+            let output = try ExtensionExecution.run(
+                executable, directory: data, input: input,
+                timeout: policy.timeout, isolated: policy.requireSignature)
+            let response: ExtensionProtocol.Response
+            do {
+                response = try ExtensionProtocol.decodeResponse(
+                    output, strict: policy.requireHandshake)
+            } catch {
+                throw ExtensionError.malformedResponse("Expected one bounded JSON response.")
+            }
+            if policy.requireHandshake {
+                guard response.protocolVersion == ExtensionProtocol.version,
+                    response.requestID == request.requestID,
+                    response.capabilities == request.capabilities
+                else { throw ExtensionError.protocolMismatch }
+            }
+            return response
         }
 
-        guard status == 0 else {
-            throw ExtensionError.helperCrashed(
-                status: status, stderr: stderr.trimmingCharacters(in: .whitespacesAndNewlines))
+        if policy.requireHandshake {
+            let hello = try exchange(.init(handler: ExtensionProtocol.hello))
+            guard hello.ok else { throw ExtensionError.protocolMismatch }
         }
-        let response: ExtensionProtocol.Response
-        do {
-            response = try ExtensionProtocol.decodeResponse(data)
-        } catch let e as ExtensionProtocol.MalformedResponse {
-            throw ExtensionError.malformedResponse(e.detail)
-        } catch {
-            throw ExtensionError.malformedResponse(String(describing: error))
-        }
-        guard response.ok else {
-            throw ExtensionError.handlerError(response.error ?? "The extension reported an error.")
-        }
-        return response.result ?? .null
+        let response = try exchange(
+            .init(handler: handler, arguments: arguments, context: context))
+        if response.ok { return response.result ?? .null }
+        if let failure = response.failure { throw ExtensionError.remoteFailure(failure) }
+        if policy.requireHandshake { throw ExtensionError.protocolMismatch }
+        throw ExtensionError.handlerError(response.error ?? "The extension reported an error.")
     }
 
     // MARK: - Validation
@@ -168,15 +282,35 @@ public enum ExtensionHost {
         }
         try nonEmpty(m.id, "id")
         // Reverse-DNS-ish: at least one dot, no path separators or spaces.
-        guard m.id.contains("."), !m.id.contains("/"), !m.id.contains(" ") else {
+        guard m.id.utf8.count <= 128,
+            m.id.split(separator: ".", omittingEmptySubsequences: false).count >= 2,
+            m.id.split(separator: ".", omittingEmptySubsequences: false).allSatisfy({ part in
+                !part.isEmpty
+                    && part.utf8.allSatisfy {
+                        (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0)
+                            || $0 == 45
+                    }
+            })
+        else {
             throw ExtensionError.invalidManifest("id must be a reverse-DNS identifier")
         }
         try nonEmpty(m.name, "name")
         try nonEmpty(m.version, "version")
+        let commands = m.contributes.commands
+        guard Set(commands.map(\.id)).count == commands.count,
+            commands.allSatisfy({
+                !$0.id.isEmpty && !$0.title.isEmpty && !$0.handler.isEmpty
+                    && $0.handler != ExtensionProtocol.hello
+            })
+        else {
+            throw ExtensionError.invalidManifest(
+                "Commands need unique IDs and non-reserved handlers.")
+        }
         try nonEmpty(m.executable, "executable")
         // The executable path must stay inside the bundle (no traversal, no absolute path).
         guard !m.executable.hasPrefix("/"), !m.executable.contains("..") else {
-            throw ExtensionError.invalidManifest("executable must be a relative path within the bundle")
+            throw ExtensionError.invalidManifest(
+                "executable must be a relative path within the bundle")
         }
     }
 
@@ -192,55 +326,4 @@ public enum ExtensionHost {
         return true
     }
 
-    // MARK: - Timeout
-
-    private struct TimedOut: Error {}
-
-    /// Race a body against a deadline. The body's own cancellation (RemoteRunner honors it)
-    /// tears down the helper process when the deadline wins.
-    private static func withTimeout<T: Sendable>(
-        _ timeout: Duration, _ body: @escaping @Sendable () async throws -> T
-    ) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask { try await body() }
-            group.addTask {
-                try await Task.sleep(for: timeout)
-                throw TimedOut()
-            }
-            defer { group.cancelAll() }
-            guard let first = try await group.next() else { throw TimedOut() }
-            return first
-        }
-    }
-}
-
-/// Reads the Team ID from a file's code signature via `codesign`, out-of-process. Returns
-/// nil for an unsigned or ad-hoc-signed file. Used to gate which helpers the host will run.
-enum CodeSignature {
-    static func teamID(of url: URL) -> String? {
-        guard
-            let (_, status, err) = try? runSyncCodesign(url), status == 0
-        else { return nil }
-        // codesign prints "TeamIdentifier=XXXXXXXXXX" (or "not set") to stderr with -dv.
-        for line in err.split(separator: "\n") where line.hasPrefix("TeamIdentifier=") {
-            let value = line.dropFirst("TeamIdentifier=".count).trimmingCharacters(in: .whitespaces)
-            return (value.isEmpty || value == "not set") ? nil : value
-        }
-        return nil
-    }
-
-    private static func runSyncCodesign(_ url: URL) throws -> (Data, Int32, String) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
-        process.arguments = ["-dv", "--verbose=2", url.path]
-        let out = Pipe()
-        let err = Pipe()
-        process.standardOutput = out
-        process.standardError = err
-        try process.run()
-        let errData = err.fileHandleForReading.readDataToEndOfFile()
-        let outData = out.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        return (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self))
-    }
 }

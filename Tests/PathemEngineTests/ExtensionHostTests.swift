@@ -1,15 +1,17 @@
+import Darwin
 import Foundation
 import Testing
 
 @testable import PathemEngine
 
-@Suite struct ExtensionHostTests {
+@Suite(.serialized) struct ExtensionHostTests {
     private let hostVersion = "0.8.0"
 
     /// Write an executable POSIX-sh helper into a bundle dir alongside a manifest pointing
     /// at it. Returns the bundle directory. Cleanup is the caller's (defer removeItem).
     private func makeBundle(
-        id: String = "com.scarcrux.pathem.test", script: String, executableName: String = "helper.sh"
+        id: String = "com.scarcrux.pathem.test", script: String,
+        executableName: String = "helper.sh"
     ) throws -> URL {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("pathem-ext-\(UUID().uuidString)")
@@ -69,7 +71,8 @@ import Testing
     }
 
     @Test func invokesHelperAndDecodesResult() async throws {
-        let dir = try makeBundle(script: "#!/bin/sh\nread l\nprintf '{\"ok\":true,\"result\":\"pong\"}\\n'\n")
+        let dir = try makeBundle(
+            script: "#!/bin/sh\nread l\nprintf '{\"ok\":true,\"result\":\"pong\"}\\n'\n")
         defer { try? FileManager.default.removeItem(at: dir) }
         let ext = try ExtensionHost.load(dir, hostVersion: hostVersion, policy: .development)
         let result = try await ExtensionHost.invoke(ext, handler: "ping", policy: .development)
@@ -77,7 +80,8 @@ import Testing
     }
 
     @Test func helperErrorSurfacesAsHandlerError() async throws {
-        let dir = try makeBundle(script: "#!/bin/sh\nread l\nprintf '{\"ok\":false,\"error\":\"nope\"}\\n'\n")
+        let dir = try makeBundle(
+            script: "#!/bin/sh\nread l\nprintf '{\"ok\":false,\"error\":\"nope\"}\\n'\n")
         defer { try? FileManager.default.removeItem(at: dir) }
         let ext = try ExtensionHost.load(dir, hostVersion: hostVersion, policy: .development)
         await #expect(throws: ExtensionHost.ExtensionError.handlerError("nope")) {
@@ -122,15 +126,137 @@ import Testing
         #expect(found.map(\.manifest.id) == ["com.a.ext", "com.z.ext"])  // sorted, broken skipped
     }
 
+    @Test func productionInvocationRequiresApprovalBeforeLaunch() async throws {
+        let directory = try makeBundle(script: "#!/bin/sh\nexit 99\n")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let ext = try ExtensionHost.load(directory, hostVersion: hostVersion, policy: .development)
+        await #expect(throws: ExtensionHost.ExtensionError.approvalRequired) {
+            try await ExtensionHost.invoke(ext, handler: "ping")
+        }
+    }
+
+    @Test func symlinkedExecutableIsRejected() throws {
+        let directory = try makeBundle(script: "#!/bin/sh\n")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let helper = directory.appendingPathComponent("helper.sh")
+        try FileManager.default.removeItem(at: helper)
+        try FileManager.default.createSymbolicLink(
+            at: helper, withDestinationURL: URL(fileURLWithPath: "/bin/true"))
+        #expect(throws: ExtensionHost.ExtensionError.executableMissing("helper.sh")) {
+            try ExtensionHost.load(directory, hostVersion: hostVersion, policy: .development)
+        }
+    }
+
+    @Test func signatureValidationRejectsTamperedCopy() throws {
+        let directory = try makeBundle(script: "#!/bin/sh\n")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let helper = directory.appendingPathComponent("signed")
+        try FileManager.default.copyItem(atPath: "/usr/bin/true", toPath: helper.path)
+        _ = try ExtensionSignature.verify(helper, requireDeveloperID: false)
+        var data = try Data(contentsOf: helper)
+        try #require(data.count > 4096)
+        data[4096] ^= 1
+        try data.write(to: helper)
+        #expect(throws: ExtensionHost.ExtensionError.invalidSignature) {
+            try ExtensionSignature.verify(helper, requireDeveloperID: false)
+        }
+    }
+
+    @Test func responsibilityProbeFailsClosedWithMissingSymbols() throws {
+        let launcher = try #require(ExtensionExecution.launcher)
+        #expect(!ExtensionExecution.probe(launcher, omitSymbols: true))
+        if ExtensionExecution.probe(launcher) {
+            let reply = try ExtensionExecution.run(
+                URL(fileURLWithPath: "/bin/cat"), directory: FileManager.default.temporaryDirectory,
+                input: Data("probe".utf8), timeout: .seconds(2), isolated: true)
+            #expect(reply == Data("probe".utf8))
+        }
+    }
+
+    @Test func mismatchedHelloRefusesToSendHandler() async throws {
+        let marker = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-extension-handler-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: marker) }
+        let directory = try makeBundle(
+            script: #"""
+                #!/bin/sh
+                read line
+                case "$line" in
+                  *"__hello"*) ;;
+                  *) /usr/bin/touch '\#(marker.path)' ;;
+                esac
+                request_id=$(printf '%s' "$line" | /usr/bin/sed -E 's/.*"requestID":"([^"]+)".*/\1/')
+                printf '{"ok":true,"protocolVersion":99,"capabilities":["commands"],"requestID":"%s"}\n' "$request_id"
+                """#)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let ext = try ExtensionHost.load(directory, hostVersion: hostVersion, policy: .development)
+        var policy = ExtensionHost.Policy.development
+        policy.testHandshake = true
+        await #expect(throws: ExtensionHost.ExtensionError.protocolMismatch) {
+            try await ExtensionHost.invoke(ext, handler: "ping", policy: policy)
+        }
+        #expect(!FileManager.default.fileExists(atPath: marker.path))
+    }
+
+    @Test func helperOutputCapsApplyToBothStreams() async throws {
+        for redirect in ["", " >&2"] {
+            let directory = try makeBundle(
+                script: "#!/bin/sh\n/usr/bin/yes overflow" + redirect + "\n")
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let ext = try ExtensionHost.load(
+                directory, hostVersion: hostVersion, policy: .development)
+            await #expect(throws: ExtensionHost.ExtensionError.outputLimit) {
+                try await ExtensionHost.invoke(ext, handler: "ping", policy: .development)
+            }
+        }
+    }
+
+    @Test func timeoutKillsGrandchildBeforeItCanWrite() async throws {
+        let marker = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-extension-grandchild-" + UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: marker) }
+        let directory = try makeBundle(
+            script: """
+                #!/bin/sh
+                ( /bin/sleep 1; /usr/bin/touch '\(marker.path)' ) &
+                wait
+                """)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let policy = ExtensionHost.Policy(requireSignature: false, timeout: .milliseconds(300))
+        let ext = try ExtensionHost.load(directory, hostVersion: hostVersion, policy: policy)
+        await #expect(throws: ExtensionHost.ExtensionError.timedOut) {
+            try await ExtensionHost.invoke(ext, handler: "ping", policy: policy)
+        }
+        try await Task.sleep(for: .seconds(1))
+        #expect(!FileManager.default.fileExists(atPath: marker.path))
+    }
+
+    @Test func helperGetsPrivateCWDAndNoInheritedDescriptor() async throws {
+        let fd = open("/dev/null", O_RDONLY | O_CLOEXEC)
+        try #require(fd >= 0)
+        defer { close(fd) }
+        let inherited = fcntl(fd, F_DUPFD, 100)
+        try #require(inherited >= 100)
+        defer { close(inherited) }
+        let directory = try makeBundle(
+            script: """
+                #!/bin/sh
+                [ "$(/bin/pwd -P)" = "$(cd "$HOME" && /bin/pwd -P)" ] || exit 2
+                [ -z "$TMPDIR" ] || exit 3
+                [ ! -e "/dev/fd/\(inherited)" ] || exit 4
+                [ "$(ulimit -t)" = 10 ] || exit 5
+                printf '{"ok":true,"result":"isolated"}\n'
+                """)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let ext = try ExtensionHost.load(directory, hostVersion: hostVersion, policy: .development)
+        let result = try await ExtensionHost.invoke(ext, handler: "ping", policy: .development)
+        #expect(result == .string("isolated"))
+    }
+
     /// End-to-end against the real reference Swift helper (pathem-ext-example), proving both
-    /// sides speak the same wire protocol. Skips cleanly if the build product isn't present.
+    /// sides speak the same wire protocol.
     @Test func realSwiftHelperSpeaksProtocol() async throws {
-        let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let built = ["debug", "release"]
-            .map { root.appendingPathComponent(".build/\($0)/pathem-ext-example") }
-            .first { FileManager.default.isExecutableFile(atPath: $0.path) }
-        guard let built else { return }  // helper not built in this configuration; skip
+        let built = try #require(ExtensionExecution.findExecutable("pathem-ext-example"))
 
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("pathem-ext-real-\(UUID().uuidString)")
@@ -138,7 +264,8 @@ import Testing
         defer { try? FileManager.default.removeItem(at: dir) }
         try FileManager.default.copyItem(at: built, to: dir.appendingPathComponent("helper"))
         let manifest = ExtensionManifest(
-            id: "com.scarcrux.pathem.example", name: "Example", version: "1.0.0", executable: "helper",
+            id: "com.scarcrux.pathem.example", name: "Example", version: "1.0.0",
+            executable: "helper",
             contributes: .init(commands: [
                 .init(id: "ping", title: "Ping", handler: "ping"),
                 .init(id: "wordCount", title: "Word Count", handler: "wordCount"),
@@ -146,13 +273,15 @@ import Testing
         try JSONEncoder().encode(manifest).write(to: dir.appendingPathComponent("manifest.json"))
 
         let ext = try ExtensionHost.load(dir, hostVersion: hostVersion, policy: .development)
-        let pong = try await ExtensionHost.invoke(ext, handler: "ping", policy: .development)
+        var policy = ExtensionHost.Policy.development
+        policy.testHandshake = true
+        let pong = try await ExtensionHost.invoke(ext, handler: "ping", policy: policy)
         #expect(pong == .string("pong"))
 
         let sample = dir.appendingPathComponent("sample.txt")
         try Data("one two three four".utf8).write(to: sample)
         let count = try await ExtensionHost.invoke(
-            ext, handler: "wordCount", arguments: ["path": .string(sample.path)], policy: .development)
+            ext, handler: "wordCount", arguments: ["path": .string(sample.path)], policy: policy)
         #expect(count == .number(4))
     }
 }

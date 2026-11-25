@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV (tabgescheiden)";
 "export.formatText" = "Platte tekst (uitgelijnde kolommen)";
 "export.formatHTML" = "HTML-tabel";
+
+"ext.approve" = "Goedkeuren";
+"ext.approved" = "Handtekening geverifieerd · Goedgekeurd";
+"ext.disable" = "Uitschakelen";
+"ext.empty" = "Geen extensies geïnstalleerd.";
+"ext.invalid" = "Ongeldige handtekening, ongeldig manifest of dubbele extensie-ID.";
+"ext.isolation" = "Geïsoleerd starten kon op deze macOS-versie niet worden geverifieerd. Extensies zijn uitgeschakeld.";
+"ext.noCommands" = "Geen opdrachten gedeclareerd.";
+"ext.optIn" = "Extensies vereisen PATHEM_ENABLE_EXTENSIONS=1.";
+"ext.pending" = "Handtekening geverifieerd · Goedkeuring vereist";
+"ext.settings" = "Extensies";

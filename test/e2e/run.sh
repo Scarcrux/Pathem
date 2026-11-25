@@ -253,6 +253,7 @@ if [[ $PACKAGED == 1 ]]; then
   assert "resource bundle present" test -d "$APP/Contents/Resources/Pathem_Pathem.bundle"
   assert "torrent daemon bundled" test -x "$APP/Contents/MacOS/pathem-torrentd"
   assert "AFC helper bundled"     test -x "$APP/Contents/MacOS/pathem-afc"
+  assert "extension launcher bundled" test -x "$APP/Contents/MacOS/pathem-ext-launch"
   assert "CLI bundled"            test -x "$APP/Contents/MacOS/pathem-cli"
   # Every language the app declares (CFBundleLocalizations) must ship a catalog; the count
   # is read from the plist so adding a language cannot leave this check stale.

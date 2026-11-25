@@ -63,7 +63,7 @@ archBinDirs=()  # per-arch bin dirs, so out-of-process helpers can be lipo'd acr
 frameworkBinDir=""
 # Out-of-process helpers bundled next to the app: the iOS-device (AFC) client and the
 # torrent daemon. Both keep risky parsing / network code out of the Full-Disk-Access process.
-helperNames=(pathem-afc pathem-torrentd pathem-cli)
+helperNames=(pathem-afc pathem-torrentd pathem-cli pathem-ext-launch)
 for arch in $ARCHS; do
 	echo "    building $arch"
 	swift build --build-system native -c "$CONFIG" --arch "$arch" --jobs "$SWIFT_BUILD_JOBS"

@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV（制表符分隔）";
 "export.formatText" = "纯文本（对齐列）";
 "export.formatHTML" = "HTML 表格";
+
+"ext.approve" = "批准";
+"ext.approved" = "签名已验证 · 已批准";
+"ext.disable" = "停用";
+"ext.empty" = "未安装扩展。";
+"ext.invalid" = "签名或清单无效，或扩展 ID 重复。";
+"ext.isolation" = "无法验证此 macOS 版本上的隔离启动。扩展已停用。";
+"ext.noCommands" = "未声明命令。";
+"ext.optIn" = "扩展需要 PATHEM_ENABLE_EXTENSIONS=1。";
+"ext.pending" = "签名已验证 · 需要批准";
+"ext.settings" = "扩展";

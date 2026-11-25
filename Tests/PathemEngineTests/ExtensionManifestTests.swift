@@ -11,7 +11,9 @@ import Testing
             contributes: .init(
                 commands: [.init(id: "zip", title: "Super Zip", handler: "doZip")],
                 columns: [.init(id: "ratio", title: "Ratio", handler: "ratio")],
-                viewers: [.init(id: "peek", title: "Peek", utis: ["public.zip-archive"], handler: "peek")],
+                viewers: [
+                    .init(id: "peek", title: "Peek", utis: ["public.zip-archive"], handler: "peek")
+                ],
                 menuItems: [.init(command: "zip", menu: "file")],
                 keybindings: [.init(command: "zip", chord: "cmd+shift+z")],
                 themes: [.init(id: "midnight", name: "Midnight", file: "themes/midnight.json")]))
@@ -74,6 +76,18 @@ import Testing
         }
     }
 
+    @Test func rejectsDeepAndOversizedProtocolInput() {
+        let deep = Data(
+            (String(repeating: "[", count: 33) + "0" + String(repeating: "]", count: 33)).utf8)
+        #expect(throws: ExtensionProtocol.MalformedResponse.self) {
+            try ExtensionProtocol.checkJSON(deep)
+        }
+        #expect(throws: ExtensionProtocol.MalformedResponse.self) {
+            try ExtensionProtocol.decodeResponse(
+                Data(repeating: 0x20, count: ExtensionProtocol.maximumBytes + 1))
+        }
+    }
+
     @Test func validationRejectsBadManifests() {
         func expectInvalid(_ m: ExtensionManifest) {
             #expect(throws: ExtensionHost.ExtensionError.self) { try ExtensionHost.validate(m) }
@@ -84,7 +98,8 @@ import Testing
         expectInvalid(.init(id: "com.a.b", name: "X", version: "1", executable: "../escape"))
         // A well-formed one passes.
         #expect(throws: Never.self) {
-            try ExtensionHost.validate(.init(id: "com.a.b", name: "X", version: "1", executable: "h"))
+            try ExtensionHost.validate(
+                .init(id: "com.a.b", name: "X", version: "1", executable: "h"))
         }
     }
 

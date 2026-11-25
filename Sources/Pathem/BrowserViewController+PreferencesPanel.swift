@@ -45,6 +45,7 @@ extension BrowserViewController {
         settings.onTrashRetentionChange = { [weak self] enabled in
             self?.trashRetention.setPreference(enabled)
         }
+        settings.onExtensionsChange = { [weak self] in self?.loadExtensionsIfEnabled() }
         settings.onThemePreview = { [weak self] preview in
             self?.renderThemePreview(preview)
         }

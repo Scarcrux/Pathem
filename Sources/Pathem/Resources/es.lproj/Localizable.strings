@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV (separado por tabuladores)";
 "export.formatText" = "Texto sin formato (columnas alineadas)";
 "export.formatHTML" = "Tabla HTML";
+
+"ext.approve" = "Aprobar";
+"ext.approved" = "Firma verificada · Aprobada";
+"ext.disable" = "Desactivar";
+"ext.empty" = "No hay extensiones instaladas.";
+"ext.invalid" = "Firma o manifiesto no válido, o ID duplicado.";
+"ext.isolation" = "No se pudo verificar el inicio aislado en esta versión de macOS. Las extensiones están desactivadas.";
+"ext.noCommands" = "No hay comandos declarados.";
+"ext.optIn" = "Las extensiones requieren PATHEM_ENABLE_EXTENSIONS=1.";
+"ext.pending" = "Firma verificada · Requiere aprobación";
+"ext.settings" = "Extensiones";

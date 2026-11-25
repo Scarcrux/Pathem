@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV (タブ区切り)";
 "export.formatText" = "テキスト (列を揃える)";
 "export.formatHTML" = "HTML の表";
+
+"ext.approve" = "承認";
+"ext.approved" = "署名確認済み · 承認済み";
+"ext.disable" = "無効にする";
+"ext.empty" = "機能拡張はインストールされていません。";
+"ext.invalid" = "署名またはマニフェストが無効か、ID が重複しています。";
+"ext.isolation" = "この macOS バージョンでは分離起動を確認できませんでした。機能拡張は無効です。";
+"ext.noCommands" = "宣言されたコマンドはありません。";
+"ext.optIn" = "機能拡張には PATHEM_ENABLE_EXTENSIONS=1 が必要です。";
+"ext.pending" = "署名確認済み · 承認が必要";
+"ext.settings" = "機能拡張";

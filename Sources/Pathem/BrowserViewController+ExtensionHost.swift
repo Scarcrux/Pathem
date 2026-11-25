@@ -8,36 +8,22 @@ import PathemEngine
 extension BrowserViewController {
     // MARK: - Extensions (out-of-process, off by default)
 
-    /// Load out-of-process Swift extensions and register their contributed commands on the
-    /// same command bus as everything else. This is the demand-gated seam (DESIGN.md Phase 6),
-    /// deliberately OFF unless `PATHEM_ENABLE_EXTENSIONS=1`: the FDA host never loads foreign
-    /// code in-process, and a shipping build exposes no extension surface until this is
-    /// intentionally turned on. Signatures are required unless `PATHEM_EXTENSIONS_UNSIGNED=1`
-    /// (local development only).
     func loadExtensionsIfEnabled() {
-        let env = ProcessInfo.processInfo.environment
-        // Off by default. Enable intentionally, either the env var (dev/CI) or a persistent
-        // opt-in that survives GUI launches (env vars don't reach a Dock/Finder-launched app):
-        //   defaults write com.scarcrux.pathem pathem.extensionsEnabled -bool YES
-        // Deliberately not a prominent Settings toggle: an FDA app must not normalize loading
-        // foreign code. Signatures stay required (production policy) unless PATHEM_EXTENSIONS_UNSIGNED.
-        let optedIn = env["PATHEM_ENABLE_EXTENSIONS"] == "1"
-            || UserDefaults.standard.bool(forKey: "pathem.extensionsEnabled")
-        guard optedIn else { return }
-        guard
-            let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-                .first?.appendingPathComponent("Pathem/Extensions"),
-            FileManager.default.fileExists(atPath: dir.path)
+        for command in commands.all where command.id.hasPrefix("ext.") {
+            commands.unregister(command.id)
+        }
+        guard AppExtensions.enabled, ExtensionHost.isolationAvailable,
+            let dir = AppExtensions.directory
         else { return }
-        let hostVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
-        let policy: ExtensionHost.Policy =
-            env["PATHEM_EXTENSIONS_UNSIGNED"] == "1" ? .development : .production
-        for ext in ExtensionHost.discover(in: dir, hostVersion: hostVersion, policy: policy) {
+        let approvals = AppExtensions.approvals()
+        for ext in ExtensionHost.discover(in: dir, hostVersion: AppExtensions.hostVersion) {
+            guard approvals[ext.manifest.id]?.matches(ext) == true else { continue }
             for cmd in ext.manifest.contributes.commands {
-                let title = String(format: L("ext.cmdTitle", "%@: %@"), ext.manifest.name, cmd.title)
+                let title = String(
+                    format: L("ext.cmdTitle", "%@: %@"), ext.manifest.name, cmd.title)
                 commands.register(
                     .init(id: "ext.\(ext.manifest.id).\(cmd.id)", title: title) { [weak self] in
-                        self?.runExtensionCommand(ext, handler: cmd.handler, title: title, policy: policy)
+                        self?.runExtensionCommand(ext, handler: cmd.handler, title: title)
                     })
             }
         }
@@ -47,7 +33,7 @@ extension BrowserViewController {
     /// its result (or error) in a simple alert. A crash, hang, or error in the helper is
     /// isolated by `ExtensionHost` and never touches the host process.
     private func runExtensionCommand(
-        _ ext: LoadedExtension, handler: String, title: String, policy: ExtensionHost.Policy
+        _ ext: LoadedExtension, handler: String, title: String
     ) {
         let context = ExtensionProtocol.Context(
             folder: activePane?.currentURL.path,
@@ -55,7 +41,8 @@ extension BrowserViewController {
         Task { @MainActor in
             do {
                 let result = try await ExtensionHost.invoke(
-                    ext, handler: handler, context: context, policy: policy)
+                    ext, handler: handler, context: context,
+                    approval: AppExtensions.approvals()[ext.manifest.id])
                 self.presentInfo(title, Self.describe(result))
             } catch {
                 self.presentInfo(L("ext.failed", "Extension error"), "\(error)")
@@ -69,7 +56,7 @@ extension BrowserViewController {
         case .null: return L("ext.noResult", "Done.")
         case .string(let s): return s
         case .bool(let b): return b ? "true" : "false"
-        case .number(let n): return n == n.rounded() ? String(Int(n)) : String(n)
+        case .number(let n): return Int(exactly: n).map(String.init) ?? String(n)
         case .array, .object:
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

@@ -4,7 +4,7 @@ import PathemEngine
 // A reference Pathem extension helper. It reads ONE JSON request line from stdin, dispatches
 // on the handler name, and writes ONE JSON response line to stdout, then exits. This is the
 // exact shape a real out-of-process Swift extension takes (DESIGN.md: line-delimited JSON
-// over stdio, crash-isolated, inheriting none of the host's grants). It shares the wire
+// over stdio). It shares the wire
 // types with the host by importing PathemEngine, so both sides encode/decode identically.
 //
 // The paired manifest.json declares these handlers as contributed commands/columns:
@@ -19,7 +19,7 @@ func respond(_ response: ExtensionProtocol.Response) -> Never {
         FileHandle.standardOutput.write(data)
         FileHandle.standardOutput.write(Data("\n".utf8))
     }
-    exit(response.ok ? 0 : 0)  // a handler-level error is still a clean exit; ok=false carries it
+    exit(0)  // The reply carries handler errors.
 }
 
 func handle(_ request: ExtensionProtocol.Request) -> ExtensionProtocol.Response {
@@ -49,7 +49,12 @@ guard let line = readLine(strippingNewline: true), let data = line.data(using: .
 }
 do {
     let request = try JSONDecoder().decode(ExtensionProtocol.Request.self, from: data)
-    respond(handle(request))
+    guard request.protocolVersion == ExtensionProtocol.version else {
+        respond(.failure("Unsupported protocol version").replying(to: request))
+    }
+    let reply: ExtensionProtocol.Response =
+        request.handler == ExtensionProtocol.hello ? .success() : handle(request)
+    respond(reply.replying(to: request))
 } catch {
     FileHandle.standardError.write(Data("bad request: \(error)\n".utf8))
     exit(1)

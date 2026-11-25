@@ -2009,3 +2009,14 @@
 "export.formatTSV" = "TSV (separato da tabulazioni)";
 "export.formatText" = "Testo semplice (colonne allineate)";
 "export.formatHTML" = "Tabella HTML";
+
+"ext.approve" = "Approva";
+"ext.approved" = "Firma verificata · Approvata";
+"ext.disable" = "Disabilita";
+"ext.empty" = "Nessuna estensione installata.";
+"ext.invalid" = "Firma o manifest non valido, oppure ID duplicato.";
+"ext.isolation" = "Impossibile verificare l’avvio isolato su questa versione di macOS. Le estensioni sono disabilitate.";
+"ext.noCommands" = "Nessun comando dichiarato.";
+"ext.optIn" = "Le estensioni richiedono PATHEM_ENABLE_EXTENSIONS=1.";
+"ext.pending" = "Firma verificata · Approvazione richiesta";
+"ext.settings" = "Estensioni";

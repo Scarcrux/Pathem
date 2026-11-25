@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
         case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts,
-            gestures, integrations, updates
+            gestures, integrations, extensions, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
@@ -25,6 +25,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .shortcuts: return L("settings.shortcuts", "Shortcuts")
             case .gestures: return L("settings.gestures", "Gestures")
             case .integrations: return L("settings.integrations", "Integrations")
+            case .extensions: return L("ext.settings", "Extensions")
             case .updates: return L("settings.updates", "Updates")
             }
         }
@@ -41,10 +42,15 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .shortcuts: return "keyboard"
             case .gestures: return "hand.draw"
             case .integrations: return "app.connected.to.app.below.fill"
+            case .extensions: return "puzzlepiece.extension"
             case .updates: return "arrow.down.circle"
             }
         }
         var itemID: NSToolbarItem.Identifier { .init("settings.\(rawValue)") }
+    }
+
+    private static var availablePanes: [Pane] {
+        Pane.allCases.filter { $0 != .extensions || AppExtensions.enabled }
     }
 
     private let window: NSWindow
@@ -52,6 +58,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     let rootView = NSView()
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
+    var onExtensionsChange: (() -> Void)?
     var onThemePreview: ((ThemePreset?) -> Void)?
     var onImportedTerminalPalette: ((ExternalThemeImport.TerminalPalette) -> Void)?
     var onTrashRetentionChange: ((Bool) -> Void)?
@@ -142,7 +149,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         ])
         window.contentView = root
         sidebar.setItems(
-            Pane.allCases.map { .init(key: $0.rawValue, title: $0.title, symbol: $0.symbol) })
+            Self.availablePanes.map { .init(key: $0.rawValue, title: $0.title, symbol: $0.symbol) })
     }
 
     /// Show the window, populated with current state.
@@ -224,7 +231,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func buildAllPanesAndIndex() {
         paneViews = [:]
         paneSearchText = [:]
-        for pane in Pane.allCases {
+        for pane in Self.availablePanes {
             let view = build(pane)
             paneViews[pane] = view
             paneSearchText[pane] = (pane.title + " " + Self.searchableText(in: view)).lowercased()
@@ -435,6 +442,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case .shortcuts: return shortcutsPane()
         case .gestures: return gesturesPane()
         case .integrations: return integrationsPane()
+        case .extensions:
+            return form([ExtensionSettings { [weak self] in self?.onExtensionsChange?() }])
         case .updates: return updatesPane()
         }
     }
@@ -2125,7 +2134,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 }
             }
         }
-        for pane in Pane.allCases {
+        for pane in Self.availablePanes {
             let view = build(pane)
             view.layoutSubtreeIfNeeded()
             let size = view.fittingSize

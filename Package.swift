@@ -26,10 +26,15 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.3"),
     ],
     targets: [
+        .target(name: "PathemExtensionRuntime"),
+        .executableTarget(name: "pathem-ext-launch"),
         // The engine: enumeration, watching, file ops, search. No AppKit.
         .target(
             name: "PathemEngine",
-            dependencies: [.product(name: "GestureSupport", package: "GestureSupport")]),
+            dependencies: [
+                "PathemExtensionRuntime",
+                .product(name: "GestureSupport", package: "GestureSupport"),
+            ]),
 
         // AppRelaunch: the shared stale-build watcher (notices when a newer bundle is installed
         // under the running process and offers a relaunch). Vendored in-tree as a local target

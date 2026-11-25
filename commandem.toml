@@ -2803,4 +2803,15 @@ missions = ["m-1331afb7", "m-b2532fac"]
   status = "done"
   note = "Trigger: the in-app Themes window listed themes as one popup row each, so 16 or more themes could not be compared visually. Change: the popup is replaced by a card grid (first screenshot, title, creator, Light or Dark badge, background and accent swatches) beside the existing detail and actions, with an All / Light / Dark filter that reads the theme package rather than tags and combines with search in Browse and Installed. Thumbnails decode lazily for cards near the visible area, capped at 400 pixels. Evidence: a failing-first engine test for appearance x search with a control (a dark package tagged light), the full engine suite, the existing gallery smoke phases, and offscreen renders in light and dark from a loopback copy of the seed catalog (9 of 16 thumbnails decoded on open). Not verified: VoiceOver, arrow keys and mouse selection on a live window, and the translations by a native reader."
   issue = 0
+
+[[mission]]
+  id = "m-b29889ca"
+  title = "Extension SDK phase 1 private hardening"
+  status = "now"
+  note = "The signed macOS 15 VM test proved plain child processes inherit Pathem’s Full Disk Access attribution. Phase 1 gates third-party helpers on an attribution self-test, verified and approved code identity, bounded process execution, and an explicit protocol handshake. Keep the opt-in gate and require XPC before the public SDK."
+  issue = 0
+
+  [[mission.comment]]
+    text = "Focused verification passed 27 Swift tests. A native post-exec control reported inherited responsibility for the plain child and self responsibility for the disclaimed child. Missing symbols, signed-binary tampering, symlinks, protocol mismatch, output saturation, and grandchild cleanup were covered. An offscreen Settings render showed approval and removal controls for a verified signed fixture. Protected-file behavior of this packaged implementation still needs an independent SIP-enabled VM replay."
+    at = "2026-11-25T12:05:33Z"
 # <<< commandem roadmap <<<
