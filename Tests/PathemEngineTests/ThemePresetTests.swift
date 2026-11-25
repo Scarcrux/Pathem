@@ -8,12 +8,18 @@ import Testing
     @Test func shippedNamesStillExist() {
         let names = Set(ThemePreset.presets.map(\.name))
         for name in [
-            "System", "Graphite", "Midnight", "Solarized", "Nord", "Dracula", "Rose", "Forest",
+            "System", "Graphite", "Midnight", "Solarized", "Nord", "Rose", "Forest",
             "Sand", "High Contrast",
         ] {
             #expect(names.contains(name), "\(name) was removed")
         }
         #expect(names.count == ThemePreset.presets.count, "duplicate theme names")
+    }
+
+    /// The built-in Dracula was retired (the name now belongs to a community catalog theme).
+    @Test func retiredNamesAreNotBuiltIn() {
+        #expect(!ThemePreset.presets.contains { $0.name == "Dracula" })
+        #expect(ThemePreset.presets.count == 22)
     }
 
     /// The menus label each theme light or dark from its appearance; the background must agree,

@@ -50,7 +50,8 @@ public struct ThemePreset: Codable, Sendable, Equatable {
     /// Built-in skins, grouped: those that follow the system appearance, then light, then dark.
     /// "System" restores the stock look (system accent, no tint, system appearance). Names are
     /// stored in preferences, so existing names never change. The added palettes follow
-    /// well-known open-source color schemes (their published background and accent colors).
+    /// well-known open-source color schemes (their published background and accent colors);
+    /// their licenses are reproduced in THIRD_PARTY_NOTICES.md.
     public static let presets: [ThemePreset] = [
         system,
         .init(
@@ -99,9 +100,6 @@ public struct ThemePreset: Codable, Sendable, Equatable {
             name: "Nord", appearance: .dark, accentHex: "#88C0D0", backgroundHex: "#2E3440",
             styles: .init(.slate, .outline, .fine)),
         .init(
-            name: "Dracula", appearance: .dark, accentHex: "#BD93F9", backgroundHex: "#282A36",
-            styles: .init(.plum, .vivid, .circled)),
-        .init(
             name: "Catppuccin Mocha", appearance: .dark, accentHex: "#CBA6F7",
             backgroundHex: "#1E1E2E",
             styles: .init(.plum, .twoTone, .rounded)),
@@ -140,6 +138,19 @@ public struct ThemePreset: Codable, Sendable, Equatable {
                     .map { (index: $0.offset, preset: $0.element) }
             )
         }
+    }
+
+    /// Whether these stored values are the built-in "Dracula" that shipped through 0.9.x and was
+    /// then retired (the name now belongs to a community catalog theme). Preferences keep the
+    /// palette and styles by value, so the look survives; the caller clears only the name, which
+    /// leaves the unnamed custom state. A community theme, or an imported theme with other
+    /// colors, is not the retired preset and keeps its name.
+    public static func isRetiredBuiltIn(
+        name: String, accentHex: String, backgroundHex: String, isCommunityTheme: Bool
+    ) -> Bool {
+        name == "Dracula" && !isCommunityTheme
+            && accentHex.caseInsensitiveCompare("#BD93F9") == .orderedSame
+            && backgroundHex.caseInsensitiveCompare("#282A36") == .orderedSame
     }
 
     /// The preset matching the supplied palette and, when supplied, bundled styles.

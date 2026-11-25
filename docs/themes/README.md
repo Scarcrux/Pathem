@@ -25,7 +25,7 @@ The preview identifies the destination and shows a color swatch. Apply saves the
 
 ## Complete looks
 
-Pathem bundles 23 themes. Each supplies a palette, a folder style, a file icon set, and a toolbar glyph style. In **Settings → Appearance**, choose a skin to preview it. The three style pickers each offer ten choices plus **Use Theme**. **System** explicitly selects macOS folder or file icons, or Pathem’s standard toolbar glyphs. Choose **Use Theme** to clear that picker’s override. Changing the skin or resetting it keeps explicit style overrides, including file icon choices saved by earlier versions.
+Pathem bundles 22 themes. Each supplies a palette, a folder style, a file icon set, and a toolbar glyph style. In **Settings → Appearance**, choose a skin to preview it. The three style pickers each offer ten choices plus **Use Theme**. **System** explicitly selects macOS folder or file icons, or Pathem’s standard toolbar glyphs. Choose **Use Theme** to clear that picker’s override. Changing the skin or resetting it keeps explicit style overrides, including file icon choices saved by earlier versions.
 
 Export now writes a v2 package. It uses the v1 palette fields and requires three additional string fields. For example, Harbor ships these values.
 

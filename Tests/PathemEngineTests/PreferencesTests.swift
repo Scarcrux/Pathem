@@ -17,6 +17,52 @@ import Testing
         #expect(decoded.iconSetName == "System")
     }
 
+    /// A preferences file written while the retired built-in Dracula was applied. The palette
+    /// and styles are stored by value, so they must decode unchanged; only the name is dropped,
+    /// leaving the unnamed custom state instead of pointing at a preset that no longer exists.
+    @Test func retiredDraculaSelectionBecomesCustomWithTheSameLook() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let older = #"""
+            {"themeName":"Dracula","appearance":"dark","accentColorHex":"#BD93F9",
+             "windowTintHex":"#282A36","iconSetName":"",
+             "themeStyles":{"folder":"Plum","fileIcons":"Vivid","toolbar":"Circled"}}
+            """#
+        try Data(older.utf8).write(to: file)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: Data(contentsOf: file))
+
+        #expect(decoded.appearance == .dark)
+        #expect(decoded.accentColorHex == "#BD93F9")
+        #expect(decoded.windowTintHex == "#282A36")
+        #expect(decoded.themeStyles == ThemeStyles(.plum, .vivid, .circled))
+        #expect(decoded.effectiveThemeStyles == ThemeStyles(.plum, .vivid, .circled))
+        #expect(decoded.communityTheme == nil)
+        #expect(decoded.themeName.isEmpty, "still names the retired preset")
+        #expect(!ThemePreset.presets.contains { $0.name == decoded.themeName })
+        // Not a silent fallback to System, and not remapped onto another built-in.
+        #expect(ThemePreset(preferences: decoded) != .system)
+        #expect(
+            ThemePreset.matching(
+                accentHex: decoded.accentColorHex, backgroundHex: decoded.windowTintHex,
+                appearance: decoded.appearance) == nil)
+
+        // The migrated state is stable across a save and reload.
+        let again = try JSONDecoder().decode(
+            Preferences.self, from: JSONEncoder().encode(decoded))
+        #expect(again == decoded)
+    }
+
+    /// A theme the user imported or installed under the same name is theirs and keeps its name.
+    @Test func otherThemesNamedDraculaKeepTheirName() throws {
+        let imported = #"""
+            {"themeName":"Dracula","appearance":"dark","accentColorHex":"#FF79C6",
+             "windowTintHex":"#21222C"}
+            """#
+        let decoded = try JSONDecoder().decode(Preferences.self, from: Data(imported.utf8))
+        #expect(decoded.themeName == "Dracula")
+        #expect(decoded.accentColorHex == "#FF79C6")
+    }
+
     @Test func defaultsAreSensible() {
         let prefs = Preferences.default
         #expect(prefs.density == .comfortable)

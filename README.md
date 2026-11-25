@@ -111,7 +111,7 @@ Nearly every surface is customizable, in the spirit of Directory Opus:
 - **The right-click menu** is a drag-to-reorder editor (uncheck to hide, reset to
   default), and the **toolbar** takes any command, including your own external
   commands.
-- **Themes** restyle the whole window: 23 built-in looks, your own colors, import
+- **Themes** restyle the whole window: 22 built-in looks, your own colors, import
   from a VS Code theme or an iTerm2 color preset, a community gallery to browse and
   install from, and a form for submitting your own. See the
   [Themes guide](https://pathem.app/docs/themes/).

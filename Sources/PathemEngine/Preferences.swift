@@ -450,6 +450,13 @@ public struct Preferences: Codable, Sendable, Equatable {
             ThemeStyles.Toolbar.self, forKey: .toolbarStyleOverride)
         themeArtwork = try? c.decodeIfPresent(ThemeArtwork.self, forKey: .themeArtwork)
         themeStyles = try c.decodeIfPresent(ThemeStyles.self, forKey: .themeStyles) ?? .system
+        // A retired built-in keeps its stored colors and styles and becomes an unnamed custom theme.
+        if ThemePreset.isRetiredBuiltIn(
+            name: themeName, accentHex: accentColorHex, backgroundHex: windowTintHex,
+            isCommunityTheme: communityTheme != nil)
+        {
+            themeName = ""
+        }
     }
 }
 

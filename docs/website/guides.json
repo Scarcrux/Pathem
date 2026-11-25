@@ -1498,7 +1498,7 @@
                     "id": "built-in",
                     "title": "Pick a built-in theme",
                     "steps": [
-                        "Open Settings > Appearance. The Skin menu lists the 23 built-in themes under Follow System, Light Themes, and Dark Themes.",
+                        "Open Settings > Appearance. The Skin menu lists the 22 built-in themes under Follow System, Light Themes, and Dark Themes.",
                         "Choose a skin. Pathem shows it on the window right away and opens Theme Preview. Choose Apply to keep it or Cancel to return to the look you had.",
                         "Adjust single values if you want to. Accent color and Window tint change the two theme colors, and None clears the window tint. Appearance switches between System, Light, and Dark.",
                         "Each theme also brings a folder style, a file icon set, and toolbar glyphs. Use the Folder style, File icons, and Toolbar glyphs menus to override any of them. Choose Use Theme in a menu to go back to what the theme supplies.",

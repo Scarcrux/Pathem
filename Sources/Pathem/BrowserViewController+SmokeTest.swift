@@ -1977,17 +1977,17 @@ extension BrowserViewController {
         try? FileManager.default.removeItem(at: iconDir)
         // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
         // running window keeps its configured skin).
-        let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
+        let parsedAccent = ThemeManager.color(fromHex: "#88C0D0")
         let emptyParse = ThemeManager.color(fromHex: "")
         let presetName = ThemePreset.matching(
-            accentHex: "#BD93F9", backgroundHex: "#282A36", appearance: .dark)?.name
+            accentHex: "#88C0D0", backgroundHex: "#2E3440", appearance: .dark)?.name
         ThemeManager.shared.apply(accentHex: "#FF0000", windowTintHex: "")
         let accentApplied = ThemeManager.shared.customAccent != nil
         ThemeManager.shared.apply(
             accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)  // restore
         check(
             "skinning-applies",
-            parsedAccent != nil && emptyParse == nil && presetName == "Dracula" && accentApplied,
+            parsedAccent != nil && emptyParse == nil && presetName == "Nord" && accentApplied,
             "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)"
         )
         check("theme-preserves-custom-toolbar", smokeThemePreservesCustomToolbar(), "")
