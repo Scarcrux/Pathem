@@ -96,8 +96,10 @@ verify_app() {
 	fi
 	local notices="$app/Contents/Resources/THIRD_PARTY_NOTICES.md"
 	if [[ -f "$notices" ]] && grep -q "SwiftTerm" "$notices" && grep -q "Sparkle" "$notices" \
-		&& [[ -f "$app/Contents/Resources/Credits.html" ]]; then
-		pass "A11 third-party notices bundled (SwiftTerm, Sparkle, About credits)"
+		&& grep -q "^## Theme palettes" "$notices" \
+		&& [[ -f "$app/Contents/Resources/Credits.html" ]] \
+		&& grep -q "Theme palettes" "$app/Contents/Resources/Credits.html"; then
+		pass "A11 third-party notices bundled (SwiftTerm, Sparkle, theme palettes, About credits)"
 	else
 		fail "A11 third-party notices missing from the app"
 	fi

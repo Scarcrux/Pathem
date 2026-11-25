@@ -39,8 +39,8 @@ Artifact verification. Before any upload, the built app and DMG must pass
   Without it the hardened runtime denies PhotoKit with no prompt (verified 2026-11-17 with a
   Developer ID signed probe: not determined to denied in 0.01 s; with the entitlement the
   prompt appeared and access was granted).
-- A11 `Contents/Resources` holds `THIRD_PARTY_NOTICES.md` (SwiftTerm and Sparkle) and the
-  `Credits.html` the About window shows. Controls: the installed 3c65e5a build fails both A10
+- A11 `Contents/Resources` holds `THIRD_PARTY_NOTICES.md` (SwiftTerm, Sparkle and the theme
+  palettes section) and the `Credits.html` the About window shows, generated from it. Controls: the installed 3c65e5a build fails both A10
   and A11; a fresh `package.sh` build passes both.
 - A7 The DMG's EdDSA signature verifies against the `SUPublicEDKey` inside the built app
   (not just the source plist), so installed copies can accept the update.
