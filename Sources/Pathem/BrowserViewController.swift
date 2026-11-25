@@ -83,6 +83,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Each pane's last-seen local folder, so a navigation's relative delta can be
     /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
     var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
+    /// Follow paired folders (per window): navigating in one pane takes the other pane to the
+    /// matching folder of its pair. See BrowserViewController+PairedFolders.
+    var followPairedFolders = false
+    /// The folder each pane was last seen at, so pairing reacts to real navigation only.
+    var pairedLastFolder: [ObjectIdentifier: String] = [:]
     let splitLayout = BrowserSplitLayoutController()
     var split: NSSplitView { splitLayout.split }
     var panesContainer: NSView { splitLayout.panesContainer }

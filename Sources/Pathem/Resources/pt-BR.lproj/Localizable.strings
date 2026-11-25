@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "Encontrar nomes semelhantes";
 "bvc.cmd.flatView" = "Visualização plana";
 "bvc.cmd.flattenFolder" = "Achatar pasta (mostrar todos os itens)";
+"bvc.cmd.followPairedFolder" = "Seguir pasta pareada";
 "bvc.cmd.forward" = "Avançar";
 "bvc.cmd.getInfo" = "Obter informações";
 "bvc.cmd.gitCommit" = "Commit…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "Abrir espaço de trabalho…";
 "bvc.cmd.organize" = "Organizar pasta…";
 "bvc.cmd.organizeWithAI" = "Organizar com IA…";
+"bvc.cmd.pairTheseFolders" = "Parear estas pastas";
 "bvc.cmd.paste" = "Colar";
 "bvc.cmd.pasteOtherPane" = "Colar no outro painel";
 "bvc.cmd.peekArchive" = "Mostrar conteúdo do arquivo compactado";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "Girar para a esquerda";
 "bvc.cmd.rotateRight" = "Girar para a direita";
 "bvc.cmd.runShortcut" = "Executar atalho na seleção…";
+"bvc.cmd.sameFolderOtherPane" = "Ir para a mesma pasta no outro painel";
 "bvc.cmd.saveLayout" = "Salvar layout…";
 "bvc.cmd.saveStyle" = "Salvar estilo…";
 "bvc.cmd.saveTabGroup" = "Salvar abas como grupo…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "Voltar";
 "menu.nav.editPath" = "Ir para o caminho…";
 "menu.nav.forward" = "Avançar";
+"menu.nav.sameFolderOtherPane" = "Ir para a mesma pasta no outro painel";
 "menu.nav.up" = "Pasta superior";
 "menu.noEditors" = "Nenhum editor encontrado";
 "menu.noRecentFolders" = "Nenhuma pasta recente";
 "menu.openIn" = "Abrir em…";
+"menu.pairs.follow" = "Seguir pasta pareada";
+"menu.pairs.pairThese" = "Parear estas pastas";
 "menu.palette.show" = "Paleta de comandos…";
 "menu.paste" = "Colar";
 "menu.quit" = "Encerrar Pathem";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "Tema";
 "overflow.themeSettings" = "Ajustes de tema…";
 "overflow.tooltip" = "Opções e tema";
+"pairs.alreadyPaired" = "Estas pastas já estão pareadas";
+"pairs.followOff" = "Pastas pareadas não são mais seguidas";
+"pairs.followOn" = "Seguindo pastas pareadas";
+"pairs.indicatorFollowing" = "Seguindo pasta pareada";
+"pairs.indicatorNoMatch" = "Nenhuma pasta correspondente no painel pareado";
+"pairs.noMatch" = "Nenhuma pasta correspondente no outro painel";
+"pairs.paired" = "Pastas pareadas";
 "palette.runCommandTitle" = "Barra de comandos";
 "palette.searchFor" = "Buscar por “%@”";
 "pane.actionsTooltip" = "Ações";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "Médio";
 "prefs.folderStyleLabel" = "Estilo das pastas";
 "prefs.iconSetLabel" = "Ícones de arquivo";
+"prefs.pairedAdd" = "Parear estas pastas";
+"prefs.pairedFoldersHint" = "Pareie uma pasta da esquerda com uma da direita. Com «Seguir pasta pareada» ativado (Visualizar > Mostrar), entrar em uma subpasta ou subir em um painel leva o outro ao mesmo lugar.";
+"prefs.pairedFoldersLabel" = "Pastas pareadas";
+"prefs.pairedRemove" = "Remover pareamento";
 "prefs.themePrepareSubmission" = "Enviar um tema…";
 "prefs.themes" = "Temas";
 "prefs.toolbarStyleLabel" = "Ícones da barra de ferramentas";

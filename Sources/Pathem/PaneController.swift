@@ -429,6 +429,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// A small eye button on the status row that shows/hides hidden files for this pane, like Finder's
     /// Cmd-Shift-period but always visible.
     private let hiddenToggle = NSButton()
+    /// A small link marker in the status row while "Follow Paired Folder" is on.
+    private let pairIndicator = NSImageView()
+    enum PairIndicator { case hidden, following, noMatch }
     /// Whether hidden files are currently shown in this pane (the per-folder view or the global
     /// default), for the eye toggle's icon.
     /// Whether dotfiles are listed: the folder's explicit eye-toggle decision wins; otherwise the
@@ -1882,7 +1885,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let statusSpacer = NSView()
         statusSpacer.translatesAutoresizingMaskIntoConstraints = false
         statusSpacer.setContentHuggingPriority(.init(1), for: .horizontal)  // expands to push the eye right
-        let statusRow = NSStackView(views: [statusLabel, statusSpacer, hiddenToggle])
+        pairIndicator.translatesAutoresizingMaskIntoConstraints = false
+        pairIndicator.symbolConfiguration = .init(pointSize: 11, weight: .regular)
+        pairIndicator.isHidden = true
+        pairIndicator.setContentHuggingPriority(.required, for: .horizontal)
+        let statusRow = NSStackView(views: [statusLabel, statusSpacer, pairIndicator, hiddenToggle])
         statusRow.orientation = .horizontal
         statusRow.spacing = 6
         statusRow.alignment = .centerY
@@ -2403,6 +2410,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     private var flashToken = 0
+
+    /// Show the paired-folder marker: linked (following), or a warning tint when the other pane
+    /// has no matching folder. Hidden when following is off.
+    func setPairIndicator(_ state: PairIndicator) {
+        pairIndicator.isHidden = state == .hidden
+        let label =
+            state == .noMatch
+            ? L("pairs.indicatorNoMatch", "No matching folder in the paired pane")
+            : L("pairs.indicatorFollowing", "Following paired folder")
+        pairIndicator.image = NSImage(systemSymbolName: "link", accessibilityDescription: label)
+        pairIndicator.contentTintColor =
+            state == .noMatch ? .systemOrange : .tertiaryLabelColor
+        pairIndicator.toolTip = label
+        pairIndicator.setAccessibilityLabel(label)
+    }
 
     /// Briefly show a transient message in the status line -- a "Copied 3 paths" confirmation, or a
     /// soft failure reason -- then revert to the normal item-count status. This is the app's toast

@@ -40,6 +40,7 @@ extension BrowserViewController {
             // and the drawer is open (changeDirectory itself ignores TUIs).
             if terminalFollows, !terminal.view.isHidden { terminal.changeDirectory(to: url) }
             mirrorNavigationIfSyncing(to: url)
+            followPairedFolderIfNeeded(pane: pane, url: url)
         }
         saveSessionSoon()
     }

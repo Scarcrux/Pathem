@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "尋找相似名稱";
 "bvc.cmd.flatView" = "平面檢視";
 "bvc.cmd.flattenFolder" = "攤平檔案夾（顯示所有項目）";
+"bvc.cmd.followPairedFolder" = "跟隨配對資料夾";
 "bvc.cmd.forward" = "前進";
 "bvc.cmd.getInfo" = "取得資訊";
 "bvc.cmd.gitCommit" = "提交…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "打開工作區…";
 "bvc.cmd.organize" = "整理檔案夾…";
 "bvc.cmd.organizeWithAI" = "使用 AI 整理…";
+"bvc.cmd.pairTheseFolders" = "配對這些資料夾";
 "bvc.cmd.paste" = "貼上";
 "bvc.cmd.pasteOtherPane" = "貼到另一個面板";
 "bvc.cmd.peekArchive" = "顯示封存檔內容";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "向左旋轉";
 "bvc.cmd.rotateRight" = "向右旋轉";
 "bvc.cmd.runShortcut" = "對所選項目執行捷徑…";
+"bvc.cmd.sameFolderOtherPane" = "在另一個窗格中前往相同資料夾";
 "bvc.cmd.saveLayout" = "儲存版面配置…";
 "bvc.cmd.saveStyle" = "儲存樣式…";
 "bvc.cmd.saveTabGroup" = "將標籤頁儲存為群組…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "返回";
 "menu.nav.editPath" = "前往路徑…";
 "menu.nav.forward" = "前進";
+"menu.nav.sameFolderOtherPane" = "在另一個窗格中前往相同資料夾";
 "menu.nav.up" = "上層檔案夾";
 "menu.noEditors" = "找不到編輯器";
 "menu.noRecentFolders" = "沒有最近使用的檔案夾";
 "menu.openIn" = "打開方式…";
+"menu.pairs.follow" = "跟隨配對資料夾";
+"menu.pairs.pairThese" = "配對這些資料夾";
 "menu.palette.show" = "指令面板…";
 "menu.paste" = "貼上";
 "menu.quit" = "結束 Pathem";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "主題";
 "overflow.themeSettings" = "主題設定…";
 "overflow.tooltip" = "選項與主題";
+"pairs.alreadyPaired" = "這些資料夾已配對";
+"pairs.followOff" = "已停止跟隨配對資料夾";
+"pairs.followOn" = "正在跟隨配對資料夾";
+"pairs.indicatorFollowing" = "正在跟隨配對資料夾";
+"pairs.indicatorNoMatch" = "配對窗格中沒有對應的資料夾";
+"pairs.noMatch" = "另一個窗格中沒有對應的資料夾";
+"pairs.paired" = "已配對這些資料夾";
 "palette.runCommandTitle" = "指令列";
 "palette.searchFor" = "搜尋「%@」";
 "pane.actionsTooltip" = "動作";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "資料夾樣式";
 "prefs.iconSetLabel" = "檔案圖像";
+"prefs.pairedAdd" = "配對這些資料夾";
+"prefs.pairedFoldersHint" = "將左側資料夾與右側資料夾配對。開啟「跟隨配對資料夾」（顯示 > 顯示）後，在一個窗格中進入子資料夾或返回上一層，另一個窗格會前往相同位置。";
+"prefs.pairedFoldersLabel" = "配對資料夾";
+"prefs.pairedRemove" = "移除配對";
 "prefs.themePrepareSubmission" = "提交主題…";
 "prefs.themes" = "主題";
 "prefs.toolbarStyleLabel" = "工具列圖示";

@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "Найти похожие имена";
 "bvc.cmd.flatView" = "Плоский вид";
 "bvc.cmd.flattenFolder" = "Развернуть папку (показать все объекты)";
+"bvc.cmd.followPairedFolder" = "Следовать за парной папкой";
 "bvc.cmd.forward" = "Вперёд";
 "bvc.cmd.getInfo" = "Свойства";
 "bvc.cmd.gitCommit" = "Коммит…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "Открыть рабочее пространство…";
 "bvc.cmd.organize" = "Упорядочить папку…";
 "bvc.cmd.organizeWithAI" = "Упорядочить с помощью ИИ…";
+"bvc.cmd.pairTheseFolders" = "Связать эти папки";
 "bvc.cmd.paste" = "Вставить";
 "bvc.cmd.pasteOtherPane" = "Вставить в другую панель";
 "bvc.cmd.peekArchive" = "Показать содержимое архива";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "Повернуть влево";
 "bvc.cmd.rotateRight" = "Повернуть вправо";
 "bvc.cmd.runShortcut" = "Запустить быструю команду для выбранного…";
+"bvc.cmd.sameFolderOtherPane" = "Перейти в ту же папку в другой панели";
 "bvc.cmd.saveLayout" = "Сохранить компоновку…";
 "bvc.cmd.saveStyle" = "Сохранить стиль…";
 "bvc.cmd.saveTabGroup" = "Сохранить вкладки как группу…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "Назад";
 "menu.nav.editPath" = "Перейти по пути…";
 "menu.nav.forward" = "Вперёд";
+"menu.nav.sameFolderOtherPane" = "Перейти в ту же папку в другой панели";
 "menu.nav.up" = "Содержащая папка";
 "menu.noEditors" = "Редакторы не найдены";
 "menu.noRecentFolders" = "Нет недавних папок";
 "menu.openIn" = "Открыть в…";
+"menu.pairs.follow" = "Следовать за парной папкой";
+"menu.pairs.pairThese" = "Связать эти папки";
 "menu.palette.show" = "Палитра команд…";
 "menu.paste" = "Вставить";
 "menu.quit" = "Завершить Pathem";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "Тема";
 "overflow.themeSettings" = "Настройки темы…";
 "overflow.tooltip" = "Параметры и тема";
+"pairs.alreadyPaired" = "Эти папки уже связаны";
+"pairs.followOff" = "Слежение за парными папками выключено";
+"pairs.followOn" = "Слежение за парными папками включено";
+"pairs.indicatorFollowing" = "Следует за парной папкой";
+"pairs.indicatorNoMatch" = "В парной панели нет соответствующей папки";
+"pairs.noMatch" = "В другой панели нет соответствующей папки";
+"pairs.paired" = "Папки связаны";
 "palette.runCommandTitle" = "Командная строка";
 "palette.searchFor" = "Искать «%@»";
 "pane.actionsTooltip" = "Действия";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "Средние";
 "prefs.folderStyleLabel" = "Стиль папок";
 "prefs.iconSetLabel" = "Значки файлов";
+"prefs.pairedAdd" = "Связать эти папки";
+"prefs.pairedFoldersHint" = "Свяжите левую папку с правой. Когда включено «Следовать за парной папкой» (Вид > Показать), переход во вложенную папку или вверх в одной панели переводит другую в то же место.";
+"prefs.pairedFoldersLabel" = "Парные папки";
+"prefs.pairedRemove" = "Удалить связь";
 "prefs.themePrepareSubmission" = "Отправить тему…";
 "prefs.themes" = "Темы";
 "prefs.toolbarStyleLabel" = "Значки панели инструментов";

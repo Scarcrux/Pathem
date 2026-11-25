@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "Trova nomi simili";
 "bvc.cmd.flatView" = "Vista piatta";
 "bvc.cmd.flattenFolder" = "Appiattisci cartella (mostra tutti gli elementi)";
+"bvc.cmd.followPairedFolder" = "Segui cartella abbinata";
 "bvc.cmd.forward" = "Avanti";
 "bvc.cmd.getInfo" = "Ottieni informazioni";
 "bvc.cmd.gitCommit" = "Commit…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "Apri spazio di lavoro…";
 "bvc.cmd.organize" = "Organizza cartella…";
 "bvc.cmd.organizeWithAI" = "Organizza con AI…";
+"bvc.cmd.pairTheseFolders" = "Abbina queste cartelle";
 "bvc.cmd.paste" = "Incolla";
 "bvc.cmd.pasteOtherPane" = "Incolla nell’altro pannello";
 "bvc.cmd.peekArchive" = "Mostra contenuto archivio";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "Ruota a sinistra";
 "bvc.cmd.rotateRight" = "Ruota a destra";
 "bvc.cmd.runShortcut" = "Esegui comando rapido sulla selezione…";
+"bvc.cmd.sameFolderOtherPane" = "Vai alla stessa cartella nell’altro pannello";
 "bvc.cmd.saveLayout" = "Salva layout…";
 "bvc.cmd.saveStyle" = "Salva stile…";
 "bvc.cmd.saveTabGroup" = "Salva schede come gruppo…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "Indietro";
 "menu.nav.editPath" = "Vai al percorso…";
 "menu.nav.forward" = "Avanti";
+"menu.nav.sameFolderOtherPane" = "Vai alla stessa cartella nell’altro pannello";
 "menu.nav.up" = "Cartella superiore";
 "menu.noEditors" = "Nessun editor trovato";
 "menu.noRecentFolders" = "Nessuna cartella recente";
 "menu.openIn" = "Apri in…";
+"menu.pairs.follow" = "Segui cartella abbinata";
+"menu.pairs.pairThese" = "Abbina queste cartelle";
 "menu.palette.show" = "Tavolozza comandi…";
 "menu.paste" = "Incolla";
 "menu.quit" = "Esci da Pathem";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "Tema";
 "overflow.themeSettings" = "Impostazioni del tema…";
 "overflow.tooltip" = "Opzioni e tema";
+"pairs.alreadyPaired" = "Queste cartelle sono già abbinate";
+"pairs.followOff" = "Cartelle abbinate non più seguite";
+"pairs.followOn" = "Cartelle abbinate seguite";
+"pairs.indicatorFollowing" = "Segue la cartella abbinata";
+"pairs.indicatorNoMatch" = "Nessuna cartella corrispondente nel pannello abbinato";
+"pairs.noMatch" = "Nessuna cartella corrispondente nell’altro pannello";
+"pairs.paired" = "Cartelle abbinate";
 "palette.runCommandTitle" = "Barra dei comandi";
 "palette.searchFor" = "Cerca “%@”";
 "pane.actionsTooltip" = "Azioni";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "Medie";
 "prefs.folderStyleLabel" = "Stile cartelle";
 "prefs.iconSetLabel" = "Icone dei file";
+"prefs.pairedAdd" = "Abbina queste cartelle";
+"prefs.pairedFoldersHint" = "Abbina una cartella di sinistra a una di destra. Con «Segui cartella abbinata» attivo (Vista > Mostra), entrare in una sottocartella o salire in un pannello porta l’altro nello stesso punto.";
+"prefs.pairedFoldersLabel" = "Cartelle abbinate";
+"prefs.pairedRemove" = "Rimuovi abbinamento";
 "prefs.themePrepareSubmission" = "Invia un tema…";
 "prefs.themes" = "Temi";
 "prefs.toolbarStyleLabel" = "Icone della barra strumenti";

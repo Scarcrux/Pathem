@@ -201,6 +201,7 @@
 "bvc.cmd.findSimilarNames" = "Ähnliche Namen suchen";
 "bvc.cmd.flatView" = "Flache Ansicht";
 "bvc.cmd.flattenFolder" = "Ordner verflachen (alle Objekte anzeigen)";
+"bvc.cmd.followPairedFolder" = "Gepaartem Ordner folgen";
 "bvc.cmd.forward" = "Vorwärts";
 "bvc.cmd.getInfo" = "Informationen";
 "bvc.cmd.gitCommit" = "Commit…";
@@ -234,6 +235,7 @@
 "bvc.cmd.openWorkspace" = "Arbeitsbereich öffnen…";
 "bvc.cmd.organize" = "Ordner organisieren…";
 "bvc.cmd.organizeWithAI" = "Mit KI organisieren…";
+"bvc.cmd.pairTheseFolders" = "Diese Ordner paaren";
 "bvc.cmd.paste" = "Einsetzen";
 "bvc.cmd.pasteOtherPane" = "In anderem Bereich einsetzen";
 "bvc.cmd.peekArchive" = "Archivinhalt anzeigen";
@@ -259,6 +261,7 @@
 "bvc.cmd.rotateLeft" = "Nach links drehen";
 "bvc.cmd.rotateRight" = "Nach rechts drehen";
 "bvc.cmd.runShortcut" = "Kurzbefehl auf Auswahl ausführen…";
+"bvc.cmd.sameFolderOtherPane" = "Zum gleichen Ordner im anderen Fenster";
 "bvc.cmd.saveLayout" = "Layout sichern…";
 "bvc.cmd.saveStyle" = "Stil sichern…";
 "bvc.cmd.saveTabGroup" = "Tabs als Gruppe sichern …";
@@ -1084,10 +1087,13 @@
 "menu.nav.back" = "Zurück";
 "menu.nav.editPath" = "Gehe zu Pfad…";
 "menu.nav.forward" = "Vorwärts";
+"menu.nav.sameFolderOtherPane" = "Zum gleichen Ordner im anderen Fenster";
 "menu.nav.up" = "Übergeordneter Ordner";
 "menu.noEditors" = "Keine Editoren gefunden";
 "menu.noRecentFolders" = "Keine zuletzt benutzten Ordner";
 "menu.openIn" = "Öffnen in…";
+"menu.pairs.follow" = "Gepaartem Ordner folgen";
+"menu.pairs.pairThese" = "Diese Ordner paaren";
 "menu.palette.show" = "Befehlspalette…";
 "menu.paste" = "Einsetzen";
 "menu.quit" = "Pathem beenden";
@@ -1199,6 +1205,13 @@
 "overflow.theme" = "Design";
 "overflow.themeSettings" = "Design-Einstellungen…";
 "overflow.tooltip" = "Optionen und Design";
+"pairs.alreadyPaired" = "Diese Ordner sind bereits gepaart";
+"pairs.followOff" = "Gepaarte Ordner werden nicht mehr verfolgt";
+"pairs.followOn" = "Gepaarte Ordner werden verfolgt";
+"pairs.indicatorFollowing" = "Folgt gepaartem Ordner";
+"pairs.indicatorNoMatch" = "Kein passender Ordner im gepaarten Fenster";
+"pairs.noMatch" = "Kein passender Ordner im anderen Fenster";
+"pairs.paired" = "Ordner gepaart";
 "palette.runCommandTitle" = "Befehl ausführen";
 "palette.searchFor" = "Nach „%@“ suchen";
 "pane.actionsTooltip" = "Aktionen";
@@ -1342,6 +1355,10 @@
 "prefs.iconMedium" = "Mittel";
 "prefs.folderStyleLabel" = "Ordnerstil";
 "prefs.iconSetLabel" = "Dateisymbole";
+"prefs.pairedAdd" = "Diese Ordner paaren";
+"prefs.pairedFoldersHint" = "Paaren Sie einen linken mit einem rechten Ordner. Ist „Gepaartem Ordner folgen“ aktiv (Darstellung > Anzeigen), führt der Wechsel in einen Unterordner oder nach oben in einem Fenster das andere an dieselbe Stelle.";
+"prefs.pairedFoldersLabel" = "Gepaarte Ordner";
+"prefs.pairedRemove" = "Paarung entfernen";
 "prefs.themePrepareSubmission" = "Design einreichen…";
 "prefs.themes" = "Designs";
 "prefs.toolbarStyleLabel" = "Symbolleiste";

@@ -201,6 +201,7 @@
 "bvc.cmd.findSimilarNames" = "Buscar nombres similares";
 "bvc.cmd.flatView" = "Vista plana";
 "bvc.cmd.flattenFolder" = "Aplanar carpeta (mostrar todos los ítems)";
+"bvc.cmd.followPairedFolder" = "Seguir carpeta emparejada";
 "bvc.cmd.forward" = "Adelante";
 "bvc.cmd.getInfo" = "Obtener información";
 "bvc.cmd.gitCommit" = "Confirmar…";
@@ -234,6 +235,7 @@
 "bvc.cmd.openWorkspace" = "Abrir espacio de trabajo…";
 "bvc.cmd.organize" = "Organizar carpeta…";
 "bvc.cmd.organizeWithAI" = "Organizar con la AI…";
+"bvc.cmd.pairTheseFolders" = "Emparejar estas carpetas";
 "bvc.cmd.paste" = "Pegar";
 "bvc.cmd.pasteOtherPane" = "Pegar en el otro panel";
 "bvc.cmd.peekArchive" = "Ver contenido del archivo comprimido";
@@ -259,6 +261,7 @@
 "bvc.cmd.rotateLeft" = "Girar a la izquierda";
 "bvc.cmd.rotateRight" = "Girar a la derecha";
 "bvc.cmd.runShortcut" = "Ejecutar atajo en la selección…";
+"bvc.cmd.sameFolderOtherPane" = "Ir a la misma carpeta en el otro panel";
 "bvc.cmd.saveLayout" = "Guardar disposición…";
 "bvc.cmd.saveStyle" = "Guardar estilo…";
 "bvc.cmd.saveTabGroup" = "Guardar pestañas como grupo…";
@@ -1084,10 +1087,13 @@
 "menu.nav.back" = "Atrás";
 "menu.nav.editPath" = "Ir a la ruta…";
 "menu.nav.forward" = "Adelante";
+"menu.nav.sameFolderOtherPane" = "Ir a la misma carpeta en el otro panel";
 "menu.nav.up" = "Carpeta contenedora";
 "menu.noEditors" = "No se han encontrado editores";
 "menu.noRecentFolders" = "No hay carpetas recientes";
 "menu.openIn" = "Abrir en…";
+"menu.pairs.follow" = "Seguir carpeta emparejada";
+"menu.pairs.pairThese" = "Emparejar estas carpetas";
 "menu.palette.show" = "Paleta de comandos…";
 "menu.paste" = "Pegar";
 "menu.quit" = "Salir de Pathem";
@@ -1199,6 +1205,13 @@
 "overflow.theme" = "Tema";
 "overflow.themeSettings" = "Ajustes de tema…";
 "overflow.tooltip" = "Opciones y tema";
+"pairs.alreadyPaired" = "Estas carpetas ya están emparejadas";
+"pairs.followOff" = "Ya no se siguen las carpetas emparejadas";
+"pairs.followOn" = "Siguiendo carpetas emparejadas";
+"pairs.indicatorFollowing" = "Siguiendo carpeta emparejada";
+"pairs.indicatorNoMatch" = "No hay carpeta equivalente en el panel emparejado";
+"pairs.noMatch" = "No hay una carpeta equivalente en el otro panel";
+"pairs.paired" = "Carpetas emparejadas";
 "palette.runCommandTitle" = "Ejecutar comando";
 "palette.searchFor" = "Buscar «%@»";
 "pane.actionsTooltip" = "Acciones";
@@ -1342,6 +1355,10 @@
 "prefs.iconMedium" = "Mediano";
 "prefs.folderStyleLabel" = "Estilo de carpetas";
 "prefs.iconSetLabel" = "Iconos de archivo";
+"prefs.pairedAdd" = "Emparejar estas carpetas";
+"prefs.pairedFoldersHint" = "Empareja una carpeta de la izquierda con una de la derecha. Con «Seguir carpeta emparejada» activado (Visualización > Mostrar), entrar en una subcarpeta o subir en un panel lleva al otro al mismo lugar.";
+"prefs.pairedFoldersLabel" = "Carpetas emparejadas";
+"prefs.pairedRemove" = "Quitar emparejamiento";
 "prefs.themePrepareSubmission" = "Enviar un tema…";
 "prefs.themes" = "Temas";
 "prefs.toolbarStyleLabel" = "Iconos de la barra de herramientas";

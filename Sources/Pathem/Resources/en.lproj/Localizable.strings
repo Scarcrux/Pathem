@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "Find Similar Names";
 "bvc.cmd.flatView" = "Flat View";
 "bvc.cmd.flattenFolder" = "Flatten Folder (Show All Items)";
+"bvc.cmd.followPairedFolder" = "Follow Paired Folder";
 "bvc.cmd.forward" = "Forward";
 "bvc.cmd.getInfo" = "Get Info";
 "bvc.cmd.gitCommit" = "Commit…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "Open Workspace…";
 "bvc.cmd.organize" = "Organize Folder…";
 "bvc.cmd.organizeWithAI" = "Organize with AI…";
+"bvc.cmd.pairTheseFolders" = "Pair These Folders";
 "bvc.cmd.paste" = "Paste";
 "bvc.cmd.pasteOtherPane" = "Paste in Other Pane";
 "bvc.cmd.peekArchive" = "Show Archive Contents";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "Rotate Left";
 "bvc.cmd.rotateRight" = "Rotate Right";
 "bvc.cmd.runShortcut" = "Run Shortcut on Selection…";
+"bvc.cmd.sameFolderOtherPane" = "Go to Same Folder in Other Pane";
 "bvc.cmd.saveLayout" = "Save Layout…";
 "bvc.cmd.saveStyle" = "Save Style…";
 "bvc.cmd.saveTabGroup" = "Save Tabs as Group…";
@@ -1128,6 +1131,13 @@
 "overflow.theme" = "Theme";
 "overflow.themeSettings" = "Theme Settings…";
 "overflow.tooltip" = "Options and theme";
+"pairs.alreadyPaired" = "These folders are already paired";
+"pairs.followOff" = "Paired folders no longer followed";
+"pairs.followOn" = "Following paired folders";
+"pairs.indicatorFollowing" = "Following paired folder";
+"pairs.indicatorNoMatch" = "No matching folder in the paired pane";
+"pairs.noMatch" = "No matching folder in the other pane";
+"pairs.paired" = "Paired these folders";
 "palette.runCommandTitle" = "Command Bar";
 "palette.searchFor" = "Search for “%@”";
 "pane.actionsTooltip" = "Actions";
@@ -1274,6 +1284,10 @@
 "prefs.iconMedium" = "Medium";
 "prefs.folderStyleLabel" = "Folder style";
 "prefs.iconSetLabel" = "File icons";
+"prefs.pairedAdd" = "Pair These Folders";
+"prefs.pairedFoldersHint" = "Pair a left folder with a right folder. With Follow Paired Folder on (View > Show), going into a subfolder or up in one pane takes the other pane to the same place.";
+"prefs.pairedFoldersLabel" = "Paired folders";
+"prefs.pairedRemove" = "Remove Pair";
 "prefs.toolbarStyleLabel" = "Toolbar glyphs";
 "prefs.useThemeStyle" = "Use Theme";
 "prefs.iconSizeLabel" = "Toolbar icon size";

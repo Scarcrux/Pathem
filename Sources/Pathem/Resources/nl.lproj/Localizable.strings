@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "Zoek vergelijkbare namen";
 "bvc.cmd.flatView" = "Platte weergave";
 "bvc.cmd.flattenFolder" = "Maak map plat (toon alle onderdelen)";
+"bvc.cmd.followPairedFolder" = "Gekoppelde map volgen";
 "bvc.cmd.forward" = "Vooruit";
 "bvc.cmd.getInfo" = "Toon info";
 "bvc.cmd.gitCommit" = "Commit…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "Open werkruimte…";
 "bvc.cmd.organize" = "Orden map…";
 "bvc.cmd.organizeWithAI" = "Orden met AI…";
+"bvc.cmd.pairTheseFolders" = "Deze mappen koppelen";
 "bvc.cmd.paste" = "Plak";
 "bvc.cmd.pasteOtherPane" = "Plak in ander paneel";
 "bvc.cmd.peekArchive" = "Toon archiefinhoud";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "Roteer naar links";
 "bvc.cmd.rotateRight" = "Roteer naar rechts";
 "bvc.cmd.runShortcut" = "Voer opdracht uit op selectie…";
+"bvc.cmd.sameFolderOtherPane" = "Naar dezelfde map in het andere paneel";
 "bvc.cmd.saveLayout" = "Bewaar indeling…";
 "bvc.cmd.saveStyle" = "Bewaar stijl…";
 "bvc.cmd.saveTabGroup" = "Tabbladen bewaren als groep…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "Terug";
 "menu.nav.editPath" = "Ga naar pad…";
 "menu.nav.forward" = "Vooruit";
+"menu.nav.sameFolderOtherPane" = "Naar dezelfde map in het andere paneel";
 "menu.nav.up" = "Bovenliggende map";
 "menu.noEditors" = "Geen editors gevonden";
 "menu.noRecentFolders" = "Geen recente mappen";
 "menu.openIn" = "Open in…";
+"menu.pairs.follow" = "Gekoppelde map volgen";
+"menu.pairs.pairThese" = "Deze mappen koppelen";
 "menu.palette.show" = "Opdrachtenpalet…";
 "menu.paste" = "Plak";
 "menu.quit" = "Sluit Pathem af";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "Thema";
 "overflow.themeSettings" = "Thema-instellingen…";
 "overflow.tooltip" = "Opties en thema";
+"pairs.alreadyPaired" = "Deze mappen zijn al gekoppeld";
+"pairs.followOff" = "Gekoppelde mappen worden niet meer gevolgd";
+"pairs.followOn" = "Gekoppelde mappen worden gevolgd";
+"pairs.indicatorFollowing" = "Volgt gekoppelde map";
+"pairs.indicatorNoMatch" = "Geen overeenkomende map in het gekoppelde paneel";
+"pairs.noMatch" = "Geen overeenkomende map in het andere paneel";
+"pairs.paired" = "Mappen gekoppeld";
 "palette.runCommandTitle" = "Opdrachtbalk";
 "palette.searchFor" = "Zoek naar “%@”";
 "pane.actionsTooltip" = "Acties";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "Gemiddeld";
 "prefs.folderStyleLabel" = "Mapstijl";
 "prefs.iconSetLabel" = "Bestandssymbolen";
+"prefs.pairedAdd" = "Deze mappen koppelen";
+"prefs.pairedFoldersHint" = "Koppel een linkermap aan een rechtermap. Met ‘Gekoppelde map volgen’ aan (Weergave > Toon) brengt een stap naar een submap of omhoog in het ene paneel het andere naar dezelfde plek.";
+"prefs.pairedFoldersLabel" = "Gekoppelde mappen";
+"prefs.pairedRemove" = "Koppeling verwijderen";
 "prefs.themePrepareSubmission" = "Een thema indienen…";
 "prefs.themes" = "Thema’s";
 "prefs.toolbarStyleLabel" = "Knoppenbalksymbolen";

@@ -50,6 +50,7 @@ extension BrowserViewController {
             [weak self] in self?.saveTabGroupPrompt()
         }
         tabSwitcher.onCommit = { [weak self] id in self?.activateTab(withIdentity: id) }
+        registerPairedFolderCommands()
     }
 
     // MARK: - Switcher

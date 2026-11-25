@@ -202,6 +202,7 @@
 "bvc.cmd.findSimilarNames" = "비슷한 이름 찾기";
 "bvc.cmd.flatView" = "평면 보기";
 "bvc.cmd.flattenFolder" = "폴더 평면화 (모든 항목 보기)";
+"bvc.cmd.followPairedFolder" = "짝 폴더 따라가기";
 "bvc.cmd.forward" = "앞으로";
 "bvc.cmd.getInfo" = "정보 가져오기";
 "bvc.cmd.gitCommit" = "커밋…";
@@ -235,6 +236,7 @@
 "bvc.cmd.openWorkspace" = "작업 공간 열기…";
 "bvc.cmd.organize" = "폴더 정리…";
 "bvc.cmd.organizeWithAI" = "AI로 정리…";
+"bvc.cmd.pairTheseFolders" = "이 폴더들을 짝으로 지정";
 "bvc.cmd.paste" = "붙여넣기";
 "bvc.cmd.pasteOtherPane" = "다른 패널에 붙여넣기";
 "bvc.cmd.peekArchive" = "압축 파일 내용 보기";
@@ -260,6 +262,7 @@
 "bvc.cmd.rotateLeft" = "왼쪽으로 회전";
 "bvc.cmd.rotateRight" = "오른쪽으로 회전";
 "bvc.cmd.runShortcut" = "선택 항목에 단축어 실행…";
+"bvc.cmd.sameFolderOtherPane" = "다른 패널의 같은 폴더로 이동";
 "bvc.cmd.saveLayout" = "레이아웃 저장…";
 "bvc.cmd.saveStyle" = "스타일 저장…";
 "bvc.cmd.saveTabGroup" = "탭을 그룹으로 저장…";
@@ -1089,10 +1092,13 @@
 "menu.nav.back" = "뒤로";
 "menu.nav.editPath" = "경로로 이동…";
 "menu.nav.forward" = "앞으로";
+"menu.nav.sameFolderOtherPane" = "다른 패널의 같은 폴더로 이동";
 "menu.nav.up" = "상위 폴더";
 "menu.noEditors" = "편집기를 찾지 못함";
 "menu.noRecentFolders" = "최근 폴더 없음";
 "menu.openIn" = "다음에서 열기…";
+"menu.pairs.follow" = "짝 폴더 따라가기";
+"menu.pairs.pairThese" = "이 폴더들을 짝으로 지정";
 "menu.palette.show" = "명령 팔레트…";
 "menu.paste" = "붙여넣기";
 "menu.quit" = "Pathem 종료";
@@ -1204,6 +1210,13 @@
 "overflow.theme" = "테마";
 "overflow.themeSettings" = "테마 설정…";
 "overflow.tooltip" = "옵션 및 테마";
+"pairs.alreadyPaired" = "이미 짝으로 지정된 폴더입니다";
+"pairs.followOff" = "짝 폴더 따라가기를 껐습니다";
+"pairs.followOn" = "짝 폴더를 따라가는 중";
+"pairs.indicatorFollowing" = "짝 폴더를 따라가는 중";
+"pairs.indicatorNoMatch" = "짝 패널에 일치하는 폴더가 없습니다";
+"pairs.noMatch" = "다른 패널에 일치하는 폴더가 없습니다";
+"pairs.paired" = "폴더를 짝으로 지정했습니다";
 "palette.runCommandTitle" = "명령 막대";
 "palette.searchFor" = "“%@” 검색";
 "pane.actionsTooltip" = "동작";
@@ -1350,6 +1363,10 @@
 "prefs.iconMedium" = "보통";
 "prefs.folderStyleLabel" = "폴더 스타일";
 "prefs.iconSetLabel" = "파일 아이콘";
+"prefs.pairedAdd" = "이 폴더들을 짝으로 지정";
+"prefs.pairedFoldersHint" = "왼쪽 폴더와 오른쪽 폴더를 짝으로 지정합니다. '짝 폴더 따라가기'를 켜면(보기 > 보기) 한쪽 패널에서 하위 폴더로 들어가거나 위로 이동할 때 다른 패널도 같은 위치로 이동합니다.";
+"prefs.pairedFoldersLabel" = "짝 폴더";
+"prefs.pairedRemove" = "짝 해제";
 "prefs.themePrepareSubmission" = "테마 제출…";
 "prefs.themes" = "테마";
 "prefs.toolbarStyleLabel" = "도구 막대 아이콘";

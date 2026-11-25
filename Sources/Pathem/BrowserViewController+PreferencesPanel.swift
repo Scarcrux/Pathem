@@ -64,6 +64,7 @@ extension BrowserViewController {
         if !terminalNames.contains(terminal.theme.name) {
             terminalNames.append(terminal.theme.name)
         }
+        settings.currentPaneFolders = { [weak self] in self?.localPaneFolders() }
         let content = settings.makeEmbedded(
             prefs: prefs,
             commands: commands.all.map { (id: $0.id, title: $0.title) },

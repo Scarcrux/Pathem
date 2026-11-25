@@ -201,6 +201,7 @@
 "bvc.cmd.findSimilarNames" = "似た名前を検索";
 "bvc.cmd.flatView" = "フラット表示";
 "bvc.cmd.flattenFolder" = "フォルダを平坦化（すべての項目を表示）";
+"bvc.cmd.followPairedFolder" = "ペアのフォルダに追従";
 "bvc.cmd.forward" = "進む";
 "bvc.cmd.getInfo" = "情報を見る";
 "bvc.cmd.gitCommit" = "コミット…";
@@ -234,6 +235,7 @@
 "bvc.cmd.openWorkspace" = "ワークスペースを開く…";
 "bvc.cmd.organize" = "フォルダを整理…";
 "bvc.cmd.organizeWithAI" = "AIで整理…";
+"bvc.cmd.pairTheseFolders" = "これらのフォルダをペアにする";
 "bvc.cmd.paste" = "ペースト";
 "bvc.cmd.pasteOtherPane" = "反対側のペインにペースト";
 "bvc.cmd.peekArchive" = "アーカイブの内容を表示";
@@ -259,6 +261,7 @@
 "bvc.cmd.rotateLeft" = "左に回転";
 "bvc.cmd.rotateRight" = "右に回転";
 "bvc.cmd.runShortcut" = "選択項目でショートカットを実行…";
+"bvc.cmd.sameFolderOtherPane" = "もう一方のペインの同じフォルダへ移動";
 "bvc.cmd.saveLayout" = "レイアウトを保存…";
 "bvc.cmd.saveStyle" = "スタイルを保存…";
 "bvc.cmd.saveTabGroup" = "タブをグループとして保存…";
@@ -1084,10 +1087,13 @@
 "menu.nav.back" = "戻る";
 "menu.nav.editPath" = "パスへ移動…";
 "menu.nav.forward" = "進む";
+"menu.nav.sameFolderOtherPane" = "もう一方のペインの同じフォルダへ移動";
 "menu.nav.up" = "上位のフォルダ";
 "menu.noEditors" = "エディタが見つかりません";
 "menu.noRecentFolders" = "最近のフォルダはありません";
 "menu.openIn" = "次で開く…";
+"menu.pairs.follow" = "ペアのフォルダに追従";
+"menu.pairs.pairThese" = "これらのフォルダをペアにする";
 "menu.palette.show" = "コマンドパレット…";
 "menu.paste" = "ペースト";
 "menu.quit" = "Pathemを終了";
@@ -1199,6 +1205,13 @@
 "overflow.theme" = "テーマ";
 "overflow.themeSettings" = "テーマ設定…";
 "overflow.tooltip" = "オプションとテーマ";
+"pairs.alreadyPaired" = "これらのフォルダは既にペアです";
+"pairs.followOff" = "ペアのフォルダへの追従を停止しました";
+"pairs.followOn" = "ペアのフォルダに追従中";
+"pairs.indicatorFollowing" = "ペアのフォルダに追従中";
+"pairs.indicatorNoMatch" = "ペアのペインに対応するフォルダがありません";
+"pairs.noMatch" = "もう一方のペインに対応するフォルダがありません";
+"pairs.paired" = "フォルダをペアにしました";
 "palette.runCommandTitle" = "コマンドを実行";
 "palette.searchFor" = "「%@」を検索";
 "pane.actionsTooltip" = "アクション";
@@ -1342,6 +1355,10 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "フォルダのスタイル";
 "prefs.iconSetLabel" = "ファイルアイコン";
+"prefs.pairedAdd" = "これらのフォルダをペアにする";
+"prefs.pairedFoldersHint" = "左のフォルダと右のフォルダをペアにします。「ペアのフォルダに追従」をオン（表示 > 表示）にすると、一方のペインでサブフォルダに入るか上へ移動すると、もう一方も同じ場所へ移動します。";
+"prefs.pairedFoldersLabel" = "ペアのフォルダ";
+"prefs.pairedRemove" = "ペアを削除";
 "prefs.themePrepareSubmission" = "テーマを提出…";
 "prefs.themes" = "テーマ";
 "prefs.toolbarStyleLabel" = "ツールバーアイコン";

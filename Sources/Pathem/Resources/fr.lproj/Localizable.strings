@@ -201,6 +201,7 @@
 "bvc.cmd.findSimilarNames" = "Rechercher des noms similaires";
 "bvc.cmd.flatView" = "Vue à plat";
 "bvc.cmd.flattenFolder" = "Aplatir le dossier (afficher tous les éléments)";
+"bvc.cmd.followPairedFolder" = "Suivre le dossier associé";
 "bvc.cmd.forward" = "Suivant";
 "bvc.cmd.getInfo" = "Lire les informations";
 "bvc.cmd.gitCommit" = "Valider…";
@@ -234,6 +235,7 @@
 "bvc.cmd.openWorkspace" = "Ouvrir l'espace de travail…";
 "bvc.cmd.organize" = "Organiser le dossier…";
 "bvc.cmd.organizeWithAI" = "Organiser avec l’IA…";
+"bvc.cmd.pairTheseFolders" = "Associer ces dossiers";
 "bvc.cmd.paste" = "Coller";
 "bvc.cmd.pasteOtherPane" = "Coller dans l'autre volet";
 "bvc.cmd.peekArchive" = "Afficher le contenu de l’archive";
@@ -259,6 +261,7 @@
 "bvc.cmd.rotateLeft" = "Pivoter vers la gauche";
 "bvc.cmd.rotateRight" = "Pivoter vers la droite";
 "bvc.cmd.runShortcut" = "Exécuter un raccourci sur la sélection…";
+"bvc.cmd.sameFolderOtherPane" = "Aller au même dossier dans l’autre panneau";
 "bvc.cmd.saveLayout" = "Enregistrer la disposition…";
 "bvc.cmd.saveStyle" = "Enregistrer le style…";
 "bvc.cmd.saveTabGroup" = "Enregistrer les onglets comme groupe…";
@@ -1084,10 +1087,13 @@
 "menu.nav.back" = "Précédent";
 "menu.nav.editPath" = "Aller au chemin…";
 "menu.nav.forward" = "Suivant";
+"menu.nav.sameFolderOtherPane" = "Aller au même dossier dans l’autre panneau";
 "menu.nav.up" = "Dossier parent";
 "menu.noEditors" = "Aucun éditeur trouvé";
 "menu.noRecentFolders" = "Aucun dossier récent";
 "menu.openIn" = "Ouvrir dans…";
+"menu.pairs.follow" = "Suivre le dossier associé";
+"menu.pairs.pairThese" = "Associer ces dossiers";
 "menu.palette.show" = "Palette de commandes…";
 "menu.paste" = "Coller";
 "menu.quit" = "Quitter Pathem";
@@ -1199,6 +1205,13 @@
 "overflow.theme" = "Thème";
 "overflow.themeSettings" = "Réglages du thème…";
 "overflow.tooltip" = "Options et thème";
+"pairs.alreadyPaired" = "Ces dossiers sont déjà associés";
+"pairs.followOff" = "Suivi des dossiers associés désactivé";
+"pairs.followOn" = "Suivi des dossiers associés activé";
+"pairs.indicatorFollowing" = "Suivi du dossier associé";
+"pairs.indicatorNoMatch" = "Aucun dossier correspondant dans le panneau associé";
+"pairs.noMatch" = "Aucun dossier correspondant dans l’autre panneau";
+"pairs.paired" = "Dossiers associés";
 "palette.runCommandTitle" = "Exécuter la commande";
 "palette.searchFor" = "Rechercher « %@ »";
 "pane.actionsTooltip" = "Actions";
@@ -1342,6 +1355,10 @@
 "prefs.iconMedium" = "Moyenne";
 "prefs.folderStyleLabel" = "Style des dossiers";
 "prefs.iconSetLabel" = "Icônes de fichier";
+"prefs.pairedAdd" = "Associer ces dossiers";
+"prefs.pairedFoldersHint" = "Associez un dossier de gauche à un dossier de droite. Avec « Suivre le dossier associé » activé (Présentation > Afficher), entrer dans un sous-dossier ou remonter dans un panneau amène l’autre au même endroit.";
+"prefs.pairedFoldersLabel" = "Dossiers associés";
+"prefs.pairedRemove" = "Retirer l’association";
 "prefs.themePrepareSubmission" = "Proposer un thème…";
 "prefs.themes" = "Thèmes";
 "prefs.toolbarStyleLabel" = "Icônes de la barre d’outils";

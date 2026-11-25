@@ -201,6 +201,7 @@
 "bvc.cmd.findSimilarNames" = "查找相似名称";
 "bvc.cmd.flatView" = "平铺视图";
 "bvc.cmd.flattenFolder" = "展平文件夹（显示所有项目）";
+"bvc.cmd.followPairedFolder" = "跟随配对文件夹";
 "bvc.cmd.forward" = "前进";
 "bvc.cmd.getInfo" = "显示简介";
 "bvc.cmd.gitCommit" = "提交…";
@@ -234,6 +235,7 @@
 "bvc.cmd.openWorkspace" = "打开工作空间…";
 "bvc.cmd.organize" = "整理文件夹…";
 "bvc.cmd.organizeWithAI" = "用 AI 整理…";
+"bvc.cmd.pairTheseFolders" = "配对这些文件夹";
 "bvc.cmd.paste" = "粘贴";
 "bvc.cmd.pasteOtherPane" = "粘贴到另一窗格";
 "bvc.cmd.peekArchive" = "查看压缩包内容";
@@ -259,6 +261,7 @@
 "bvc.cmd.rotateLeft" = "向左旋转";
 "bvc.cmd.rotateRight" = "向右旋转";
 "bvc.cmd.runShortcut" = "对所选项运行快捷指令…";
+"bvc.cmd.sameFolderOtherPane" = "在另一窗格中转到相同文件夹";
 "bvc.cmd.saveLayout" = "存储布局…";
 "bvc.cmd.saveStyle" = "存储样式…";
 "bvc.cmd.saveTabGroup" = "将标签页存储为组…";
@@ -1084,10 +1087,13 @@
 "menu.nav.back" = "后退";
 "menu.nav.editPath" = "前往路径…";
 "menu.nav.forward" = "前进";
+"menu.nav.sameFolderOtherPane" = "在另一窗格中转到相同文件夹";
 "menu.nav.up" = "上层文件夹";
 "menu.noEditors" = "未找到编辑器";
 "menu.noRecentFolders" = "没有最近的文件夹";
 "menu.openIn" = "打开方式…";
+"menu.pairs.follow" = "跟随配对文件夹";
+"menu.pairs.pairThese" = "配对这些文件夹";
 "menu.palette.show" = "命令面板…";
 "menu.paste" = "粘贴";
 "menu.quit" = "退出 Pathem";
@@ -1199,6 +1205,13 @@
 "overflow.theme" = "主题";
 "overflow.themeSettings" = "主题设置…";
 "overflow.tooltip" = "选项与主题";
+"pairs.alreadyPaired" = "这些文件夹已配对";
+"pairs.followOff" = "已停止跟随配对文件夹";
+"pairs.followOn" = "正在跟随配对文件夹";
+"pairs.indicatorFollowing" = "正在跟随配对文件夹";
+"pairs.indicatorNoMatch" = "配对窗格中没有对应的文件夹";
+"pairs.noMatch" = "另一窗格中没有对应的文件夹";
+"pairs.paired" = "已配对这些文件夹";
 "palette.runCommandTitle" = "运行命令";
 "palette.searchFor" = "搜索“%@”";
 "pane.actionsTooltip" = "操作";
@@ -1342,6 +1355,10 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "文件夹样式";
 "prefs.iconSetLabel" = "文件图标";
+"prefs.pairedAdd" = "配对这些文件夹";
+"prefs.pairedFoldersHint" = "将左侧文件夹与右侧文件夹配对。开启“跟随配对文件夹”（显示 > 显示）后，在一个窗格中进入子文件夹或返回上一级，另一个窗格会转到相同位置。";
+"prefs.pairedFoldersLabel" = "配对文件夹";
+"prefs.pairedRemove" = "移除配对";
 "prefs.themePrepareSubmission" = "提交主题…";
 "prefs.themes" = "主题";
 "prefs.toolbarStyleLabel" = "工具栏图标";

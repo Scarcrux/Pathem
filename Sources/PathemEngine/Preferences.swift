@@ -63,6 +63,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var newFileName: String
     /// New tabs open at the end of the bar (true) or right after the current tab.
     public var newTabAtEnd: Bool
+    /// Folder pairs for "follow paired folder" (Settings > Layout > Paired Folders).
+    public var pairedFolders: [FolderPair] = []
     /// File-size units (decimal vs binary).
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
@@ -444,6 +446,8 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(String.self, forKey: .newFolderName) ?? d.newFolderName
         newFileName = try c.decodeIfPresent(String.self, forKey: .newFileName) ?? d.newFileName
         newTabAtEnd = try c.decodeIfPresent(Bool.self, forKey: .newTabAtEnd) ?? d.newTabAtEnd
+        pairedFolders =
+            try c.decodeIfPresent([FolderPair].self, forKey: .pairedFolders) ?? d.pairedFolders
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

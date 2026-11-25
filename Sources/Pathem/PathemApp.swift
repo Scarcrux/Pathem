@@ -2001,6 +2001,7 @@ enum PathemApp {
                     commandItem("Stack Panes Vertically", "view.stackPanes"),
                     commandItem("Show Folder Tree", "view.folderTree"),
                     commandItem("Sync Browsing", "view.syncBrowsing"),
+                    commandItem("Follow Paired Folder", "pairs.follow"),
                     commandItem("Vim Navigation", "nav.vimMode"),
                 ]))
         viewMenu.addItem(
@@ -2090,6 +2091,8 @@ enum PathemApp {
         goMenu.addItem(commandItem("Forward", "nav.forward"))
         goMenu.addItem(commandItem("Enclosing Folder", "nav.up"))
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
+        goMenu.addItem(commandItem("Go to Same Folder in Other Pane", "nav.sameFolderOtherPane"))
+        goMenu.addItem(commandItem("Pair These Folders", "pairs.pairThese"))
         goMenu.addItem(
             commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
         goMenu.addItem(.separator())

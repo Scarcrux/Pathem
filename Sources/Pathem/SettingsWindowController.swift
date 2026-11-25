@@ -420,6 +420,12 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                     L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"),
                     \.middleClickOpensNewTab),
                 labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
+                labeled(L("prefs.pairedFoldersLabel", "Paired folders"), pairedFoldersControl()),
+                hint(
+                    L(
+                        "prefs.pairedFoldersHint",
+                        "Pair a left folder with a right folder. With Follow Paired Folder on (View > Show), going into a subfolder or up in one pane takes the other pane to the same place."
+                    )),
                 hint(L("prefs.statusBarHint", "Status bar shows:")),
                 check(L("prefs.statusItemCount", "Item count"), \.statusShowItemCount),
                 check(
@@ -1412,6 +1418,68 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             self.newTabPopup.selectItem(at: 2)
             self.onChange?(self.prefs)
         }
+    }
+
+    /// The current left and right pane folders, for "Pair These Folders"; set by the browser.
+    var currentPaneFolders: (() -> (left: URL, right: URL)?)?
+    private let pairedFoldersStack = NSStackView()
+
+    private func pairedFoldersControl() -> NSView {
+        pairedFoldersStack.orientation = .vertical
+        pairedFoldersStack.alignment = .leading
+        pairedFoldersStack.spacing = 6
+        reloadPairedFolders()
+        return pairedFoldersStack
+    }
+
+    private func reloadPairedFolders() {
+        for view in pairedFoldersStack.arrangedSubviews {
+            pairedFoldersStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
+        }
+        for (index, pair) in prefs.pairedFolders.enumerated() {
+            let abbreviate = { (path: String) in (path as NSString).abbreviatingWithTildeInPath }
+            let text = NSTextField(
+                labelWithString: "\(abbreviate(pair.left))  \u{21C4}  \(abbreviate(pair.right))")
+            text.lineBreakMode = .byTruncatingMiddle
+            text.toolTip = pair.left + "\n" + pair.right
+            text.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+            let remove = NSButton(
+                title: "", target: self, action: #selector(removePairedFolder(_:)))
+            remove.image = NSImage(
+                systemSymbolName: "minus.circle",
+                accessibilityDescription: L("prefs.pairedRemove", "Remove Pair"))
+            remove.toolTip = L("prefs.pairedRemove", "Remove Pair")
+            remove.isBordered = false
+            remove.tag = index
+            let row = NSStackView(views: [text, remove])
+            row.orientation = .horizontal
+            row.spacing = 6
+            pairedFoldersStack.addArrangedSubview(row)
+        }
+        let add = NSButton(
+            title: L("prefs.pairedAdd", "Pair These Folders"), target: self,
+            action: #selector(addPairedFolder))
+        add.bezelStyle = .rounded
+        pairedFoldersStack.addArrangedSubview(add)
+    }
+
+    @objc private func addPairedFolder() {
+        guard let folders = currentPaneFolders?() else {
+            NSSound.beep()
+            return
+        }
+        prefs.pairedFolders = PairedFolders.adding(
+            FolderPair(left: folders.left.path, right: folders.right.path), to: prefs.pairedFolders)
+        onChange?(prefs)
+        reloadPairedFolders()
+    }
+
+    @objc private func removePairedFolder(_ sender: NSButton) {
+        guard prefs.pairedFolders.indices.contains(sender.tag) else { return }
+        prefs.pairedFolders.remove(at: sender.tag)
+        onChange?(prefs)
+        reloadPairedFolders()
     }
 
     private func commanderEditButton() -> NSView {

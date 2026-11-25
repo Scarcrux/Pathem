@@ -73,9 +73,48 @@ extension BrowserViewController {
                 let valid = chosen != nil
                 tabSwitcher.cancel()
                 print("TABPOWER CHECK switcher-open: \(valid ? "PASS" : "FAIL")")
-                done(diverted && refused && valid)
+                let paired = debugCheckPairedFolders()
+                done(diverted && refused && valid && paired)
             }
         }
+    }
+
+    /// Real folders in a temp tree: following a pair into a subfolder moves the other pane, a
+    /// folder with no counterpart leaves it put, and following off does nothing.
+    func debugCheckPairedFolders() -> Bool {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("pathem-pairs-\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: root) }
+        for sub in ["src/a", "src/b", "dst/a"] {
+            try? fm.createDirectory(
+                at: root.appendingPathComponent(sub), withIntermediateDirectories: true)
+        }
+        let src = root.appendingPathComponent("src").standardizedFileURL
+        let dst = root.appendingPathComponent("dst").standardizedFileURL
+        guard let left = leftTabs.activePane, let right = rightTabs.activePane else { return false }
+        let savedPairs = prefs.pairedFolders
+        defer { prefs.pairedFolders = savedPairs }
+        prefs.pairedFolders = [FolderPair(left: src.path, right: dst.path)]
+        left.navigate(to: src)
+        right.navigate(to: dst)
+        setActiveSide(leftTabs, pane: left)
+        followPairedFolders = false
+        left.navigate(to: src.appendingPathComponent("a"))
+        let offStayed = right.rootURL.path == dst.path
+        left.navigate(to: src)
+        toggleFollowPairedFolders()  // on
+        left.navigate(to: src.appendingPathComponent("a"))
+        let followed = right.rootURL.path == dst.appendingPathComponent("a").path
+        left.navigate(to: src.appendingPathComponent("b"))
+        let heldStill = right.rootURL.path == dst.appendingPathComponent("a").path
+        left.navigate(to: src)
+        let wentUp = right.rootURL.path == dst.path
+        toggleFollowPairedFolders()  // off again
+        let ok = offStayed && followed && heldStill && wentUp
+        print(
+            "TABPOWER CHECK paired-folders: \(ok ? "PASS" : "FAIL") off=\(offStayed) "
+                + "follow=\(followed) noMatchHold=\(heldStill) up=\(wentUp)")
+        return ok
     }
 }
 #endif
