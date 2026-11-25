@@ -2213,6 +2213,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-25: 0.9.5 (build 29) released and verified externally (feed names 0.9.5/29, DMG A9, app A1-A6/A10/A11 incl. theme palette notices, EdDSA A7; gate 69 pass, 1 known skip; packaged 17/17 incl. Themes loopback). Ships Themes in every build: community gallery card grid with Light/Dark filter, HEIC screenshots, themed icons over QuickLook icons, .jsonc import, built-in Dracula retired (colors kept) into a catalog flagship, palette license notices, Settings naming with palette aliases, hard links kept in copies, date column sizing, launch constraint fixes. The 27-theme catalog (6 icon flagships, Dracula under MIT) is published to CloudFront with 5-minute caching, and the web gallery pathem.app/themes is regenerated from it. Design work by Fable and Sonnet agents, Codex for earlier batches; each change reviewed before landing."
     at = "2026-11-25T07:59:57Z"
 
+  [[mission.comment]]
+    text = "2026-11-25: Extension isolation test (clean macOS 15.7.7 VM, SIP enabled; the dev Mac has SIP off and cannot discriminate). A test app granted Full Disk Access read the TCC database; a child it launched with plain posix_spawn also read it (helpers inherit the app's Full Disk Access: PROVEN); the same child launched with responsibility disclaimed was denied, as were an ungranted control app and the reader run alone by launchd. So Pathem's Process-launched helpers (curl, sftp, adb, extension helpers) are attributed to Pathem for privacy permissions, and responsibility disclaim works on macOS 15 for isolating third-party extensions. Earlier docs claiming helpers inherit none of the app's grants were wrong; correction in progress."
+    at = "2026-11-25T11:01:32Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
