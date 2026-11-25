@@ -2217,6 +2217,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-25: Extension isolation test (clean macOS 15.7.7 VM, SIP enabled; the dev Mac has SIP off and cannot discriminate). A test app granted Full Disk Access read the TCC database; a child it launched with plain posix_spawn also read it (helpers inherit the app's Full Disk Access: PROVEN); the same child launched with responsibility disclaimed was denied, as were an ungranted control app and the reader run alone by launchd. So Pathem's Process-launched helpers (curl, sftp, adb, extension helpers) are attributed to Pathem for privacy permissions, and responsibility disclaim works on macOS 15 for isolating third-party extensions. Earlier docs claiming helpers inherit none of the app's grants were wrong; correction in progress."
     at = "2026-11-25T11:01:32Z"
 
+  [[mission.comment]]
+    text = "2026-11-25: 0.9.6 features landed on main (unreleased), from Opus-inspired designs: stacked top/bottom panes (6d288d5); always-visible folder tree column (6cc231a) with roots, pins, saved expansion, reveal, drops and pane markers (6255fb4); tab lock, reopen closed tab, MRU switcher and tab groups (acdeaf2); paired folders (a268446); selection commands, selection summary popover and export/print listing (ef82359, b69e4a4, 81b8107); multi-mode find-as-you-type with Find, Filter, Go, command and semantic modes (40be1a2); filtered copy/move/trash with live preview (e0b35cd); macOS platform limits documented (8f988b9); extension SDK phase 1 hardening by Codex (c72a165: disclaimed spawn for third-party helpers, startup self-test, SecStaticCode verification with cdhash pinning, approval UI, isolation limits, protocol v1; still gated off); helper isolation claims corrected (e7a2370). Unverified: live key input for the switcher and find-as-you-type, real Finder drags onto the tree, protected-file refusal for a real extension on a SIP-enabled VM. Queued for Codex: metadata columns, activity log, ADB upgrade, admin mode."
+    at = "2026-11-25T19:14:27Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
