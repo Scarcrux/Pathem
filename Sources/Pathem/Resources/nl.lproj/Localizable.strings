@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "Verwijder locatie";
 "bvc.cmd.removeQuarantine" = "Verwijder quarantaine";
 "bvc.cmd.rename" = "Hernoem…";
+"bvc.cmd.reopenClosedTab" = "Gesloten tabblad heropenen";
 "bvc.cmd.repoReclaim" = "Maak ruimte vrij in repo…";
 "bvc.cmd.resetData" = "Zet Pathem-gegevens terug…";
 "bvc.cmd.revealInFinder" = "Toon in Finder";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "Voer opdracht uit op selectie…";
 "bvc.cmd.saveLayout" = "Bewaar indeling…";
 "bvc.cmd.saveStyle" = "Bewaar stijl…";
+"bvc.cmd.saveTabGroup" = "Tabbladen bewaren als groep…";
 "bvc.cmd.saveViewPreset" = "Bewaar huidige weergave als…";
 "bvc.cmd.saveWorkspace" = "Bewaar werkruimte…";
 "bvc.cmd.searchFolder" = "Zoek in deze map…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "Groottebrowser…";
 "bvc.cmd.slideshow" = "Diavoorstelling";
 "bvc.cmd.split" = "Splits bestand…";
+"bvc.cmd.switchTabs" = "Van tabblad wisselen";
+"bvc.cmd.switchTabsReverse" = "Van tabblad wisselen (omgekeerd)";
 "bvc.cmd.syncBrowsing" = "Synchroniseer navigatie";
 "bvc.cmd.tagColor" = "Label %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal volgt map";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "Toon dropstapel";
 "menu.storage" = "Opslag";
 "menu.tab.close" = "Sluit tabblad";
+"menu.tab.lock" = "Tabblad vergrendelen";
 "menu.tab.new" = "Nieuw tabblad";
+"menu.tab.reopen" = "Gesloten tabblad heropenen";
+"menu.tabGroups" = "Tabbladgroepen";
 "menu.tags.clear" = "Wis labels";
 "menu.templates.manage" = "Beheer sjablonen…";
 "menu.terminal.here" = "Open Terminal hier";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "Sluit andere tabbladen";
 "tabs.closeTab" = "Sluit tabblad";
 "tabs.duplicate" = "Dupliceer tabblad";
+"tabs.group.add" = "Openen en aan huidige tabbladen toevoegen";
+"tabs.group.delete" = "Verwijderen";
+"tabs.group.rename" = "Hernoemen…";
+"tabs.group.renameTitle" = "Tabbladgroep hernoemen:";
+"tabs.group.replace" = "Openen en huidige tabbladen vervangen";
+"tabs.group.saveTitle" = "Tabbladen bewaren als groep:";
+"tabs.lockTab" = "Tabblad vergrendelen";
+"tabs.lockedAX" = "Vergrendeld";
+"tabs.lockedTooltip" = "Vergrendeld. Ontgrendel het tabblad om het te sluiten.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Verplaats naar ander paneel";
 "tabs.newTab" = "Nieuw tabblad";
+"tabs.switcher.title" = "Tabbladwisselaar";
+"tabs.unlockTab" = "Tabblad ontgrendelen";
 "templates.actionName" = "Nieuw uit sjabloon";
 "templates.colName" = "Sjabloon";
 "templates.commandTitle" = "Nieuw: %@";

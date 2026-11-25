@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "Remove Location";
 "bvc.cmd.removeQuarantine" = "Remove Quarantine";
 "bvc.cmd.rename" = "Rename…";
+"bvc.cmd.reopenClosedTab" = "Reopen Closed Tab";
 "bvc.cmd.repoReclaim" = "Reclaim in Repo…";
 "bvc.cmd.resetData" = "Reset Pathem Data…";
 "bvc.cmd.revealInFinder" = "Reveal in Finder";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "Run Shortcut on Selection…";
 "bvc.cmd.saveLayout" = "Save Layout…";
 "bvc.cmd.saveStyle" = "Save Style…";
+"bvc.cmd.saveTabGroup" = "Save Tabs as Group…";
 "bvc.cmd.saveViewPreset" = "Save Current View As…";
 "bvc.cmd.saveWorkspace" = "Save Workspace…";
 "bvc.cmd.searchFolder" = "Search This Folder…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "Size Browser…";
 "bvc.cmd.slideshow" = "Slideshow";
 "bvc.cmd.split" = "Split File…";
+"bvc.cmd.switchTabs" = "Switch Tabs";
+"bvc.cmd.switchTabsReverse" = "Switch Tabs (Reverse)";
 "bvc.cmd.syncBrowsing" = "Sync Browsing";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal Follows Folder";
@@ -1056,6 +1060,7 @@
 "menu.selectAll" = "Select All";
 "menu.services" = "Services";
 "menu.storage" = "Storage";
+"menu.tabGroups" = "Tab Groups";
 "menu.terminalTheme" = "Terminal Theme";
 "menu.tools" = "Tools";
 "menu.transform" = "Transform";
@@ -1628,9 +1633,20 @@
 "tabs.closeOthers" = "Close Other Tabs";
 "tabs.closeTab" = "Close Tab";
 "tabs.duplicate" = "Duplicate Tab";
+"tabs.group.add" = "Open, Adding to Current Tabs";
+"tabs.group.delete" = "Delete";
+"tabs.group.rename" = "Rename…";
+"tabs.group.renameTitle" = "Rename tab group:";
+"tabs.group.replace" = "Open, Replacing Current Tabs";
+"tabs.group.saveTitle" = "Save tabs as group:";
+"tabs.lockTab" = "Lock Tab";
+"tabs.lockedAX" = "Locked";
+"tabs.lockedTooltip" = "Locked. Unlock the tab to close it.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Move to Other Pane";
 "tabs.newTab" = "New Tab";
+"tabs.switcher.title" = "Tab Switcher";
+"tabs.unlockTab" = "Unlock Tab";
 "templates.actionName" = "New from Template";
 "templates.colName" = "Template";
 "templates.commandTitle" = "New: %@";

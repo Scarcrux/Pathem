@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "Remover localização";
 "bvc.cmd.removeQuarantine" = "Remover quarentena";
 "bvc.cmd.rename" = "Renomear…";
+"bvc.cmd.reopenClosedTab" = "Reabrir aba fechada";
 "bvc.cmd.repoReclaim" = "Recuperar espaço no repositório…";
 "bvc.cmd.resetData" = "Redefinir dados do Pathem…";
 "bvc.cmd.revealInFinder" = "Mostrar no Finder";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "Executar atalho na seleção…";
 "bvc.cmd.saveLayout" = "Salvar layout…";
 "bvc.cmd.saveStyle" = "Salvar estilo…";
+"bvc.cmd.saveTabGroup" = "Salvar abas como grupo…";
 "bvc.cmd.saveViewPreset" = "Salvar visualização atual como…";
 "bvc.cmd.saveWorkspace" = "Salvar espaço de trabalho…";
 "bvc.cmd.searchFolder" = "Buscar nesta pasta…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "Navegador de tamanhos…";
 "bvc.cmd.slideshow" = "Apresentação de slides";
 "bvc.cmd.split" = "Dividir arquivo…";
+"bvc.cmd.switchTabs" = "Alternar abas";
+"bvc.cmd.switchTabsReverse" = "Alternar abas (inverso)";
 "bvc.cmd.syncBrowsing" = "Sincronizar navegação";
 "bvc.cmd.tagColor" = "Etiqueta %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal acompanha a pasta";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "Mostrar pilha de soltar";
 "menu.storage" = "Armazenamento";
 "menu.tab.close" = "Fechar aba";
+"menu.tab.lock" = "Bloquear aba";
 "menu.tab.new" = "Nova aba";
+"menu.tab.reopen" = "Reabrir aba fechada";
+"menu.tabGroups" = "Grupos de abas";
 "menu.tags.clear" = "Limpar etiquetas";
 "menu.templates.manage" = "Gerenciar modelos…";
 "menu.terminal.here" = "Abrir Terminal aqui";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "Fechar outras abas";
 "tabs.closeTab" = "Fechar aba";
 "tabs.duplicate" = "Duplicar aba";
+"tabs.group.add" = "Abrir adicionando às abas atuais";
+"tabs.group.delete" = "Excluir";
+"tabs.group.rename" = "Renomear…";
+"tabs.group.renameTitle" = "Renomear grupo de abas:";
+"tabs.group.replace" = "Abrir substituindo as abas atuais";
+"tabs.group.saveTitle" = "Salvar abas como grupo:";
+"tabs.lockTab" = "Bloquear aba";
+"tabs.lockedAX" = "Bloqueada";
+"tabs.lockedTooltip" = "Bloqueada. Desbloqueie a aba para fechá-la.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Mover para o outro painel";
 "tabs.newTab" = "Nova aba";
+"tabs.switcher.title" = "Seletor de abas";
+"tabs.unlockTab" = "Desbloquear aba";
 "templates.actionName" = "Novo a partir do modelo";
 "templates.colName" = "Modelo";
 "templates.commandTitle" = "Novo: %@";

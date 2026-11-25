@@ -251,6 +251,7 @@
 "bvc.cmd.removeLocation" = "移除位置信息";
 "bvc.cmd.removeQuarantine" = "移除隔离标记";
 "bvc.cmd.rename" = "重新命名…";
+"bvc.cmd.reopenClosedTab" = "重新打开已关闭的标签页";
 "bvc.cmd.repoReclaim" = "在仓库中回收空间…";
 "bvc.cmd.resetData" = "重置 Pathem 数据…";
 "bvc.cmd.revealInFinder" = "在 Finder 中显示";
@@ -260,6 +261,7 @@
 "bvc.cmd.runShortcut" = "对所选项运行快捷指令…";
 "bvc.cmd.saveLayout" = "存储布局…";
 "bvc.cmd.saveStyle" = "存储样式…";
+"bvc.cmd.saveTabGroup" = "将标签页存储为组…";
 "bvc.cmd.saveViewPreset" = "将当前视图存储为…";
 "bvc.cmd.saveWorkspace" = "存储工作空间…";
 "bvc.cmd.searchFolder" = "搜索此文件夹…";
@@ -286,6 +288,8 @@
 "bvc.cmd.sizeBrowser" = "大小浏览器…";
 "bvc.cmd.slideshow" = "幻灯片显示";
 "bvc.cmd.split" = "分割文件…";
+"bvc.cmd.switchTabs" = "切换标签页";
+"bvc.cmd.switchTabsReverse" = "切换标签页（反向）";
 "bvc.cmd.syncBrowsing" = "同步浏览";
 "bvc.cmd.tagColor" = "标记 %@";
 "bvc.cmd.terminalFollowsFolder" = "终端跟随文件夹";
@@ -1097,7 +1101,10 @@
 "menu.shelf.toggle" = "显示 Drop Stack";
 "menu.storage" = "存储";
 "menu.tab.close" = "关闭标签页";
+"menu.tab.lock" = "锁定标签页";
 "menu.tab.new" = "新建标签页";
+"menu.tab.reopen" = "重新打开已关闭的标签页";
+"menu.tabGroups" = "标签页组";
 "menu.tags.clear" = "清除标记";
 "menu.templates.manage" = "管理模板…";
 "menu.terminal.here" = "在此处打开终端";
@@ -1657,9 +1664,20 @@
 "tabs.closeOthers" = "关闭其他标签页";
 "tabs.closeTab" = "关闭标签页";
 "tabs.duplicate" = "复制标签页";
+"tabs.group.add" = "打开并添加到当前标签页";
+"tabs.group.delete" = "删除";
+"tabs.group.rename" = "重新命名…";
+"tabs.group.renameTitle" = "重新命名标签页组：";
+"tabs.group.replace" = "打开并替换当前标签页";
+"tabs.group.saveTitle" = "将标签页存储为组：";
+"tabs.lockTab" = "锁定标签页";
+"tabs.lockedAX" = "已锁定";
+"tabs.lockedTooltip" = "已锁定。请先解锁标签页再关闭。";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "移动到另一窗格";
 "tabs.newTab" = "新建标签页";
+"tabs.switcher.title" = "标签页切换器";
+"tabs.unlockTab" = "解锁标签页";
 "templates.actionName" = "从模板新建";
 "templates.colName" = "模板";
 "templates.commandTitle" = "新建：%@";

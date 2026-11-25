@@ -38,6 +38,8 @@ final class TabbedPaneController: NSObject {
     private let start: URL
     private(set) var tabs: [PaneController] = []
     private(set) var activeIndex = 0
+    /// The last 20 tabs closed on this side, for Reopen Closed Tab.
+    private(set) var closedTabs = ClosedTabStack()
 
     #if DEBUG
     struct ActivationReceipt {
@@ -143,6 +145,18 @@ final class TabbedPaneController: NSObject {
     /// (rootURL, not currentURL, so a column-view drill-down isn't what gets saved).
     var tabFolders: [String] { tabs.map { $0.rootURL.path } }
     var activeTabIndex: Int { activeIndex }
+    /// Which tabs are locked, parallel to `tabFolders` (persisted with the session).
+    var tabLocks: [Bool] { tabs.map(\.isTabLocked) }
+
+    /// Everything needed to bring `pane` back as a tab: folder, view, lock and history.
+    func snapshot(of pane: PaneController) -> TabSnapshot {
+        TabSnapshot(
+            path: pane.rootURL.path, format: pane.format, locked: pane.isTabLocked,
+            back: pane.backHistory.map(\.path), forward: pane.forwardHistory.map(\.path))
+    }
+
+    /// Snapshots of every tab, for saving a tab group.
+    var tabSnapshots: [TabSnapshot] { tabs.map { snapshot(of: $0) } }
 
     /// Open tabs at the given folders (skipping ones that no longer exist), replacing any
     /// current tabs. Falls back to the start folder if none are valid. Used for session
@@ -154,7 +168,7 @@ final class TabbedPaneController: NSObject {
         tabs.removeAll()
     }
 
-    func restoreTabs(_ folders: [String], active: Int) {
+    func restoreTabs(_ folders: [String], active: Int, locked: [Bool] = []) {
         let fm = FileManager.default
         // Tear down any existing tabs so this replaces the layout rather than appending.
         for tab in tabs { tab.teardown() }
@@ -172,8 +186,10 @@ final class TabbedPaneController: NSObject {
             refreshTabBar()
             return
         }
+        let locks = TabLockPolicy.normalized(locked, count: folders.count)
         for survivor in survivors {
-            newTab(at: URL(fileURLWithPath: survivor.element), focus: false)
+            let pane = newTab(at: URL(fileURLWithPath: survivor.element), focus: false)
+            pane.isTabLocked = locks[survivor.offset]
         }
         // Map the saved active index (an original offset) to the surviving tab at
         // or after it, falling back to the last tab.
@@ -200,10 +216,82 @@ final class TabbedPaneController: NSObject {
     /// Open `url` in a new, focused tab (used by "Open in New Tab" on a folder).
     func openTab(at url: URL) { newTab(at: url, focus: true) }
 
+    /// Open `url` in a new tab right after the tab at `index` (a locked tab's navigation lands
+    /// here, so the new folder sits next to the one that stayed put).
+    func openTab(at url: URL, after index: Int) {
+        newTab(at: url, focus: true, insertAfter: index)
+    }
+
+    /// Bring back the most recently closed tab of this side, skipping folders that are gone.
     @discardableResult
-    private func newTab(at url: URL, focus: Bool) -> PaneController {
+    func reopenClosedTab() -> Bool {
+        let fm = FileManager.default
+        guard
+            let snap = closedTabs.popRestorable(exists: {
+                var isDir: ObjCBool = false
+                return fm.fileExists(atPath: $0, isDirectory: &isDir) && isDir.boolValue
+            })
+        else { return false }
+        adopt(snap, focus: true)
+        return true
+    }
+
+    var canReopenClosedTab: Bool { !closedTabs.isEmpty }
+
+    /// Open a tab from a snapshot: folder, then view, history and lock.
+    @discardableResult
+    private func adopt(_ snap: TabSnapshot, focus: Bool) -> PaneController {
+        let pane = newTab(at: URL(fileURLWithPath: snap.path), focus: focus)
+        pane.restoreHistory(
+            back: snap.back.map { URL(fileURLWithPath: $0) },
+            forward: snap.forward.map { URL(fileURLWithPath: $0) })
+        if let format = snap.format, format != pane.format { pane.applyFormat(format) }
+        pane.isTabLocked = snap.locked
+        refreshTabBar()
+        return pane
+    }
+
+    /// Open a saved tab group's tabs on this side: replacing the current tabs, or adding to them.
+    func openGroupTabs(_ snaps: [TabSnapshot], active: Int, replacing: Bool) {
+        let fm = FileManager.default
+        let usable = snaps.enumerated().filter {
+            var isDir: ObjCBool = false
+            return fm.fileExists(atPath: $0.element.path, isDirectory: &isDir) && isDir.boolValue
+        }
+        guard !usable.isEmpty else { return }
+        if replacing {
+            for tab in tabs { tab.teardown() }
+            tabs.removeAll()
+            activeIndex = 0
+        }
+        let previousCount = tabs.count
+        let savedAtEnd = newTabAtEnd
+        newTabAtEnd = true  // a group's tabs keep their saved order, whatever "new tabs open" says
+        for entry in usable { adopt(entry.element, focus: false) }
+        newTabAtEnd = savedAtEnd
+        let mapped = usable.firstIndex(where: { $0.offset >= active }) ?? (usable.count - 1)
+        activeIndex = previousCount + mapped
+        showActivePane()
+        refreshTabBar()
+        focusActivePane()
+    }
+
+    /// Lock or unlock the tab at `index`.
+    func setLocked(_ locked: Bool, at index: Int) {
+        guard tabs.indices.contains(index), tabs[index].isTabLocked != locked else { return }
+        tabs[index].isTabLocked = locked
+        refreshTabBar()
+    }
+
+    @discardableResult
+    private func newTab(at url: URL, focus: Bool, insertAfter: Int? = nil) -> PaneController {
         let pane = PaneController(start: url)
         configurePane?(pane)
+        pane.onLockedNavigation = { [weak self, weak pane] target in
+            guard let self, let pane, let index = self.tabs.firstIndex(where: { $0 === pane })
+            else { return }
+            self.openTab(at: target, after: index)
+        }
         pane.onBecomeActive = { [weak self, weak pane] in
             guard let self, let pane, let index = self.tabs.firstIndex(where: { $0 === pane })
             else { return }
@@ -237,7 +325,10 @@ final class TabbedPaneController: NSObject {
             self?.onPaneDropOntoFile?(dragged, target)
         }
         // Insert at the end, or right after the current tab (browser-style) when configured.
-        if newTabAtEnd || tabs.isEmpty {
+        if let after = insertAfter, tabs.indices.contains(after) {
+            tabs.insert(pane, at: after + 1)
+            activeIndex = after + 1
+        } else if newTabAtEnd || tabs.isEmpty {
             tabs.append(pane)
             activeIndex = tabs.count - 1
         } else {
@@ -300,7 +391,7 @@ final class TabbedPaneController: NSObject {
     /// This tab's folder, closing the tab if this side has others. The last tab is never closed --
     /// same rule as Move Tab to New Window -- so a side is never left with nothing in it.
     func takeTab(at index: Int) -> URL? {
-        guard tabs.indices.contains(index) else { return nil }
+        guard tabs.indices.contains(index), !tabs[index].isTabLocked else { return nil }
         let url = tabs[index].currentURL
         if tabs.count > 1 { closeTab(at: index) }
         return url
@@ -327,9 +418,17 @@ final class TabbedPaneController: NSObject {
 
     func closeActiveTab() { closeTab(at: activeIndex) }
 
+    /// Whether the active tab may be closed (more than one tab, and not locked).
+    var activeTabIsLocked: Bool { activePane?.isTabLocked ?? false }
+
     private func closeTab(at index: Int) {
         guard tabs.count > 1, tabs.indices.contains(index) else { return }
+        guard TabLockPolicy.canClose(tabLocks, index: index) else {
+            NSSound.beep()  // locked: the chip's tooltip says why
+            return
+        }
         guard tabs[index].prepareViewerToClose() else { return }  // unsaved markup: cancelled
+        closedTabs.push(snapshot(of: tabs[index]))
         // Only pull focus to this side if it already had it (or we're closing the
         // active tab), so clicking the X on a background side's tab doesn't steal it.
         let hadFocus = activePane.map { $0.keyView.window?.firstResponder === $0.keyView } ?? false
@@ -395,12 +494,15 @@ final class TabbedPaneController: NSObject {
                 makeChip(
                     title: pane.smartListingTitle ?? Self.title(for: pane.currentURL),
                     index: index,
-                    active: index == activeIndex, closable: tabs.count > 1))
+                    active: index == activeIndex, closable: tabs.count > 1 && !pane.isTabLocked,
+                    locked: pane.isTabLocked))
         }
         tabBar.addArrangedSubview(plusButton)
     }
 
-    private func makeChip(title: String, index: Int, active: Bool, closable: Bool) -> NSView {
+    private func makeChip(
+        title: String, index: Int, active: Bool, closable: Bool, locked: Bool = false
+    ) -> NSView {
         let chip = TabChipView()
         chip.wantsLayer = true
         chip.layer?.cornerRadius = 5
@@ -410,7 +512,8 @@ final class TabbedPaneController: NSObject {
         // The whole chip selects the tab, not just the label -- clicking its padding or empty
         // space is what a user expects. Only the close button (below) is carved out.
         chip.onSelect = { [weak self] in self?.selectTab(index) }
-        chip.menu = makeTabMenu(index: index, closable: closable)
+        chip.menu = makeTabMenu(index: index, closable: closable, locked: locked)
+        if locked { chip.toolTip = L("tabs.lockedTooltip", "Locked. Unlock the tab to close it.") }
         chip.index = index
         chip.sideID = sideID
         chip.onDroppedOutside = { [weak self] i in  // no tab bar took it -> tear off into a window
@@ -424,8 +527,29 @@ final class TabbedPaneController: NSObject {
         name.translatesAutoresizingMaskIntoConstraints = false
         chip.addSubview(name)
 
+        var nameLeading = name.leadingAnchor.constraint(
+            equalTo: chip.leadingAnchor, constant: 8)
+        if locked {
+            let glyph = NSImageView()
+            glyph.image = NSImage(
+                systemSymbolName: "lock.fill",
+                accessibilityDescription: L("tabs.lockedAX", "Locked"))
+            glyph.symbolConfiguration = .init(pointSize: 9, weight: .semibold)
+            glyph.contentTintColor = active ? ThemeManager.shared.accent : .secondaryLabelColor
+            glyph.setAccessibilityLabel(L("tabs.lockedAX", "Locked"))
+            glyph.translatesAutoresizingMaskIntoConstraints = false
+            chip.addSubview(glyph)
+            NSLayoutConstraint.activate([
+                glyph.leadingAnchor.constraint(equalTo: chip.leadingAnchor, constant: 7),
+                glyph.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
+                glyph.widthAnchor.constraint(equalToConstant: 10),
+            ])
+            nameLeading = name.leadingAnchor.constraint(
+                equalTo: glyph.trailingAnchor, constant: 4)
+        }
+
         NSLayoutConstraint.activate([
-            name.leadingAnchor.constraint(equalTo: chip.leadingAnchor, constant: 8),
+            nameLeading,
             name.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
             chip.heightAnchor.constraint(equalToConstant: 24),
             chip.widthAnchor.constraint(lessThanOrEqualToConstant: 200),
@@ -464,7 +588,7 @@ final class TabbedPaneController: NSObject {
 
     /// The right-click menu for a tab: open its folder elsewhere or copy its path, plus the
     /// usual tab actions.
-    private func makeTabMenu(index: Int, closable: Bool) -> NSMenu {
+    private func makeTabMenu(index: Int, closable: Bool, locked: Bool) -> NSMenu {
         let menu = NSMenu()
         func add(_ title: String, _ selector: Selector) {
             let item = menu.addItem(withTitle: title, action: selector, keyEquivalent: "")
@@ -479,6 +603,9 @@ final class TabbedPaneController: NSObject {
         add(L("crumb.leftPane", "Open in Left Pane"), #selector(tabToLeftPane(_:)))
         add(L("crumb.rightPane", "Open in Right Pane"), #selector(tabToRightPane(_:)))
         add(L("tabs.moveToOtherPane", "Move to Other Pane"), #selector(moveTabToOtherPane(_:)))
+        add(
+            locked ? L("tabs.unlockTab", "Unlock Tab") : L("tabs.lockTab", "Lock Tab"),
+            #selector(toggleLockMenu(_:)))
         menu.addItem(.separator())
         if closable { add(L("tabs.closeTab", "Close Tab"), #selector(closeTabMenu(_:))) }
         if tabs.count > 1 {
@@ -508,17 +635,26 @@ final class TabbedPaneController: NSObject {
         if let url = tabURL(sender.tag) { onOpenFolderInPane?(url, .rightPane) }
     }
     @objc private func closeTabMenu(_ sender: NSMenuItem) { closeTab(at: sender.tag) }
+    @objc private func toggleLockMenu(_ sender: NSMenuItem) {
+        guard tabs.indices.contains(sender.tag) else { return }
+        setLocked(!tabs[sender.tag].isTabLocked, at: sender.tag)
+    }
     @objc private func closeOtherTabs(_ sender: NSMenuItem) {
         // Remove every tab except the target, keeping it as the sole, active tab.
         guard tabs.indices.contains(sender.tag) else { return }
         let keep = tabs[sender.tag]
+        // Locked tabs stay, along with the one the command was invoked on.
+        let going = Set(TabLockPolicy.indicesToCloseOthers(tabLocks, keeping: sender.tag))
         // Ask about unsaved markup in every tab that is about to go, before closing any.
-        for tab in tabs where tab !== keep {
+        for (i, tab) in tabs.enumerated() where going.contains(i) {
             guard tab.prepareViewerToClose() else { return }
         }
-        for tab in tabs where tab !== keep { tab.teardown() }
-        tabs = [keep]
-        activeIndex = 0
+        for (i, tab) in tabs.enumerated() where going.contains(i) {
+            closedTabs.push(snapshot(of: tab))
+            tab.teardown()
+        }
+        tabs = tabs.enumerated().filter { !going.contains($0.offset) }.map(\.element)
+        activeIndex = tabs.firstIndex(where: { $0 === keep }) ?? 0
         showActivePane()
         refreshTabBar()
     }

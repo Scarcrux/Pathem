@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "Удалить геопозицию";
 "bvc.cmd.removeQuarantine" = "Снять карантин";
 "bvc.cmd.rename" = "Переименовать…";
+"bvc.cmd.reopenClosedTab" = "Открыть закрытую вкладку";
 "bvc.cmd.repoReclaim" = "Освободить место в репозитории…";
 "bvc.cmd.resetData" = "Сбросить данные Pathem…";
 "bvc.cmd.revealInFinder" = "Показать в Finder";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "Запустить быструю команду для выбранного…";
 "bvc.cmd.saveLayout" = "Сохранить компоновку…";
 "bvc.cmd.saveStyle" = "Сохранить стиль…";
+"bvc.cmd.saveTabGroup" = "Сохранить вкладки как группу…";
 "bvc.cmd.saveViewPreset" = "Сохранить текущий вид как…";
 "bvc.cmd.saveWorkspace" = "Сохранить рабочее пространство…";
 "bvc.cmd.searchFolder" = "Искать в этой папке…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "Обзор размеров…";
 "bvc.cmd.slideshow" = "Слайд-шоу";
 "bvc.cmd.split" = "Разделить файл…";
+"bvc.cmd.switchTabs" = "Переключить вкладки";
+"bvc.cmd.switchTabsReverse" = "Переключить вкладки (обратно)";
 "bvc.cmd.syncBrowsing" = "Синхронная навигация";
 "bvc.cmd.tagColor" = "Тег «%@»";
 "bvc.cmd.terminalFollowsFolder" = "Терминал следует за папкой";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "Показать стопку";
 "menu.storage" = "Хранилище";
 "menu.tab.close" = "Закрыть вкладку";
+"menu.tab.lock" = "Закрепить вкладку";
 "menu.tab.new" = "Новая вкладка";
+"menu.tab.reopen" = "Открыть закрытую вкладку";
+"menu.tabGroups" = "Группы вкладок";
 "menu.tags.clear" = "Очистить теги";
 "menu.templates.manage" = "Управление шаблонами…";
 "menu.terminal.here" = "Открыть Терминал здесь";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "Закрыть другие вкладки";
 "tabs.closeTab" = "Закрыть вкладку";
 "tabs.duplicate" = "Дублировать вкладку";
+"tabs.group.add" = "Открыть, добавив к текущим вкладкам";
+"tabs.group.delete" = "Удалить";
+"tabs.group.rename" = "Переименовать…";
+"tabs.group.renameTitle" = "Переименовать группу вкладок:";
+"tabs.group.replace" = "Открыть, заменив текущие вкладки";
+"tabs.group.saveTitle" = "Сохранить вкладки как группу:";
+"tabs.lockTab" = "Закрепить вкладку";
+"tabs.lockedAX" = "Закреплена";
+"tabs.lockedTooltip" = "Закреплена. Открепите вкладку, чтобы закрыть её.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Переместить в другую панель";
 "tabs.newTab" = "Новая вкладка";
+"tabs.switcher.title" = "Переключатель вкладок";
+"tabs.unlockTab" = "Открепить вкладку";
 "templates.actionName" = "Новый из шаблона";
 "templates.colName" = "Шаблон";
 "templates.commandTitle" = "Новый: %@";

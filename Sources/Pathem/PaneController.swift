@@ -468,6 +468,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Fired only on user navigation (not watcher refreshes), so the browser can
     /// clear the stale search query.
     var onDidNavigate: (() -> Void)?
+    /// This tab is locked: it keeps its folder, and any navigation away from it opens the
+    /// destination in a new tab instead (via `onLockedNavigation`).
+    var isTabLocked = false
+    var onLockedNavigation: ((URL) -> Void)?
     /// Files were dropped onto this pane: copy/move them into its folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
     var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
@@ -538,6 +542,32 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// The tab's navigated root folder (ignores column-view drill-down). Used for
     /// session/layout capture so a restart reopens the tab's folder, not a deep column.
     var rootURL: URL { nav.current }
+    /// Back and Forward stacks (oldest first), captured when a tab closes so Reopen restores them.
+    var backHistory: [URL] { nav.backStack }
+    var forwardHistory: [URL] { nav.forwardStack }
+
+    /// Put the Back/Forward stacks of a reopened tab back.
+    func restoreHistory(back: [URL], forward: [URL]) {
+        nav = NavigationState(current: nav.current, back: back, forward: forward)
+        backButton.isEnabled = nav.canGoBack
+        forwardButton.isEnabled = nav.canGoForward
+    }
+
+    /// A locked tab never changes folder: send the destination to a new tab. True when diverted.
+    private func divertedByLock(to url: URL) -> Bool {
+        guard
+            TabLockPolicy.navigation(locked: isTabLocked, current: nav.current, target: url)
+                == .newTab, let onLockedNavigation
+        else { return false }
+        onLockedNavigation(url.standardizedFileURL)
+        return true
+    }
+
+    /// Navigation the user asked for from outside the pane (sidebar, menus): honors the tab lock.
+    func navigateFromUser(to url: URL) {
+        guard !divertedByLock(to: url) else { return }
+        navigate(to: url)
+    }
     var selectedEntries: [FileEntry] { content.selectedEntries }
     var canGoBack: Bool { nav.canGoBack }
     var canGoForward: Bool { nav.canGoForward }
@@ -1525,6 +1555,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             if (try? url.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true {
                 NSWorkspace.shared.open(url)
             } else {
+                if divertedByLock(to: url) { return }
                 nav.go(to: url)
                 enterDirectory()  // clears smart mode and watches the real folder
             }
@@ -1573,10 +1604,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     @objc func goBack() {
         guard remote == nil else { return }
+        if let previous = nav.backStack.last, divertedByLock(to: previous) { return }
         if nav.goBack() { enterDirectory() }
     }
     @objc func goForward() {
         guard remote == nil else { return }
+        if let next = nav.forwardStack.last, divertedByLock(to: next) { return }
         if nav.goForward() { enterDirectory() }
     }
     @objc func goUp() {
@@ -1598,6 +1631,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             enterDirectory()
             return
         }
+        if let parent = nav.parent, divertedByLock(to: parent) { return }
         if nav.goUp() { enterDirectory() }
     }
 
@@ -1742,6 +1776,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         breadcrumb.setContentHuggingPriority(.init(1), for: .horizontal)
         breadcrumb.setContentCompressionResistancePriority(.init(1), for: .horizontal)
         breadcrumb.onNavigate = { [weak self] url in
+            if self?.divertedByLock(to: url) == true { return }
             self?.nav.go(to: url)
             self?.enterDirectory()
         }
@@ -3167,9 +3202,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         if isDirectory.boolValue {
             guard url != nav.current else { return }
+            if divertedByLock(to: url) { return }
             nav.go(to: url)
             enterDirectory()
         } else {
+            if divertedByLock(to: url.deletingLastPathComponent()) { return }
             nav.go(to: url.deletingLastPathComponent())
             enterDirectory()
             content.select(name: url.lastPathComponent)

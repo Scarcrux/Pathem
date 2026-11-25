@@ -875,6 +875,7 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.activeSide?.selectPreviousTab()
         }
+        registerTabPowerCommands()
         add(
             "nav.back", L("bvc.cmd.back", "Back"),
             enabled: { [weak self] in self?.activePane?.canGoBack ?? false }

@@ -251,6 +251,7 @@
 "bvc.cmd.removeLocation" = "Supprimer la localisation";
 "bvc.cmd.removeQuarantine" = "Supprimer la quarantaine";
 "bvc.cmd.rename" = "Renommer…";
+"bvc.cmd.reopenClosedTab" = "Rouvrir l’onglet fermé";
 "bvc.cmd.repoReclaim" = "Récupérer dans le dépôt…";
 "bvc.cmd.resetData" = "Réinitialiser les données de Pathem…";
 "bvc.cmd.revealInFinder" = "Afficher dans le Finder";
@@ -260,6 +261,7 @@
 "bvc.cmd.runShortcut" = "Exécuter un raccourci sur la sélection…";
 "bvc.cmd.saveLayout" = "Enregistrer la disposition…";
 "bvc.cmd.saveStyle" = "Enregistrer le style…";
+"bvc.cmd.saveTabGroup" = "Enregistrer les onglets comme groupe…";
 "bvc.cmd.saveViewPreset" = "Enregistrer la vue actuelle sous…";
 "bvc.cmd.saveWorkspace" = "Enregistrer l'espace de travail…";
 "bvc.cmd.searchFolder" = "Rechercher dans ce dossier…";
@@ -286,6 +288,8 @@
 "bvc.cmd.sizeBrowser" = "Explorateur de tailles…";
 "bvc.cmd.slideshow" = "Diaporama";
 "bvc.cmd.split" = "Diviser le fichier…";
+"bvc.cmd.switchTabs" = "Changer d’onglet";
+"bvc.cmd.switchTabsReverse" = "Changer d’onglet (sens inverse)";
 "bvc.cmd.syncBrowsing" = "Navigation synchronisée";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Le Terminal suit le dossier";
@@ -1097,7 +1101,10 @@
 "menu.shelf.toggle" = "Afficher le Drop Stack";
 "menu.storage" = "Stockage";
 "menu.tab.close" = "Fermer l’onglet";
+"menu.tab.lock" = "Verrouiller l’onglet";
 "menu.tab.new" = "Nouvel onglet";
+"menu.tab.reopen" = "Rouvrir l’onglet fermé";
+"menu.tabGroups" = "Groupes d’onglets";
 "menu.tags.clear" = "Effacer les tags";
 "menu.templates.manage" = "Gérer les modèles…";
 "menu.terminal.here" = "Ouvrir le Terminal ici";
@@ -1657,9 +1664,20 @@
 "tabs.closeOthers" = "Fermer les autres onglets";
 "tabs.closeTab" = "Fermer l’onglet";
 "tabs.duplicate" = "Dupliquer l’onglet";
+"tabs.group.add" = "Ouvrir en ajoutant aux onglets actuels";
+"tabs.group.delete" = "Supprimer";
+"tabs.group.rename" = "Renommer…";
+"tabs.group.renameTitle" = "Renommer le groupe d’onglets :";
+"tabs.group.replace" = "Ouvrir en remplaçant les onglets actuels";
+"tabs.group.saveTitle" = "Enregistrer les onglets sous le nom de groupe :";
+"tabs.lockTab" = "Verrouiller l’onglet";
+"tabs.lockedAX" = "Verrouillé";
+"tabs.lockedTooltip" = "Verrouillé. Déverrouillez l’onglet pour le fermer.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Déplacer vers l’autre volet";
 "tabs.newTab" = "Nouvel onglet";
+"tabs.switcher.title" = "Sélecteur d’onglets";
+"tabs.unlockTab" = "Déverrouiller l’onglet";
 "templates.actionName" = "Nouveau depuis un modèle";
 "templates.colName" = "Modèle";
 "templates.commandTitle" = "Nouveau : %@";

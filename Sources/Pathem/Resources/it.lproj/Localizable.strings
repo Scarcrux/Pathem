@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "Rimuovi posizione";
 "bvc.cmd.removeQuarantine" = "Rimuovi quarantena";
 "bvc.cmd.rename" = "Rinomina…";
+"bvc.cmd.reopenClosedTab" = "Riapri scheda chiusa";
 "bvc.cmd.repoReclaim" = "Recupera spazio nel repo…";
 "bvc.cmd.resetData" = "Reimposta dati di Pathem…";
 "bvc.cmd.revealInFinder" = "Mostra nel Finder";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "Esegui comando rapido sulla selezione…";
 "bvc.cmd.saveLayout" = "Salva layout…";
 "bvc.cmd.saveStyle" = "Salva stile…";
+"bvc.cmd.saveTabGroup" = "Salva schede come gruppo…";
 "bvc.cmd.saveViewPreset" = "Salva vista corrente come…";
 "bvc.cmd.saveWorkspace" = "Salva spazio di lavoro…";
 "bvc.cmd.searchFolder" = "Cerca in questa cartella…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "Esplora dimensioni…";
 "bvc.cmd.slideshow" = "Presentazione";
 "bvc.cmd.split" = "Dividi file…";
+"bvc.cmd.switchTabs" = "Cambia scheda";
+"bvc.cmd.switchTabsReverse" = "Cambia scheda (inverso)";
 "bvc.cmd.syncBrowsing" = "Sincronizza navigazione";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Il Terminale segue la cartella";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "Mostra pila di rilascio";
 "menu.storage" = "Archiviazione";
 "menu.tab.close" = "Chiudi scheda";
+"menu.tab.lock" = "Blocca scheda";
 "menu.tab.new" = "Nuova scheda";
+"menu.tab.reopen" = "Riapri scheda chiusa";
+"menu.tabGroups" = "Gruppi di schede";
 "menu.tags.clear" = "Rimuovi tag";
 "menu.templates.manage" = "Gestisci modelli…";
 "menu.terminal.here" = "Apri Terminale qui";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "Chiudi le altre schede";
 "tabs.closeTab" = "Chiudi scheda";
 "tabs.duplicate" = "Duplica scheda";
+"tabs.group.add" = "Apri aggiungendo alle schede attuali";
+"tabs.group.delete" = "Elimina";
+"tabs.group.rename" = "Rinomina…";
+"tabs.group.renameTitle" = "Rinomina gruppo di schede:";
+"tabs.group.replace" = "Apri sostituendo le schede attuali";
+"tabs.group.saveTitle" = "Salva le schede come gruppo:";
+"tabs.lockTab" = "Blocca scheda";
+"tabs.lockedAX" = "Bloccata";
+"tabs.lockedTooltip" = "Bloccata. Sblocca la scheda per chiuderla.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Sposta nell’altro pannello";
 "tabs.newTab" = "Nuova scheda";
+"tabs.switcher.title" = "Selettore schede";
+"tabs.unlockTab" = "Sblocca scheda";
 "templates.actionName" = "Nuovo da modello";
 "templates.colName" = "Modello";
 "templates.commandTitle" = "Nuovo: %@";

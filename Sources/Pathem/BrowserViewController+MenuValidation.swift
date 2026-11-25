@@ -80,6 +80,13 @@ extension BrowserViewController {
             menuItem.state =
                 (activePane?.effectiveViewOptions.calculateFolderSizes ?? prefs.calculateFolderSizes)
                 ? .on : .off
+        case "tab.lock", "tab.unlock":
+            // One File-menu item that flips between Lock Tab and Unlock Tab with the active tab.
+            let locked = activeSide?.activeTabIsLocked == true
+            menuItem.title =
+                locked ? L("tabs.unlockTab", "Unlock Tab") : L("tabs.lockTab", "Lock Tab")
+            menuItem.representedObject = locked ? "tab.unlock" : "tab.lock"
+            return commands.command(locked ? "tab.unlock" : "tab.lock")?.isEnabled() ?? true
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.folderTree": menuItem.state = prefs.showFolderTree ? .on : .off
         case "view.stackPanes": menuItem.state = prefs.stackPanesVertically ? .on : .off

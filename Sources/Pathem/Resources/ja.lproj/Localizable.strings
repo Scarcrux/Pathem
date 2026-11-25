@@ -251,6 +251,7 @@
 "bvc.cmd.removeLocation" = "位置情報を削除";
 "bvc.cmd.removeQuarantine" = "検疫を解除";
 "bvc.cmd.rename" = "名称変更…";
+"bvc.cmd.reopenClosedTab" = "閉じたタブを開き直す";
 "bvc.cmd.repoReclaim" = "リポジトリで容量を回収…";
 "bvc.cmd.resetData" = "Pathemのデータをリセット…";
 "bvc.cmd.revealInFinder" = "Finderに表示";
@@ -260,6 +261,7 @@
 "bvc.cmd.runShortcut" = "選択項目でショートカットを実行…";
 "bvc.cmd.saveLayout" = "レイアウトを保存…";
 "bvc.cmd.saveStyle" = "スタイルを保存…";
+"bvc.cmd.saveTabGroup" = "タブをグループとして保存…";
 "bvc.cmd.saveViewPreset" = "現在の表示を保存…";
 "bvc.cmd.saveWorkspace" = "ワークスペースを保存…";
 "bvc.cmd.searchFolder" = "このフォルダを検索…";
@@ -286,6 +288,8 @@
 "bvc.cmd.sizeBrowser" = "サイズブラウザ…";
 "bvc.cmd.slideshow" = "スライドショー";
 "bvc.cmd.split" = "ファイルを分割…";
+"bvc.cmd.switchTabs" = "タブを切り替える";
+"bvc.cmd.switchTabsReverse" = "タブを切り替える（逆順）";
 "bvc.cmd.syncBrowsing" = "同期ブラウズ";
 "bvc.cmd.tagColor" = "タグ %@";
 "bvc.cmd.terminalFollowsFolder" = "ターミナルをフォルダに追従";
@@ -1097,7 +1101,10 @@
 "menu.shelf.toggle" = "Drop Stack を表示";
 "menu.storage" = "ストレージ";
 "menu.tab.close" = "タブを閉じる";
+"menu.tab.lock" = "タブをロック";
 "menu.tab.new" = "新規タブ";
+"menu.tab.reopen" = "閉じたタブを開き直す";
+"menu.tabGroups" = "タブグループ";
 "menu.tags.clear" = "タグを消去";
 "menu.templates.manage" = "テンプレートを管理…";
 "menu.terminal.here" = "ここでターミナルを開く";
@@ -1657,9 +1664,20 @@
 "tabs.closeOthers" = "他のタブを閉じる";
 "tabs.closeTab" = "タブを閉じる";
 "tabs.duplicate" = "タブを複製";
+"tabs.group.add" = "現在のタブに追加して開く";
+"tabs.group.delete" = "削除";
+"tabs.group.rename" = "名前を変更…";
+"tabs.group.renameTitle" = "タブグループの名前を変更:";
+"tabs.group.replace" = "現在のタブを置き換えて開く";
+"tabs.group.saveTitle" = "タブグループの名前:";
+"tabs.lockTab" = "タブをロック";
+"tabs.lockedAX" = "ロック中";
+"tabs.lockedTooltip" = "ロック中です。閉じるにはロックを解除してください。";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "他のペインに移動";
 "tabs.newTab" = "新規タブ";
+"tabs.switcher.title" = "タブスイッチャー";
+"tabs.unlockTab" = "タブのロックを解除";
 "templates.actionName" = "テンプレートから新規作成";
 "templates.colName" = "テンプレート";
 "templates.commandTitle" = "新規：%@";

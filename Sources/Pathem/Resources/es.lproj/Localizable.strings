@@ -251,6 +251,7 @@
 "bvc.cmd.removeLocation" = "Eliminar ubicación";
 "bvc.cmd.removeQuarantine" = "Eliminar cuarentena";
 "bvc.cmd.rename" = "Renombrar…";
+"bvc.cmd.reopenClosedTab" = "Reabrir pestaña cerrada";
 "bvc.cmd.repoReclaim" = "Recuperar espacio en el repositorio…";
 "bvc.cmd.resetData" = "Restablecer datos de Pathem…";
 "bvc.cmd.revealInFinder" = "Mostrar en el Finder";
@@ -260,6 +261,7 @@
 "bvc.cmd.runShortcut" = "Ejecutar atajo en la selección…";
 "bvc.cmd.saveLayout" = "Guardar disposición…";
 "bvc.cmd.saveStyle" = "Guardar estilo…";
+"bvc.cmd.saveTabGroup" = "Guardar pestañas como grupo…";
 "bvc.cmd.saveViewPreset" = "Guardar vista actual como…";
 "bvc.cmd.saveWorkspace" = "Guardar espacio de trabajo…";
 "bvc.cmd.searchFolder" = "Buscar en esta carpeta…";
@@ -286,6 +288,8 @@
 "bvc.cmd.sizeBrowser" = "Explorador de tamaños…";
 "bvc.cmd.slideshow" = "Pase de diapositivas";
 "bvc.cmd.split" = "Dividir archivo…";
+"bvc.cmd.switchTabs" = "Cambiar de pestaña";
+"bvc.cmd.switchTabsReverse" = "Cambiar de pestaña (inverso)";
 "bvc.cmd.syncBrowsing" = "Navegación sincronizada";
 "bvc.cmd.tagColor" = "Etiquetar %@";
 "bvc.cmd.terminalFollowsFolder" = "El Terminal sigue a la carpeta";
@@ -1097,7 +1101,10 @@
 "menu.shelf.toggle" = "Mostrar Drop Stack";
 "menu.storage" = "Almacenamiento";
 "menu.tab.close" = "Cerrar pestaña";
+"menu.tab.lock" = "Bloquear pestaña";
 "menu.tab.new" = "Nueva pestaña";
+"menu.tab.reopen" = "Reabrir pestaña cerrada";
+"menu.tabGroups" = "Grupos de pestañas";
 "menu.tags.clear" = "Borrar etiquetas";
 "menu.templates.manage" = "Gestionar plantillas…";
 "menu.terminal.here" = "Abrir el Terminal aquí";
@@ -1657,9 +1664,20 @@
 "tabs.closeOthers" = "Cerrar otras pestañas";
 "tabs.closeTab" = "Cerrar pestaña";
 "tabs.duplicate" = "Duplicar pestaña";
+"tabs.group.add" = "Abrir añadiendo a las pestañas actuales";
+"tabs.group.delete" = "Eliminar";
+"tabs.group.rename" = "Renombrar…";
+"tabs.group.renameTitle" = "Renombrar grupo de pestañas:";
+"tabs.group.replace" = "Abrir reemplazando las pestañas actuales";
+"tabs.group.saveTitle" = "Guardar pestañas como grupo:";
+"tabs.lockTab" = "Bloquear pestaña";
+"tabs.lockedAX" = "Bloqueada";
+"tabs.lockedTooltip" = "Bloqueada. Desbloquea la pestaña para cerrarla.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Mover al otro panel";
 "tabs.newTab" = "Nueva pestaña";
+"tabs.switcher.title" = "Selector de pestañas";
+"tabs.unlockTab" = "Desbloquear pestaña";
 "templates.actionName" = "Nuevo desde plantilla";
 "templates.colName" = "Plantilla";
 "templates.commandTitle" = "Nuevo: %@";

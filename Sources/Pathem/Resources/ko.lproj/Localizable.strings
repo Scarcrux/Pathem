@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "위치 제거";
 "bvc.cmd.removeQuarantine" = "격리 해제";
 "bvc.cmd.rename" = "이름 변경…";
+"bvc.cmd.reopenClosedTab" = "닫은 탭 다시 열기";
 "bvc.cmd.repoReclaim" = "저장소에서 공간 확보…";
 "bvc.cmd.resetData" = "Pathem 데이터 초기화…";
 "bvc.cmd.revealInFinder" = "Finder에서 보기";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "선택 항목에 단축어 실행…";
 "bvc.cmd.saveLayout" = "레이아웃 저장…";
 "bvc.cmd.saveStyle" = "스타일 저장…";
+"bvc.cmd.saveTabGroup" = "탭을 그룹으로 저장…";
 "bvc.cmd.saveViewPreset" = "현재 보기를 다음으로 저장…";
 "bvc.cmd.saveWorkspace" = "작업 공간 저장…";
 "bvc.cmd.searchFolder" = "이 폴더에서 검색…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "크기 브라우저…";
 "bvc.cmd.slideshow" = "슬라이드쇼";
 "bvc.cmd.split" = "파일 분할…";
+"bvc.cmd.switchTabs" = "탭 전환";
+"bvc.cmd.switchTabsReverse" = "탭 전환 (역순)";
 "bvc.cmd.syncBrowsing" = "동기식 탐색";
 "bvc.cmd.tagColor" = "%@ 태그";
 "bvc.cmd.terminalFollowsFolder" = "터미널이 폴더를 따라감";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "드롭 스택 보기";
 "menu.storage" = "저장 공간";
 "menu.tab.close" = "탭 닫기";
+"menu.tab.lock" = "탭 잠금";
 "menu.tab.new" = "새로운 탭";
+"menu.tab.reopen" = "닫은 탭 다시 열기";
+"menu.tabGroups" = "탭 그룹";
 "menu.tags.clear" = "태그 지우기";
 "menu.templates.manage" = "템플릿 관리…";
 "menu.terminal.here" = "여기에서 터미널 열기";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "다른 탭 닫기";
 "tabs.closeTab" = "탭 닫기";
 "tabs.duplicate" = "탭 복제";
+"tabs.group.add" = "현재 탭에 추가해서 열기";
+"tabs.group.delete" = "삭제";
+"tabs.group.rename" = "이름 변경…";
+"tabs.group.renameTitle" = "탭 그룹 이름 변경:";
+"tabs.group.replace" = "현재 탭을 바꿔서 열기";
+"tabs.group.saveTitle" = "탭 그룹 이름:";
+"tabs.lockTab" = "탭 잠금";
+"tabs.lockedAX" = "잠김";
+"tabs.lockedTooltip" = "잠겨 있습니다. 닫으려면 탭 잠금을 해제하세요.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "다른 패널로 이동";
 "tabs.newTab" = "새로운 탭";
+"tabs.switcher.title" = "탭 전환기";
+"tabs.unlockTab" = "탭 잠금 해제";
 "templates.actionName" = "템플릿으로 새로 만들기";
 "templates.colName" = "템플릿";
 "templates.commandTitle" = "새로 만들기: %@";

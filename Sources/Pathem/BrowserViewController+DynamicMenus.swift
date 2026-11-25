@@ -6,6 +6,7 @@ extension BrowserViewController {
     /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.
     func installLayoutsMenu() {
         menuInstaller.installBrowserMenus(delegate: self)
+        menuInstaller.installTabGroupsMenu(delegate: self)
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -15,6 +16,10 @@ extension BrowserViewController {
         }
         if menu === externalCommandsMenu {
             populateExternalCommandsMenu()
+            return
+        }
+        if menu === menuInstaller.tabGroupsMenu {
+            populateTabGroupsMenu(menu)
             return
         }
         if menu === bookmarksMenu {
@@ -150,7 +155,7 @@ extension BrowserViewController {
 
     @objc private func openRecentFolder(_ sender: NSMenuItem) {
         guard let url = sender.representedObject as? URL else { return }
-        activePane?.navigate(to: url)
+        activePane?.navigateFromUser(to: url)
     }
     @objc private func clearRecentFolders() {
         recentFolders = []

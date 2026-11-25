@@ -16,6 +16,13 @@ public struct NavigationState: Sendable, Equatable {
         self.forwardStack = []
     }
 
+    /// Rebuild a state with known stacks (oldest first), e.g. for a reopened tab.
+    public init(current: URL, back: [URL], forward: [URL]) {
+        self.current = current.standardizedFileURL
+        self.backStack = back.map(\.standardizedFileURL)
+        self.forwardStack = forward.map(\.standardizedFileURL)
+    }
+
     public var canGoBack: Bool { !backStack.isEmpty }
     public var canGoForward: Bool { !forwardStack.isEmpty }
 

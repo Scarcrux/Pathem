@@ -251,6 +251,7 @@
 "bvc.cmd.removeLocation" = "Standort entfernen";
 "bvc.cmd.removeQuarantine" = "Quarantäne entfernen";
 "bvc.cmd.rename" = "Umbenennen…";
+"bvc.cmd.reopenClosedTab" = "Geschlossenen Tab wieder öffnen";
 "bvc.cmd.repoReclaim" = "Im Repo zurückgewinnen…";
 "bvc.cmd.resetData" = "Pathem-Daten zurücksetzen…";
 "bvc.cmd.revealInFinder" = "Im Finder zeigen";
@@ -260,6 +261,7 @@
 "bvc.cmd.runShortcut" = "Kurzbefehl auf Auswahl ausführen…";
 "bvc.cmd.saveLayout" = "Layout sichern…";
 "bvc.cmd.saveStyle" = "Stil sichern…";
+"bvc.cmd.saveTabGroup" = "Tabs als Gruppe sichern …";
 "bvc.cmd.saveViewPreset" = "Aktuelle Ansicht sichern als…";
 "bvc.cmd.saveWorkspace" = "Arbeitsbereich sichern…";
 "bvc.cmd.searchFolder" = "Diesen Ordner durchsuchen…";
@@ -286,6 +288,8 @@
 "bvc.cmd.sizeBrowser" = "Größenbrowser…";
 "bvc.cmd.slideshow" = "Diashow";
 "bvc.cmd.split" = "Datei aufteilen…";
+"bvc.cmd.switchTabs" = "Tabs wechseln";
+"bvc.cmd.switchTabsReverse" = "Tabs wechseln (rückwärts)";
 "bvc.cmd.syncBrowsing" = "Synchron blättern";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal folgt Ordner";
@@ -1097,7 +1101,10 @@
 "menu.shelf.toggle" = "Drop Stack einblenden";
 "menu.storage" = "Speicher";
 "menu.tab.close" = "Tab schließen";
+"menu.tab.lock" = "Tab sperren";
 "menu.tab.new" = "Neuer Tab";
+"menu.tab.reopen" = "Geschlossenen Tab wieder öffnen";
+"menu.tabGroups" = "Tab-Gruppen";
 "menu.tags.clear" = "Tags entfernen";
 "menu.templates.manage" = "Vorlagen verwalten…";
 "menu.terminal.here" = "Terminal hier öffnen";
@@ -1657,9 +1664,20 @@
 "tabs.closeOthers" = "Andere Tabs schließen";
 "tabs.closeTab" = "Tab schließen";
 "tabs.duplicate" = "Tab duplizieren";
+"tabs.group.add" = "Öffnen und zu aktuellen Tabs hinzufügen";
+"tabs.group.delete" = "Löschen";
+"tabs.group.rename" = "Umbenennen …";
+"tabs.group.renameTitle" = "Tab-Gruppe umbenennen:";
+"tabs.group.replace" = "Öffnen und aktuelle Tabs ersetzen";
+"tabs.group.saveTitle" = "Tabs als Gruppe sichern unter:";
+"tabs.lockTab" = "Tab sperren";
+"tabs.lockedAX" = "Gesperrt";
+"tabs.lockedTooltip" = "Gesperrt. Entsperren Sie den Tab, um ihn zu schließen.";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "In anderen Bereich bewegen";
 "tabs.newTab" = "Neuer Tab";
+"tabs.switcher.title" = "Tab-Umschalter";
+"tabs.unlockTab" = "Tab entsperren";
 "templates.actionName" = "Neu aus Vorlage";
 "templates.colName" = "Vorlage";
 "templates.commandTitle" = "Neu: %@";

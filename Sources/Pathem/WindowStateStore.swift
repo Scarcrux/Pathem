@@ -14,8 +14,16 @@ final class WindowStateStore {
         var right: [String]
         var rightActive: Int
         var leftIsActive: Bool
+        /// Which tabs are locked, parallel to `left` / `right`. Absent in older sessions (none locked).
+        var leftLocked: [Bool]
+        var rightLocked: [Bool]
 
-        init(left: [String], leftActive: Int, right: [String], rightActive: Int, leftIsActive: Bool) {
+        init(
+            left: [String], leftActive: Int, right: [String], rightActive: Int, leftIsActive: Bool,
+            leftLocked: [Bool] = [], rightLocked: [Bool] = []
+        ) {
+            self.leftLocked = leftLocked
+            self.rightLocked = rightLocked
             self.left = left
             self.leftActive = leftActive
             self.right = right
@@ -32,6 +40,8 @@ final class WindowStateStore {
             right = try c.decodeIfPresent([String].self, forKey: .right) ?? []
             rightActive = try c.decodeIfPresent(Int.self, forKey: .rightActive) ?? 0
             leftIsActive = try c.decodeIfPresent(Bool.self, forKey: .leftIsActive) ?? true
+            leftLocked = try c.decodeIfPresent([Bool].self, forKey: .leftLocked) ?? []
+            rightLocked = try c.decodeIfPresent([Bool].self, forKey: .rightLocked) ?? []
         }
     }
 
@@ -75,7 +85,9 @@ final class WindowStateStore {
 
     // MARK: - Workspaces
 
-    func workspaces() -> [Workspace] { ConfigStore.load([Workspace].self, from: Self.workspacesURL) ?? [] }
+    func workspaces() -> [Workspace] {
+        ConfigStore.load([Workspace].self, from: Self.workspacesURL) ?? []
+    }
 
     /// Add or replace a workspace by name.
     func saveWorkspace(_ workspace: Workspace) {
@@ -84,6 +96,14 @@ final class WindowStateStore {
         all.append(workspace)
         ConfigStore.save(all, to: Self.workspacesURL)
     }
+
+    // MARK: - Tab groups
+
+    func tabGroups() -> TabGroupStore {
+        ConfigStore.load(TabGroupStore.self, from: Self.tabGroupsURL) ?? TabGroupStore()
+    }
+
+    func saveTabGroups(_ store: TabGroupStore) { ConfigStore.save(store, to: Self.tabGroupsURL) }
 
     // MARK: - Styles
 
@@ -101,5 +121,6 @@ final class WindowStateStore {
 
     private static var sessionURL: URL? { ConfigStore.url("session.json") }
     private static var workspacesURL: URL? { ConfigStore.url("workspaces.json") }
+    private static var tabGroupsURL: URL? { ConfigStore.url("tab-groups.json") }
     private static var stylesURL: URL? { ConfigStore.url("styles.json") }
 }

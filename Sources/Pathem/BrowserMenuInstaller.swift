@@ -11,6 +11,7 @@ final class BrowserMenuInstaller {
     let bookmarksMenu = NSMenu(title: "Bookmarks")
     let recentFoldersMenu = NSMenu(title: "Recent Folders")
     let externalCommandsMenu = NSMenu(title: "External Commands")
+    let tabGroupsMenu = NSMenu(title: "Tab Groups")
 
     var recentFolders: [URL] = []
 
@@ -44,6 +45,24 @@ final class BrowserMenuInstaller {
         goMenu.addItem(.separator())
         goMenu.addItem(item)
         installedMenuIDs.insert("recentFolders")
+    }
+
+    /// File > Tab Groups, right after Close Tab.
+    func installTabGroupsMenu(delegate: NSMenuDelegate) {
+        guard !installedMenuIDs.contains("tabGroups"), let mainMenu = NSApp.mainMenu,
+            let fileMenu = mainMenu.items.compactMap(\.submenu).first(where: {
+                $0.title == L("menu.file", "File")
+            })
+        else { return }
+        tabGroupsMenu.delegate = delegate
+        let item = NSMenuItem(
+            title: L("menu.tabGroups", "Tab Groups"), action: nil, keyEquivalent: "")
+        item.submenu = tabGroupsMenu
+        let closeIndex = fileMenu.items.firstIndex {
+            ($0.representedObject as? String) == "tab.lock"
+        }
+        fileMenu.insertItem(item, at: closeIndex.map { $0 + 1 } ?? fileMenu.items.count)
+        installedMenuIDs.insert("tabGroups")
     }
 
     func installExternalCommandsMenu(delegate: NSMenuDelegate) {

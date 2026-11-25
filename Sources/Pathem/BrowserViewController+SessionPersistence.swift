@@ -56,9 +56,12 @@ extension BrowserViewController {
         }
         var model = sidebar.model
         if model.groups.isEmpty {
-            model.groups = [Sidebar.Group(title: L("sidebar.favoritesDefaultName", "Favorites"), items: [])]
+            model.groups = [
+                Sidebar.Group(title: L("sidebar.favoritesDefaultName", "Favorites"), items: [])
+            ]
         }
-        let existing = Set(model.groups.flatMap(\.items).map { ($0.path as NSString).standardizingPath })
+        let existing = Set(
+            model.groups.flatMap(\.items).map { ($0.path as NSString).standardizingPath })
         var added = 0
         for url in found {
             let path = (url.path as NSString).standardizingPath
@@ -72,14 +75,18 @@ extension BrowserViewController {
         guard added > 0 else {
             presentInfo(
                 L("sidebar.importAllPresentTitle", "Nothing new to import"),
-                L("sidebar.importAllPresentBody", "Every Finder favorite is already in your sidebar."))
+                L(
+                    "sidebar.importAllPresentBody",
+                    "Every Finder favorite is already in your sidebar."))
             return
         }
         sidebar.model = model  // rebuilds the sidebar; it does not persist on its own
         saveSidebar(model)
         presentInfo(
             String(format: L("sidebar.importedTitle", "Imported %d favorite(s)"), added),
-            L("sidebar.importedBody", "They were added to your Favorites. Drag to reorder or rename them."))
+            L(
+                "sidebar.importedBody",
+                "They were added to your Favorites. Drag to reorder or rename them."))
     }
 
     func loadSidebar() {
@@ -101,7 +108,9 @@ extension BrowserViewController {
         sidebar.model = Sidebar(groups: [
             Sidebar.Group(
                 title: L("sidebar.favoritesDefaultName", "Favorites"),
-                items: layout.favorites.map { Sidebar.Item(name: $0.name, icon: $0.icon, path: $0.url.path) })
+                items: layout.favorites.map {
+                    Sidebar.Item(name: $0.name, icon: $0.icon, path: $0.url.path)
+                })
         ])
         BreadcrumbBar.demoRoot = layout.root  // clean "Home ▸ …" path, hiding the temp prefix
     }
@@ -126,7 +135,9 @@ extension BrowserViewController {
             sidebar.demoCloud = []
             sidebar.demoVolumes = []
             BreadcrumbBar.demoRoot = nil
-            sidebar.model = savedRealSidebar ?? .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
+            sidebar.model =
+                savedRealSidebar
+                ?? .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
             // resetHistory so the (about-to-be-deleted) demo temp path can't be reached
             // via Back after we leave demo mode.
             if let url = savedPaneFolders?.left { leftTabs.activePane?.resetHistory(to: url) }
@@ -137,7 +148,6 @@ extension BrowserViewController {
     func saveSidebar(_ model: Sidebar) {
         saveConfig(model, to: Self.sidebarURL)
     }
-
 
     // MARK: - Terminal theme
 
@@ -174,8 +184,10 @@ extension BrowserViewController {
         if persistsSession, let session = windowState.loadSession(),
             !(session.left.isEmpty && session.right.isEmpty)
         {
-            leftTabs.restoreTabs(session.left, active: session.leftActive)
-            rightTabs.restoreTabs(session.right, active: session.rightActive)
+            leftTabs.restoreTabs(
+                session.left, active: session.leftActive, locked: session.leftLocked)
+            rightTabs.restoreTabs(
+                session.right, active: session.rightActive, locked: session.rightLocked)
             let side = session.leftIsActive ? leftTabs : rightTabs
             if let pane = (side.activePane ?? leftTabs.activePane) {
                 setActiveSide(side.activePane != nil ? side : leftTabs, pane: pane)
@@ -207,6 +219,7 @@ extension BrowserViewController {
         return WindowStateStore.Session(
             left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
             right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex,
-            leftIsActive: activeSide === leftTabs)
+            leftIsActive: activeSide === leftTabs,
+            leftLocked: leftTabs.tabLocks, rightLocked: rightTabs.tabLocks)
     }
 }

@@ -536,8 +536,8 @@ extension BrowserViewController {
         }
         check(
             "stateful-browser-controllers-own-wiring",
-            splitLayout.ownsSplitDelegates && menuInstaller.installedMenuCount == 5,
-            "splitDelegates=\(splitLayout.ownsSplitDelegates) installedMenus=\(menuInstaller.installedMenuCount)/5"
+            splitLayout.ownsSplitDelegates && menuInstaller.installedMenuCount == 6,
+            "splitDelegates=\(splitLayout.ownsSplitDelegates) installedMenus=\(menuInstaller.installedMenuCount)/6"
         )
         // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
         // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so

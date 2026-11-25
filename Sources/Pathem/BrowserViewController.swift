@@ -21,6 +21,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     weak var activeSide: TabbedPaneController?
     /// A running Export Listing job, so it can be cancelled and a second one is not started.
     var listingExportTask: Task<Void, Never>?
+    /// Most-recently-used order of every tab in both panes, for the Ctrl-Tab switcher.
+    var tabOrder = TabSwitcherOrder<ObjectIdentifier>()
+    lazy var tabSwitcher = TabSwitcherController()
     /// The app's file-operation undo/redo history (replaces the window's NSUndoManager for file
     /// ops; text-field editing keeps its own). Drives Cmd-Z, the Edit menu, and a recent-actions
     /// panel with selective undo.
@@ -612,7 +615,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // Restore the last session's tabs/folders (or open initial tabs) now that
         // configurePane + callbacks are set, so each pane is fully wired.
         restoreSession()
-        sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
+        sidebar.onSelect = { [weak self] url in self?.activePane?.navigateFromUser(to: url) }
         sidebar.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
         sidebar.onOpenInOtherPane = { [weak self] url in
             (self?.otherPane ?? self?.activePane)?.navigate(to: url)
@@ -842,7 +845,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Detach the active tab into its own window: open a new window at that folder and, if the
     /// side still has other tabs, close the one we moved (so nothing is duplicated in place).
     func moveActiveTabToNewWindow() {
-        guard let side = activeSide, let pane = side.activePane, !pane.isRemote else {
+        guard let side = activeSide, let pane = side.activePane, !pane.isRemote,
+            !pane.isTabLocked  // a locked tab can't be closed, so it can't be moved either
+        else {
             NSSound.beep()
             return
         }
@@ -1049,6 +1054,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if activePane !== pane { activePane?.setActive(false) }
         activePane = pane
         activeSide = side
+        tabOrder.touch(ObjectIdentifier(pane))
         pane.setActive(true)
         // The sidebar tracks the newly active pane's folder (nothing for a smart listing).
         sidebar.highlightFolder(pane.smartListingTitle == nil ? pane.currentURL : nil)

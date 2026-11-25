@@ -252,6 +252,7 @@
 "bvc.cmd.removeLocation" = "移除位置";
 "bvc.cmd.removeQuarantine" = "移除隔離";
 "bvc.cmd.rename" = "重新命名…";
+"bvc.cmd.reopenClosedTab" = "重新開啟已關閉的標籤頁";
 "bvc.cmd.repoReclaim" = "在儲存庫中回收空間…";
 "bvc.cmd.resetData" = "重置 Pathem 資料…";
 "bvc.cmd.revealInFinder" = "在 Finder 中顯示";
@@ -261,6 +262,7 @@
 "bvc.cmd.runShortcut" = "對所選項目執行捷徑…";
 "bvc.cmd.saveLayout" = "儲存版面配置…";
 "bvc.cmd.saveStyle" = "儲存樣式…";
+"bvc.cmd.saveTabGroup" = "將標籤頁儲存為群組…";
 "bvc.cmd.saveViewPreset" = "將目前顯示方式儲存為…";
 "bvc.cmd.saveWorkspace" = "儲存工作區…";
 "bvc.cmd.searchFolder" = "搜尋此檔案夾…";
@@ -287,6 +289,8 @@
 "bvc.cmd.sizeBrowser" = "大小瀏覽器…";
 "bvc.cmd.slideshow" = "幻燈片秀";
 "bvc.cmd.split" = "分割檔案…";
+"bvc.cmd.switchTabs" = "切換標籤頁";
+"bvc.cmd.switchTabsReverse" = "切換標籤頁（反向）";
 "bvc.cmd.syncBrowsing" = "同步瀏覽";
 "bvc.cmd.tagColor" = "標籤「%@」";
 "bvc.cmd.terminalFollowsFolder" = "終端機跟隨檔案夾";
@@ -1102,7 +1106,10 @@
 "menu.shelf.toggle" = "顯示暫存堆疊";
 "menu.storage" = "儲存空間";
 "menu.tab.close" = "關閉標籤頁";
+"menu.tab.lock" = "鎖定標籤頁";
 "menu.tab.new" = "新增標籤頁";
+"menu.tab.reopen" = "重新開啟已關閉的標籤頁";
+"menu.tabGroups" = "標籤頁群組";
 "menu.tags.clear" = "清除標籤";
 "menu.templates.manage" = "管理範本…";
 "menu.terminal.here" = "在此打開終端機";
@@ -1704,9 +1711,20 @@
 "tabs.closeOthers" = "關閉其他標籤頁";
 "tabs.closeTab" = "關閉標籤頁";
 "tabs.duplicate" = "複製標籤頁";
+"tabs.group.add" = "開啟並加入目前標籤頁";
+"tabs.group.delete" = "刪除";
+"tabs.group.rename" = "重新命名…";
+"tabs.group.renameTitle" = "重新命名標籤頁群組：";
+"tabs.group.replace" = "開啟並取代目前標籤頁";
+"tabs.group.saveTitle" = "將標籤頁儲存為群組：";
+"tabs.lockTab" = "鎖定標籤頁";
+"tabs.lockedAX" = "已鎖定";
+"tabs.lockedTooltip" = "已鎖定。請先解鎖標籤頁再關閉。";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "移到另一個面板";
 "tabs.newTab" = "新增標籤頁";
+"tabs.switcher.title" = "標籤頁切換器";
+"tabs.unlockTab" = "解鎖標籤頁";
 "templates.actionName" = "從範本新增";
 "templates.colName" = "範本";
 "templates.commandTitle" = "新增：%@";

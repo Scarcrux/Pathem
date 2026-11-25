@@ -371,6 +371,16 @@ enum PathemApp {
             RunLoop.main.run(until: Date().addingTimeInterval(55))
             exit(1)
         }
+        if let dir = ProcessInfo.processInfo.environment["PATHEM_TABPOWER_SHOT"] {
+            browser.installToolbarIfNeeded()
+            window.setContentSize(NSSize(width: 1200, height: 760))
+            browser.view.layoutSubtreeIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                browser.debugRenderTabPower(toDir: dir) { ok in exit(ok ? 0 : 1) }
+            }
+            RunLoop.main.run(until: Date().addingTimeInterval(45))
+            exit(1)
+        }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
             let communityTheme: ThemePreset?
             if let package = launchEnvironment["PATHEM_COMMUNITY_RENDER_PACKAGE"] {
@@ -1872,6 +1882,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
+        fileMenu.addItem(commandItem("Reopen Closed Tab", "tab.reopen"))
+        fileMenu.addItem(commandItem("Lock Tab", "tab.lock"))
 
         let editItem = NSMenuItem()
         mainMenu.addItem(editItem)
