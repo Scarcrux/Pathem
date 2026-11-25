@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "Torrents";
 "bvc.cmd.transfers" = "Overdrachten";
 "bvc.cmd.trimMedia" = "Knip bij…";
+"bvc.cmd.typeAhead" = "Zoeken tijdens het typen";
 "bvc.cmd.undo" = "Maak ongedaan";
 "bvc.cmd.useAsDefaultView" = "Gebruik als standaardweergave";
 "bvc.cmd.verifyChecksum" = "Verifieer controlesom…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "Groottebrowser…";
 "menu.view.syncBrowsing" = "Synchroniseer navigatie";
 "menu.view.toggleHidden" = "Toon verborgen bestanden";
+"menu.view.typeAhead" = "Zoeken tijdens het typen";
 "menu.view.useAsDefault" = "Gebruik als standaardweergave";
 "menu.view.zoomIn" = "Zoom in";
 "menu.view.zoomOut" = "Zoom uit";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "Duur van spoor";
 "prefs.dragTrailLabel" = "Veegspoor";
 "prefs.dragTrailWidth" = "Breedte";
+"prefs.findAsYouType" = "Typ in een lijst om te zoeken, filteren of gaan (> opdrachten, ? zoeken)";
 "prefs.fixedFolderLabel" = "Vaste map";
 "prefs.folderHandler" = "Open mappen in Pathem in plaats van Finder";
 "prefs.folderHandlerConfirmBody" = "Hiermee wordt Pathem de standaard-app voor het openen van mappen op het hele systeem, dus bij dubbelklikken op een map of in een app die een map opent, wordt Pathem gebruikt in plaats van Finder. “Toon in Finder” blijft ongewijzigd. Je kunt hier altijd terugschakelen.";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "Kan de export niet voorbereiden.";
 "trim.noRange" = "Er is geen bereik geselecteerd om bij te snijden.";
 "trim.title" = "Snijd “%@” bij";
+"typeahead.a11y" = "Zoeken tijdens het typen";
+"typeahead.commandTag" = "Opdracht";
+"typeahead.didYouMean" = "“%@” bestaat niet. Bedoelde je %@?";
+"typeahead.filter" = "Filter";
+"typeahead.find" = "Zoek";
+"typeahead.folders" = "%d mappen";
+"typeahead.go" = "Ga";
+"typeahead.matchCount" = "%d van %d";
+"typeahead.noCommand" = "Geen overeenkomende opdracht";
+"typeahead.noFolders" = "Geen overeenkomende map";
+"typeahead.noMatches" = "Geen overeenkomsten";
+"typeahead.noSuchPath" = "“%@” bestaat niet.";
+"typeahead.placeholder" = "Typ om te zoeken. / om te gaan, > voor opdrachten, ? om te zoeken";
+"typeahead.searchHint" = "Beschrijf wat je zoekt";
+"typeahead.searchTag" = "Zoeken";
+"typeahead.searching" = "Deze map wordt doorzocht";
+"typeahead.shown" = "%d getoond";
 "update.autoCheck" = "Zoek automatisch naar updates";
 "update.autoInstall" = "Updates automatisch downloaden en installeren";
 "update.buttonTitle" = "Update gereed";

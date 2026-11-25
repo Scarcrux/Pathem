@@ -359,7 +359,7 @@
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:2098:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:2103:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false
@@ -380,7 +380,7 @@
     },
     {
       "id": "m55",
-      "site": "Sources/Pathem/BrowserViewController.swift:925:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController.swift:926:30:presentSheet",
       "filename": false,
       "group": 7,
       "content_change": false

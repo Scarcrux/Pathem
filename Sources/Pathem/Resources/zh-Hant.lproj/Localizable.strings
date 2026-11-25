@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "Torrent";
 "bvc.cmd.transfers" = "傳輸";
 "bvc.cmd.trimMedia" = "修剪…";
+"bvc.cmd.typeAhead" = "邊輸入邊尋找";
 "bvc.cmd.undo" = "還原";
 "bvc.cmd.useAsDefaultView" = "設為預設顯示方式";
 "bvc.cmd.verifyChecksum" = "驗證檢查碼…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "大小瀏覽器…";
 "menu.view.syncBrowsing" = "同步瀏覽";
 "menu.view.toggleHidden" = "顯示隱藏的檔案";
+"menu.view.typeAhead" = "邊輸入邊尋找";
 "menu.view.useAsDefault" = "設為預設顯示方式";
 "menu.view.zoomIn" = "放大";
 "menu.view.zoomOut" = "縮小";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "軌跡時間";
 "prefs.dragTrailLabel" = "滑動軌跡";
 "prefs.dragTrailWidth" = "寬度";
+"prefs.findAsYouType" = "在檔案列表中輸入以尋找、篩選或前往（> 指令，? 搜尋）";
 "prefs.fixedFolderLabel" = "固定的檔案夾";
 "prefs.folderHandler" = "在 Pathem 而非 Finder 中打開檔案夾";
 "prefs.folderHandlerConfirmBody" = "這會讓 Pathem 成為整個系統打開檔案夾的預設 App，因此按兩下檔案夾或由 App 打開檔案夾時，會使用 Pathem 而非 Finder。這不會影響「在 Finder 中顯示」。你可以隨時在這裡切換回來。";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "無法準備輸出。";
 "trim.noRange" = "未選取修剪範圍。";
 "trim.title" = "修剪「%@」";
+"typeahead.a11y" = "邊輸入邊尋找";
+"typeahead.commandTag" = "指令";
+"typeahead.didYouMean" = "「%@」不存在。你是指 %@ 嗎？";
+"typeahead.filter" = "篩選";
+"typeahead.find" = "尋找";
+"typeahead.folders" = "%d 個檔案夾";
+"typeahead.go" = "前往";
+"typeahead.matchCount" = "第 %d 個，共 %d 個";
+"typeahead.noCommand" = "沒有符合的指令";
+"typeahead.noFolders" = "沒有符合的檔案夾";
+"typeahead.noMatches" = "沒有符合的項目";
+"typeahead.noSuchPath" = "「%@」不存在。";
+"typeahead.placeholder" = "輸入以尋找。/ 前往路徑，> 執行指令，? 語意搜尋";
+"typeahead.searchHint" = "描述你要找的內容";
+"typeahead.searchTag" = "搜尋";
+"typeahead.searching" = "正在搜尋此檔案夾";
+"typeahead.shown" = "顯示 %d 項";
 "update.autoCheck" = "自動檢查更新";
 "update.autoInstall" = "自動下載並安裝更新";
 "update.buttonTitle" = "更新已就緒";

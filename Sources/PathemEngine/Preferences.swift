@@ -184,6 +184,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// "Super-drag": flick the selection a short way and release (off a drop target) to fire
     /// a directional quick action, with a swipe trail for feedback. Off by default.
     public var dragFlickActions: Bool
+    /// Typing a plain character in a file list opens the find-as-you-type field (Find, Filter,
+    /// Go, `>` commands, `?` semantic search). Off restores the table's built-in type-select.
+    public var findAsYouType: Bool
     /// The swipe trail's color, as a "#RRGGBB" hex string.
     public var dragTrailColor: String
     /// The swipe trail's line width in points.
@@ -245,7 +248,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         statusShowFreeSpace: Bool = false,
         newFolderName: String = "untitled folder", newFileName: String = "untitled file",
         newTabAtEnd: Bool = true,
-        dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
+        dragFlickActions: Bool = false, findAsYouType: Bool = true,
+        dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
         iconSetName: String = ""
@@ -255,6 +259,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.windowTintHex = windowTintHex
         self.iconSetName = iconSetName
         self.dragFlickActions = dragFlickActions
+        self.findAsYouType = findAsYouType
         self.dragTrailColor = dragTrailColor
         self.dragTrailWidth = dragTrailWidth
         self.dragTrailDecay = dragTrailDecay
@@ -450,6 +455,7 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent([FolderPair].self, forKey: .pairedFolders) ?? d.pairedFolders
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
+        findAsYouType = try c.decodeIfPresent(Bool.self, forKey: .findAsYouType) ?? d.findAsYouType
         dragTrailColor =
             try c.decodeIfPresent(String.self, forKey: .dragTrailColor) ?? d.dragTrailColor
         dragTrailWidth =

@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "토렌트";
 "bvc.cmd.transfers" = "전송";
 "bvc.cmd.trimMedia" = "다듬기…";
+"bvc.cmd.typeAhead" = "입력하며 찾기";
 "bvc.cmd.undo" = "실행 취소";
 "bvc.cmd.useAsDefaultView" = "기본 보기로 사용";
 "bvc.cmd.verifyChecksum" = "체크섬 확인…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "크기 브라우저…";
 "menu.view.syncBrowsing" = "동기식 탐색";
 "menu.view.toggleHidden" = "숨김 파일 보기";
+"menu.view.typeAhead" = "입력하며 찾기";
 "menu.view.useAsDefault" = "기본 보기로 사용";
 "menu.view.zoomIn" = "확대";
 "menu.view.zoomOut" = "축소";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "궤적 시간";
 "prefs.dragTrailLabel" = "스와이프 궤적";
 "prefs.dragTrailWidth" = "두께";
+"prefs.findAsYouType" = "파일 목록에서 입력하여 찾기, 필터, 이동 (> 명령, ? 검색)";
 "prefs.fixedFolderLabel" = "고정 폴더";
 "prefs.folderHandler" = "Finder 대신 Pathem에서 폴더 열기";
 "prefs.folderHandlerConfirmBody" = "Pathem을 시스템 전체에서 폴더를 여는 기본 앱으로 설정하므로, 폴더를 더블 클릭하거나 앱에서 폴더를 열 때 Finder 대신 Pathem이 사용됩니다. “Finder에서 보기”에는 영향을 주지 않습니다. 언제든지 여기서 되돌릴 수 있습니다.";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "내보내기를 준비할 수 없습니다.";
 "trim.noRange" = "다듬을 범위가 선택되지 않았습니다.";
 "trim.title" = "“%@” 다듬기";
+"typeahead.a11y" = "입력하며 찾기";
+"typeahead.commandTag" = "명령";
+"typeahead.didYouMean" = "“%@” 항목이 없습니다. %@ 말씀이신가요?";
+"typeahead.filter" = "필터";
+"typeahead.find" = "찾기";
+"typeahead.folders" = "폴더 %d개";
+"typeahead.go" = "이동";
+"typeahead.matchCount" = "%d / %d";
+"typeahead.noCommand" = "일치하는 명령 없음";
+"typeahead.noFolders" = "일치하는 폴더 없음";
+"typeahead.noMatches" = "일치하는 항목 없음";
+"typeahead.noSuchPath" = "“%@” 항목이 없습니다.";
+"typeahead.placeholder" = "입력하여 찾기. /는 이동, >는 명령, ?는 검색";
+"typeahead.searchHint" = "찾는 내용을 설명하세요";
+"typeahead.searchTag" = "검색";
+"typeahead.searching" = "이 폴더 검색 중";
+"typeahead.shown" = "%d개 표시";
 "update.autoCheck" = "업데이트 자동 확인";
 "update.autoInstall" = "업데이트 자동으로 다운로드 및 설치";
 "update.buttonTitle" = "업데이트 준비됨";

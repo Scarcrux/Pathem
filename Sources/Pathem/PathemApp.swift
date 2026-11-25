@@ -1104,6 +1104,20 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }
 
+        // Find-as-you-type bar in each mode over the demo Downloads folder
+        // (PATHEM_TYPEAHEAD_SHOT=<output dir>, with PATHEM_DEMO=1).
+        if let shotDir = ProcessInfo.processInfo.environment["PATHEM_TYPEAHEAD_SHOT"],
+            let demoLayout
+        {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                browser.debugNavigateActive(to: demoLayout.root.appendingPathComponent("Downloads"))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+                browser.runTypeAheadShots(into: shotDir) { exit(0) }
+            }
+        }
+
         // Headless sidebar render for layout inspection (PATHEM_SIDEBAR_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SHOT"] != nil {
             // Height override so checks can reach sections below the fold (Volumes, Shared).
@@ -1969,6 +1983,7 @@ enum PathemApp {
                     commandItem("Search This Folder…", "search.palette", "f"),
                     commandItem("Semantic Search This Folder…", "search.semantic"),
                     commandItem("Filter…", "view.filter", "f", [.command, .shift]),
+                    commandItem("Find as You Type", "view.typeAhead"),
                     commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
                     commandItem("Find in Files…", "files.findInFiles"),
                     commandItem("Find Duplicates", "files.findDuplicates"),

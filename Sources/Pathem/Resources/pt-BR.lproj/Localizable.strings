@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "Torrents";
 "bvc.cmd.transfers" = "Transferências";
 "bvc.cmd.trimMedia" = "Aparar…";
+"bvc.cmd.typeAhead" = "Localizar ao digitar";
 "bvc.cmd.undo" = "Desfazer";
 "bvc.cmd.useAsDefaultView" = "Usar como visualização padrão";
 "bvc.cmd.verifyChecksum" = "Verificar checksum…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "Navegador de tamanhos…";
 "menu.view.syncBrowsing" = "Sincronizar navegação";
 "menu.view.toggleHidden" = "Mostrar arquivos ocultos";
+"menu.view.typeAhead" = "Localizar ao digitar";
 "menu.view.useAsDefault" = "Usar como visualização padrão";
 "menu.view.zoomIn" = "Ampliar";
 "menu.view.zoomOut" = "Reduzir";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "Duração do rastro";
 "prefs.dragTrailLabel" = "Rastro do gesto";
 "prefs.dragTrailWidth" = "Espessura";
+"prefs.findAsYouType" = "Digitar em uma lista para localizar, filtrar ou ir (> comandos, ? busca)";
 "prefs.fixedFolderLabel" = "Pasta fixa";
 "prefs.folderHandler" = "Abrir pastas no Pathem em vez do Finder";
 "prefs.folderHandlerConfirmBody" = "Isto torna o Pathem o app padrão para abrir pastas em todo o sistema, então um clique duplo em uma pasta, ou um app que abre uma pasta, usa o Pathem em vez do Finder. Isso não afeta “Mostrar no Finder”. Você pode voltar atrás aqui a qualquer momento.";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "Não foi possível preparar a exportação.";
 "trim.noRange" = "Nenhum intervalo de corte foi selecionado.";
 "trim.title" = "Aparar “%@”";
+"typeahead.a11y" = "Localizar ao digitar";
+"typeahead.commandTag" = "Comando";
+"typeahead.didYouMean" = "“%@” não existe. Você quis dizer %@?";
+"typeahead.filter" = "Filtrar";
+"typeahead.find" = "Localizar";
+"typeahead.folders" = "%d pastas";
+"typeahead.go" = "Ir";
+"typeahead.matchCount" = "%d de %d";
+"typeahead.noCommand" = "Nenhum comando correspondente";
+"typeahead.noFolders" = "Nenhuma pasta correspondente";
+"typeahead.noMatches" = "Nenhuma correspondência";
+"typeahead.noSuchPath" = "“%@” não existe.";
+"typeahead.placeholder" = "Digite para localizar. / para ir, > para comandos, ? para buscar";
+"typeahead.searchHint" = "Descreva o que você procura";
+"typeahead.searchTag" = "Busca";
+"typeahead.searching" = "Pesquisando nesta pasta";
+"typeahead.shown" = "%d exibidos";
 "update.autoCheck" = "Buscar atualizações automaticamente";
 "update.autoInstall" = "Baixar e instalar atualizações automaticamente";
 "update.buttonTitle" = "Atualização pronta";

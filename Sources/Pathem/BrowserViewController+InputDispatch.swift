@@ -10,28 +10,52 @@ extension BrowserViewController {
         if vimMode, handleVimKey(chord) { return true }  // vim keys take precedence when enabled
         // Don't consume a chord whose command is currently disabled, so the event
         // falls through (e.g. Cmd-W with one tab should reach Close Window).
-        guard let id = keymap.commandID(for: chord), commands.command(id)?.isEnabled() == true else {
-            return false
-        }
+        guard let id = keymap.commandID(for: chord) else { return openTypeAhead(for: chord) }
+        guard commands.command(id)?.isEnabled() == true else { return false }
         commands.perform(id)
+        return true
+    }
+
+    /// A plain printable key that no binding claimed opens the pane's find-as-you-type field,
+    /// seeded with that character. Never reached for a bound chord (even a disabled one), a
+    /// chord with Command, Option or Control, or while a text field has focus.
+    func openTypeAhead(for chord: KeyChord) -> Bool {
+        guard prefs.findAsYouType, !vimMode, !isEditingText, let pane = activePane,
+            let event = NSApp.currentEvent, event.type == .keyDown,
+            let typed = event.characters,
+            TypeAhead.opens(
+                with: typed, cmd: chord.cmd, opt: chord.opt, ctrl: chord.ctrl),
+            TypeAhead.shouldOpen(typed: typed, shift: chord.shift, keymap: keymap)
+        else { return false }
+        pane.typeAhead.open(seed: typed)
         return true
     }
 
     /// Map a plain (unmodified) key to a navigation action in vim mode: h/j/k/l move, gg/G jump to
     /// the top/bottom, / focuses the filter. Returns true when it consumed the key.
     func handleVimKey(_ chord: KeyChord) -> Bool {
-        guard !chord.cmd, !chord.ctrl, !chord.opt, !isEditingText else { vimPendingG = false; return false }
+        guard !chord.cmd, !chord.ctrl, !chord.opt, !isEditingText else {
+            vimPendingG = false
+            return false
+        }
         let hadPendingG = vimPendingG
         vimPendingG = false
         switch (chord.key, chord.shift) {
         case ("j", false): activePane?.moveSelection(by: 1)
         case ("k", false): activePane?.moveSelection(by: -1)
-        case ("h", false): if commands.command("nav.up")?.isEnabled() == true { commands.perform("nav.up") }
-        case ("l", false), ("l", true): if commands.command("files.open")?.isEnabled() == true { commands.perform("files.open") }
+        case ("h", false):
+            if commands.command("nav.up")?.isEnabled() == true { commands.perform("nav.up") }
+        case ("l", false), ("l", true):
+            if commands.command("files.open")?.isEnabled() == true {
+                commands.perform("files.open")
+            }
         case ("g", false):
             if hadPendingG { activePane?.selectFirst() } else { vimPendingG = true }
         case ("g", true): activePane?.selectLast()  // Shift-G
-        case ("/", _): if commands.command("view.filter")?.isEnabled() == true { commands.perform("view.filter") }
+        case ("/", _):
+            if commands.command("view.filter")?.isEnabled() == true {
+                commands.perform("view.filter")
+            }
         default: return false
         }
         return true
@@ -91,7 +115,8 @@ extension BrowserViewController {
     /// The command a flick `direction` maps to, as "Title  ⌘K" (its keyboard equivalent), for
     /// the trail's live hint. The shortcut is the simplest keymap chord bound to that command.
     func flickHint(for direction: String) -> String {
-        guard let id = dragGestures.commandID(for: direction), let title = commands.command(id)?.title
+        guard let id = dragGestures.commandID(for: direction),
+            let title = commands.command(id)?.title
         else { return "" }
         let chord = keymap.bindings.filter { $0.value == id }.keys.sorted().first
         let shortcut = chord.map { ChordFormat.display($0) } ?? ""

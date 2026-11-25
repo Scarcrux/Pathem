@@ -503,6 +503,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.configurePane = { [weak self] pane in
                 pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false
                 }
+                pane.typeAhead.hooks = self?.typeAheadHooks(for: pane) ?? TypeAheadHooks()
                 pane.onMouseGestureHandler = { [weak self] stroke in
                     self?.handleGesture(stroke) ?? false
                 }

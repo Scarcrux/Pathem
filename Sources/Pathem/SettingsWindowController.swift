@@ -331,6 +331,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                         "prefs.dragFlickActions",
                         "Super-drag: right-drag an item to flick it (with a swipe trail)"),
                     \.dragFlickActions),
+                check(
+                    L(
+                        "prefs.findAsYouType",
+                        "Type in a file list to find, filter or go (> commands, ? search)"),
+                    \.findAsYouType),
                 labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
                 folderHandlerControl(),
                 magnetHandlerControl(),

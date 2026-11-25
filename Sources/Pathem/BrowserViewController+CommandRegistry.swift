@@ -810,6 +810,10 @@ extension BrowserViewController {
         add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in
             self?.showPalette(prefill: ">")
         }
+        add(
+            "view.typeAhead", L("bvc.cmd.typeAhead", "Find as You Type"),
+            keywords: ["find", "jump", "type select", "go to folder", "quick find"]
+        ) { [weak self] in self?.showTypeAhead() }
         add("search.palette", L("bvc.cmd.searchFolder", "Search This Folder…")) { [weak self] in
             self?.showFileSearch()
         }

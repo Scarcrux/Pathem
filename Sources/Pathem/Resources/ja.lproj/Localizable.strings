@@ -301,6 +301,7 @@
 "bvc.cmd.torrents" = "トレント";
 "bvc.cmd.transfers" = "転送";
 "bvc.cmd.trimMedia" = "トリミング…";
+"bvc.cmd.typeAhead" = "入力しながら検索";
 "bvc.cmd.undo" = "取り消す";
 "bvc.cmd.useAsDefaultView" = "デフォルトの表示として使用";
 "bvc.cmd.verifyChecksum" = "チェックサムを検証…";
@@ -1141,6 +1142,7 @@
 "menu.view.sizeBrowser" = "サイズブラウザ…";
 "menu.view.syncBrowsing" = "同期ブラウズ";
 "menu.view.toggleHidden" = "隠しファイルを表示";
+"menu.view.typeAhead" = "入力しながら検索";
 "menu.view.useAsDefault" = "デフォルトの表示として使用";
 "menu.view.zoomIn" = "拡大";
 "menu.view.zoomOut" = "縮小";
@@ -1342,6 +1344,7 @@
 "prefs.dragTrailDecay" = "軌跡時間";
 "prefs.dragTrailLabel" = "スワイプ軌跡";
 "prefs.dragTrailWidth" = "幅";
+"prefs.findAsYouType" = "ファイル一覧で入力して検索・絞り込み・移動(> コマンド、? 検索)";
 "prefs.fixedFolderLabel" = "固定フォルダ";
 "prefs.folderHandler" = "フォルダをFinderではなくPathemで開く";
 "prefs.folderHandlerConfirmBody" = "これにより、Pathemがシステム全体でフォルダを開くためのデフォルトアプリになり、フォルダのダブルクリックやフォルダを開くアプリがFinderの代わりにPathemを使用します。「Finderに表示」には影響しません。いつでもここで元に戻せます。";
@@ -1824,6 +1827,23 @@
 "trim.noExport" = "書き出しを準備できませんでした。";
 "trim.noRange" = "トリミング範囲が選択されていません。";
 "trim.title" = "「%@」をトリミング";
+"typeahead.a11y" = "入力しながら検索";
+"typeahead.commandTag" = "コマンド";
+"typeahead.didYouMean" = "「%@」は存在しません。「%@」ではありませんか?";
+"typeahead.filter" = "絞り込み";
+"typeahead.find" = "検索";
+"typeahead.folders" = "%d 個のフォルダ";
+"typeahead.go" = "移動";
+"typeahead.matchCount" = "%d / %d";
+"typeahead.noCommand" = "一致するコマンドなし";
+"typeahead.noFolders" = "一致するフォルダなし";
+"typeahead.noMatches" = "一致なし";
+"typeahead.noSuchPath" = "「%@」は存在しません。";
+"typeahead.placeholder" = "入力して検索。/ で移動、> でコマンド、? で意味検索";
+"typeahead.searchHint" = "探しているものを説明してください";
+"typeahead.searchTag" = "検索";
+"typeahead.searching" = "このフォルダを検索中";
+"typeahead.shown" = "%d 件を表示";
 "update.autoCheck" = "自動的にアップデートを確認";
 "update.autoInstall" = "アップデートを自動的にダウンロードしてインストール";
 "update.buttonTitle" = "アップデート準備完了";

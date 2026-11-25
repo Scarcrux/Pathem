@@ -301,6 +301,7 @@
 "bvc.cmd.torrents" = "Torrents";
 "bvc.cmd.transfers" = "Transferencias";
 "bvc.cmd.trimMedia" = "Recortar…";
+"bvc.cmd.typeAhead" = "Buscar al escribir";
 "bvc.cmd.undo" = "Deshacer";
 "bvc.cmd.useAsDefaultView" = "Usar como vista por omisión";
 "bvc.cmd.verifyChecksum" = "Verificar suma de comprobación…";
@@ -1141,6 +1142,7 @@
 "menu.view.sizeBrowser" = "Explorador de tamaños…";
 "menu.view.syncBrowsing" = "Navegación sincronizada";
 "menu.view.toggleHidden" = "Mostrar archivos ocultos";
+"menu.view.typeAhead" = "Buscar al escribir";
 "menu.view.useAsDefault" = "Usar como vista por omisión";
 "menu.view.zoomIn" = "Acercar";
 "menu.view.zoomOut" = "Alejar";
@@ -1342,6 +1344,7 @@
 "prefs.dragTrailDecay" = "Duración";
 "prefs.dragTrailLabel" = "Estela";
 "prefs.dragTrailWidth" = "Ancho";
+"prefs.findAsYouType" = "Escribir en una lista para buscar, filtrar o ir (> comandos, ? búsqueda)";
 "prefs.fixedFolderLabel" = "Carpeta fija";
 "prefs.folderHandler" = "Abrir carpetas en Pathem en lugar de Finder";
 "prefs.folderHandlerConfirmBody" = "Esto convierte a Pathem en la app predeterminada para abrir carpetas en todo el sistema, así que al hacer doble clic en una carpeta o cuando una app abre una carpeta se usa Pathem en lugar de Finder. No afecta a “Mostrar en Finder.” Puedes volver a cambiarlo aquí en cualquier momento.";
@@ -1824,6 +1827,23 @@
 "trim.noExport" = "No se pudo preparar la exportación.";
 "trim.noRange" = "No se seleccionó ningún intervalo de recorte.";
 "trim.title" = "Recortar «%@»";
+"typeahead.a11y" = "Buscar al escribir";
+"typeahead.commandTag" = "Comando";
+"typeahead.didYouMean" = "«%@» no existe. ¿Quisiste decir %@?";
+"typeahead.filter" = "Filtrar";
+"typeahead.find" = "Buscar";
+"typeahead.folders" = "%d carpetas";
+"typeahead.go" = "Ir";
+"typeahead.matchCount" = "%d de %d";
+"typeahead.noCommand" = "Ningún comando coincide";
+"typeahead.noFolders" = "Ninguna carpeta coincide";
+"typeahead.noMatches" = "Sin coincidencias";
+"typeahead.noSuchPath" = "«%@» no existe.";
+"typeahead.placeholder" = "Escribe para buscar. / para ir, > para comandos, ? para buscar";
+"typeahead.searchHint" = "Describe lo que buscas";
+"typeahead.searchTag" = "Búsqueda";
+"typeahead.searching" = "Buscando en esta carpeta";
+"typeahead.shown" = "%d mostrados";
 "update.autoCheck" = "Buscar actualizaciones automáticamente";
 "update.autoInstall" = "Descargar e instalar actualizaciones automáticamente";
 "update.buttonTitle" = "Actualización lista";

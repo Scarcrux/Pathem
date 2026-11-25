@@ -756,6 +756,28 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         updateStatus()
     }
 
+    /// The find-as-you-type bar and its state (created on first use of the pane).
+    private(set) lazy var typeAhead = TypeAheadController(pane: self)
+
+    /// The quick filter's current text, so the type-ahead bar can restore it on Esc.
+    var currentFilterText: String { filterText }
+
+    /// Keep `text` as the active quick filter, shown in the regular filter field so it can be
+    /// edited or cleared there (the type-ahead bar's Return in Filter mode).
+    func adoptFilter(_ text: String) {
+        guard !text.isEmpty else { return }
+        filterField.stringValue = text
+        filterField.isHidden = false
+        setFilter(text)
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// Give keyboard focus back to the file list.
+    func focusList() { containerView.window?.makeFirstResponder(content.keyView) }
+
+    /// Select exactly the named entries (the type-ahead bar restores the prior selection).
+    func selectNames(_ names: Set<String>) { content.selectNames(names) }
+
     /// Show and focus the filter field.
     func beginFilter() {
         filterField.isHidden = false
@@ -1898,8 +1920,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         statusRow.setHuggingPriority(.required, for: .vertical)
         statusRow.setContentHuggingPriority(.required, for: .vertical)
         statusRow.setClippingResistancePriority(.required, for: .vertical)
+        bottomStack.addArrangedSubview(typeAhead.bar)
         bottomStack.addArrangedSubview(filterField)
         bottomStack.addArrangedSubview(statusRow)
+        typeAhead.bar.translatesAutoresizingMaskIntoConstraints = false
+        typeAhead.bar.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
         filterField.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
         statusRow.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
 

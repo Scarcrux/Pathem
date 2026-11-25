@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "Торренты";
 "bvc.cmd.transfers" = "Передачи";
 "bvc.cmd.trimMedia" = "Обрезать…";
+"bvc.cmd.typeAhead" = "Поиск при вводе";
 "bvc.cmd.undo" = "Отменить";
 "bvc.cmd.useAsDefaultView" = "Использовать как вид по умолчанию";
 "bvc.cmd.verifyChecksum" = "Проверить контрольную сумму…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "Обзор размеров…";
 "menu.view.syncBrowsing" = "Синхронная навигация";
 "menu.view.toggleHidden" = "Показывать скрытые файлы";
+"menu.view.typeAhead" = "Поиск при вводе";
 "menu.view.useAsDefault" = "Использовать как вид по умолчанию";
 "menu.view.zoomIn" = "Увеличить";
 "menu.view.zoomOut" = "Уменьшить";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "Время следа";
 "prefs.dragTrailLabel" = "След смахивания";
 "prefs.dragTrailWidth" = "Ширина";
+"prefs.findAsYouType" = "Печатать в списке для поиска, фильтра или перехода (> команды, ? поиск)";
 "prefs.fixedFolderLabel" = "Постоянная папка";
 "prefs.folderHandler" = "Открывать папки в Pathem вместо Finder";
 "prefs.folderHandlerConfirmBody" = "Pathem станет программой по умолчанию для открытия папок во всей системе: двойной щелчок по папке или программа, открывающая папку, будет использовать Pathem вместо Finder. Это не влияет на «Показать в Finder». Вернуть всё можно здесь в любой момент.";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "Не удалось подготовить экспорт.";
 "trim.noRange" = "Диапазон обрезки не выбран.";
 "trim.title" = "Обрезка «%@»";
+"typeahead.a11y" = "Поиск при вводе";
+"typeahead.commandTag" = "Команда";
+"typeahead.didYouMean" = "«%@» не существует. Возможно, вы имели в виду %@?";
+"typeahead.filter" = "Фильтр";
+"typeahead.find" = "Найти";
+"typeahead.folders" = "Папок: %d";
+"typeahead.go" = "Перейти";
+"typeahead.matchCount" = "%d из %d";
+"typeahead.noCommand" = "Нет подходящей команды";
+"typeahead.noFolders" = "Нет подходящей папки";
+"typeahead.noMatches" = "Нет совпадений";
+"typeahead.noSuchPath" = "«%@» не существует.";
+"typeahead.placeholder" = "Введите для поиска. / для перехода, > для команд, ? для поиска";
+"typeahead.searchHint" = "Опишите, что вы ищете";
+"typeahead.searchTag" = "Поиск";
+"typeahead.searching" = "Поиск в этой папке";
+"typeahead.shown" = "Показано: %d";
 "update.autoCheck" = "Автоматически проверять обновления";
 "update.autoInstall" = "Автоматически загружать и устанавливать обновления";
 "update.buttonTitle" = "Обновление готово";

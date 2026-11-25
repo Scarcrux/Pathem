@@ -302,6 +302,7 @@
 "bvc.cmd.torrents" = "Torrent";
 "bvc.cmd.transfers" = "Trasferimenti";
 "bvc.cmd.trimMedia" = "Taglia…";
+"bvc.cmd.typeAhead" = "Trova mentre scrivi";
 "bvc.cmd.undo" = "Annulla";
 "bvc.cmd.useAsDefaultView" = "Usa come vista predefinita";
 "bvc.cmd.verifyChecksum" = "Verifica checksum…";
@@ -1146,6 +1147,7 @@
 "menu.view.sizeBrowser" = "Esplora dimensioni…";
 "menu.view.syncBrowsing" = "Sincronizza navigazione";
 "menu.view.toggleHidden" = "Mostra file nascosti";
+"menu.view.typeAhead" = "Trova mentre scrivi";
 "menu.view.useAsDefault" = "Usa come vista predefinita";
 "menu.view.zoomIn" = "Ingrandisci";
 "menu.view.zoomOut" = "Riduci";
@@ -1348,6 +1350,7 @@
 "prefs.dragTrailDecay" = "Durata della scia";
 "prefs.dragTrailLabel" = "Scia del gesto";
 "prefs.dragTrailWidth" = "Spessore";
+"prefs.findAsYouType" = "Scrivi in un elenco per trovare, filtrare o andare (> comandi, ? ricerca)";
 "prefs.fixedFolderLabel" = "Cartella fissa";
 "prefs.folderHandler" = "Apri le cartelle in Pathem invece che nel Finder";
 "prefs.folderHandlerConfirmBody" = "Questa azione rende Pathem l’app predefinita per aprire le cartelle in tutto il sistema, quindi un doppio clic su una cartella o un’app che apre una cartella usa Pathem invece del Finder. Non influisce su “Mostra nel Finder”. Puoi tornare indietro qui in qualsiasi momento.";
@@ -1874,6 +1877,23 @@
 "trim.noExport" = "Impossibile preparare l’esportazione.";
 "trim.noRange" = "Non è stato selezionato alcun intervallo da tagliare.";
 "trim.title" = "Taglia “%@”";
+"typeahead.a11y" = "Trova mentre scrivi";
+"typeahead.commandTag" = "Comando";
+"typeahead.didYouMean" = "“%@” non esiste. Intendevi %@?";
+"typeahead.filter" = "Filtra";
+"typeahead.find" = "Trova";
+"typeahead.folders" = "%d cartelle";
+"typeahead.go" = "Vai";
+"typeahead.matchCount" = "%d di %d";
+"typeahead.noCommand" = "Nessun comando corrispondente";
+"typeahead.noFolders" = "Nessuna cartella corrispondente";
+"typeahead.noMatches" = "Nessuna corrispondenza";
+"typeahead.noSuchPath" = "“%@” non esiste.";
+"typeahead.placeholder" = "Digita per trovare. / per andare, > per i comandi, ? per cercare";
+"typeahead.searchHint" = "Descrivi ciò che cerchi";
+"typeahead.searchTag" = "Ricerca";
+"typeahead.searching" = "Ricerca in questa cartella";
+"typeahead.shown" = "%d mostrati";
 "update.autoCheck" = "Verifica automaticamente gli aggiornamenti";
 "update.autoInstall" = "Scarica e installa automaticamente gli aggiornamenti";
 "update.buttonTitle" = "Aggiornamento pronto";

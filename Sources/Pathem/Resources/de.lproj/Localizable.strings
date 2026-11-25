@@ -301,6 +301,7 @@
 "bvc.cmd.torrents" = "Torrents";
 "bvc.cmd.transfers" = "Übertragungen";
 "bvc.cmd.trimMedia" = "Kürzen…";
+"bvc.cmd.typeAhead" = "Suchen beim Tippen";
 "bvc.cmd.undo" = "Widerrufen";
 "bvc.cmd.useAsDefaultView" = "Als Standardansicht verwenden";
 "bvc.cmd.verifyChecksum" = "Prüfsumme verifizieren…";
@@ -1141,6 +1142,7 @@
 "menu.view.sizeBrowser" = "Größenbrowser…";
 "menu.view.syncBrowsing" = "Synchron blättern";
 "menu.view.toggleHidden" = "Ausgeblendete Dateien anzeigen";
+"menu.view.typeAhead" = "Suchen beim Tippen";
 "menu.view.useAsDefault" = "Als Standardansicht verwenden";
 "menu.view.zoomIn" = "Vergrößern";
 "menu.view.zoomOut" = "Verkleinern";
@@ -1342,6 +1344,7 @@
 "prefs.dragTrailDecay" = "Dauer";
 "prefs.dragTrailLabel" = "Wischspur";
 "prefs.dragTrailWidth" = "Breite";
+"prefs.findAsYouType" = "In einer Dateiliste tippen zum Suchen, Filtern oder Wechseln (> Befehle, ? Suche)";
 "prefs.fixedFolderLabel" = "Fester Ordner";
 "prefs.folderHandler" = "Ordner in Pathem statt im Finder öffnen";
 "prefs.folderHandlerConfirmBody" = "Dadurch wird Pathem systemweit zur Standard-App zum Öffnen von Ordnern, sodass ein Doppelklick auf einen Ordner oder eine App, die einen Ordner öffnet, Pathem statt Finder verwendet. Dies betrifft nicht „Im Finder zeigen.“ Du kannst hier jederzeit zurückwechseln.";
@@ -1824,6 +1827,23 @@
 "trim.noExport" = "Der Export konnte nicht vorbereitet werden.";
 "trim.noRange" = "Es wurde kein Kürzungsbereich ausgewählt.";
 "trim.title" = "„%@“ kürzen";
+"typeahead.a11y" = "Suchen beim Tippen";
+"typeahead.commandTag" = "Befehl";
+"typeahead.didYouMean" = "„%@“ existiert nicht. Meinten Sie %@?";
+"typeahead.filter" = "Filtern";
+"typeahead.find" = "Suchen";
+"typeahead.folders" = "%d Ordner";
+"typeahead.go" = "Gehe zu";
+"typeahead.matchCount" = "%d von %d";
+"typeahead.noCommand" = "Kein passender Befehl";
+"typeahead.noFolders" = "Kein passender Ordner";
+"typeahead.noMatches" = "Keine Treffer";
+"typeahead.noSuchPath" = "„%@“ existiert nicht.";
+"typeahead.placeholder" = "Tippen zum Suchen. / zum Wechseln, > für Befehle, ? für die Suche";
+"typeahead.searchHint" = "Beschreiben Sie, was Sie suchen";
+"typeahead.searchTag" = "Suche";
+"typeahead.searching" = "Dieser Ordner wird durchsucht";
+"typeahead.shown" = "%d angezeigt";
 "update.autoCheck" = "Automatisch nach Updates suchen";
 "update.autoInstall" = "Updates automatisch laden und installieren";
 "update.buttonTitle" = "Update bereit";

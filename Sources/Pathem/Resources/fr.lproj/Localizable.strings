@@ -301,6 +301,7 @@
 "bvc.cmd.torrents" = "Torrents";
 "bvc.cmd.transfers" = "Transferts";
 "bvc.cmd.trimMedia" = "Raccourcir…";
+"bvc.cmd.typeAhead" = "Recherche à la frappe";
 "bvc.cmd.undo" = "Annuler";
 "bvc.cmd.useAsDefaultView" = "Utiliser comme présentation par défaut";
 "bvc.cmd.verifyChecksum" = "Vérifier la somme de contrôle…";
@@ -1141,6 +1142,7 @@
 "menu.view.sizeBrowser" = "Explorateur de tailles…";
 "menu.view.syncBrowsing" = "Navigation synchronisée";
 "menu.view.toggleHidden" = "Afficher les fichiers masqués";
+"menu.view.typeAhead" = "Recherche à la frappe";
 "menu.view.useAsDefault" = "Utiliser comme présentation par défaut";
 "menu.view.zoomIn" = "Zoom avant";
 "menu.view.zoomOut" = "Zoom arrière";
@@ -1342,6 +1344,7 @@
 "prefs.dragTrailDecay" = "Durée";
 "prefs.dragTrailLabel" = "Traînée";
 "prefs.dragTrailWidth" = "Largeur";
+"prefs.findAsYouType" = "Taper dans une liste pour chercher, filtrer ou aller (> commandes, ? recherche)";
 "prefs.fixedFolderLabel" = "Dossier fixe";
 "prefs.folderHandler" = "Ouvrir les dossiers dans Pathem plutôt que dans le Finder";
 "prefs.folderHandlerConfirmBody" = "Cela fait de Pathem l'application par défaut pour ouvrir les dossiers dans tout le système : un double-clic sur un dossier, ou une application qui ouvre un dossier, utilise Pathem au lieu de Finder. Cela n'affecte pas « Afficher dans le Finder. » Vous pouvez revenir en arrière ici à tout moment.";
@@ -1824,6 +1827,23 @@
 "trim.noExport" = "Impossible de préparer l'exportation.";
 "trim.noRange" = "Aucune plage de découpe n'a été sélectionnée.";
 "trim.title" = "Raccourcir « %@ »";
+"typeahead.a11y" = "Recherche à la frappe";
+"typeahead.commandTag" = "Commande";
+"typeahead.didYouMean" = "« %@ » n’existe pas. Vouliez-vous dire %@ ?";
+"typeahead.filter" = "Filtrer";
+"typeahead.find" = "Chercher";
+"typeahead.folders" = "%d dossiers";
+"typeahead.go" = "Aller";
+"typeahead.matchCount" = "%d sur %d";
+"typeahead.noCommand" = "Aucune commande correspondante";
+"typeahead.noFolders" = "Aucun dossier correspondant";
+"typeahead.noMatches" = "Aucun résultat";
+"typeahead.noSuchPath" = "« %@ » n’existe pas.";
+"typeahead.placeholder" = "Tapez pour chercher. / pour aller, > pour les commandes, ? pour rechercher";
+"typeahead.searchHint" = "Décrivez ce que vous cherchez";
+"typeahead.searchTag" = "Recherche";
+"typeahead.searching" = "Recherche dans ce dossier";
+"typeahead.shown" = "%d affichés";
 "update.autoCheck" = "Rechercher les mises à jour automatiquement";
 "update.autoInstall" = "Télécharger et installer automatiquement les mises à jour";
 "update.buttonTitle" = "Mise à jour prête";
