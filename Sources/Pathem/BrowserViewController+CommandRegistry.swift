@@ -177,6 +177,20 @@ extension BrowserViewController {
             "select.different", L("menu.select.different", "Select Different Items"),
             keywords: ["compare", "changed", "differ from other pane"], enabled: hasSplit
         ) { [weak self] in self?.compareSelect(.different) }
+        add(
+            "files.exportListing", L("menu.files.exportListing", "Export Listing…"),
+            keywords: ["csv", "tsv", "html", "save list", "directory listing", "dir"],
+            enabled: hasPane
+        ) { [weak self] in self?.exportListing() }
+        add(
+            "files.printListing", L("menu.files.printListing", "Print Listing…"),
+            keywords: ["print folder", "directory listing"], enabled: hasPane
+        ) { [weak self] in self?.printListing() }
+        add(
+            "files.cancelExportListing",
+            L("menu.files.cancelExportListing", "Cancel Export Listing"),
+            enabled: { [weak self] in self?.listingExportTask != nil }
+        ) { [weak self] in self?.cancelListingExport() }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in
             self?.newFolder()
         }

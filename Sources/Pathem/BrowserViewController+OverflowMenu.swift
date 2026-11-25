@@ -27,6 +27,7 @@ extension BrowserViewController {
         menu.addItem(overflowCommandItem("view.applyStyle"))
         menu.addItem(overflowCommandItem("view.saveStyle"))
         menu.addItem(overflowCommandItem("view.customizeToolbar"))
+        menu.addItem(overflowCommandItem("files.exportListing"))
         menu.addItem(.separator())
         let settings = NSMenuItem(
             title: L("overflow.settings", "Settings…"), action: #selector(openOverflowSettings),

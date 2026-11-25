@@ -575,6 +575,32 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.selectNames(result)
     }
 
+    /// What Export and Print Listing need from the pane: the shown (filtered, sorted) entries,
+    /// the visible columns, and enough to widen the listing to hidden files or subfolders.
+    struct ExportContext: Sendable {
+        var title: String
+        var url: URL?
+        var isLocal: Bool
+        var entries: [FileEntry]
+        var selected: Set<String>
+        var hiddenShown: Bool
+        var filter: FileFilter
+        var format: ViewFormat
+        var columnIDs: [String]
+    }
+
+    func exportContext() -> ExportContext {
+        let local = remote == nil && !smartActive
+        let url = local ? currentURL : nil
+        return ExportContext(
+            title: url?.lastPathComponent ?? currentURL.lastPathComponent, url: url,
+            isLocal: local, entries: content.entries,
+            selected: Set(content.selectedEntries.map(\.name)), hiddenShown: hiddenShown,
+            filter: fileFilter, format: format,
+            columnIDs: (content as? FileListController)?.visibleColumnIDs
+                ?? ["name", "kind", "size", "date"])
+    }
+
     /// Replace the selection with the shown entries named in `names` (Edit > Select commands).
     func selectEntries(named names: Set<String>) { content.selectNames(names) }
 

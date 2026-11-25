@@ -19,6 +19,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let rightTabs: TabbedPaneController
     weak var activePane: PaneController?
     weak var activeSide: TabbedPaneController?
+    /// A running Export Listing job, so it can be cancelled and a second one is not started.
+    var listingExportTask: Task<Void, Never>?
     /// The app's file-operation undo/redo history (replaces the window's NSUndoManager for file
     /// ops; text-field editing keeps its own). Drives Cmd-Z, the Edit menu, and a recent-actions
     /// panel with selective undo.

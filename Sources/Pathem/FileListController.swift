@@ -407,6 +407,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         refreshExtendedColumnsAsync()
     }
 
+    /// The identifiers of the shown columns, left to right (for Export Listing).
+    var visibleColumnIDs: [String] {
+        tableView.tableColumns.filter { !$0.isHidden }.map { $0.identifier.rawValue }
+    }
+
     private func rememberColumns() {
         guard !applyingViewOptions else { return }
         var options = FolderViewOptions()

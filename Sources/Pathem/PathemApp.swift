@@ -785,6 +785,15 @@ enum PathemApp {
             exit(0)
         }
 
+        // Headless render of the Export Listing save-panel accessory (PATHEM_EXPORT_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_EXPORT_SHOT"] != nil {
+            let light = ProcessInfo.processInfo.environment["PATHEM_CAPTURE_APPEARANCE"] == "light"
+            ExportListingAccessory.debugRender(
+                to: capturePath("export.png"),
+                appearance: NSAppearance(named: light ? .aqua : .darkAqua))
+            exit(0)
+        }
+
         // Interactive preview of the real NSPopover, including its material, arrow, focus and
         // cursor-relative placement. Used during visual polish; it stays open until the user picks
         // an action or clicks away, while keeping the underlying demo window available for context.
@@ -1841,6 +1850,9 @@ enum PathemApp {
                     commandItem("Verify Checksum…", "files.verifyChecksum"),
                     commandItem("New Encrypted Disk Image…", "files.encryptDMG"),
                 ]))
+        fileMenu.addItem(.separator())
+        fileMenu.addItem(commandItem("Export Listing…", "files.exportListing"))
+        fileMenu.addItem(commandItem("Print Listing…", "files.printListing"))
         fileMenu.addItem(
             submenu(
                 L("menu.storage", "Storage"),
