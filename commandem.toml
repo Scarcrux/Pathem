@@ -2347,6 +2347,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-26: Admin Mode verified end to end on a clean macOS 15.7.7 VM (SIP on) with a Developer ID-signed test build. Three bugs were found and fixed on the way, each convicted by logs: (1) a Swift 6 isolation trap in the XPC reply handler crashed the app right after unlock (crash report: dispatch_assert_queue in AdminModeController.unlock), fixed with Sendable callbacks that hop to the MainActor; (2) a stale Admin badge restored in a locked process, fixed so the badge derives only from the live session; (3) authd denied the helper's re-check because the right used the zero-timeout authenticate-admin rule (credential expired 0.006 > 0), fixed with an explicit rule (user, admin group, shared, 300 s timeout) that migrates older definitions. Final run: locked launch with no badge, signed-peer accept, authorization accepted, badge on unlock, rename retried through the helper and completed as root, relaunch locked, no crash. Unlock failures now show a self-describing message."
     at = "2026-11-26T19:45:08Z"
 
+  [[mission.comment]]
+    text = "0.9.6 (build 30) published and verified from outside: the feed serves 0.9.6/30, the downloaded DMG passes the signature, notarization and Gatekeeper checks (A9), the mounted app passes A1-A6 and A10-A12, the EdDSA signature verifies (A7) and every appcast item is signed (A8). Release gate: 71 GUI checks passed, 1 skipped; 18 packaged checks passed. Site bumped to 0.9.6 (35 MB DMG); the theme gallery is unchanged."
+    at = "2026-11-26T20:51:04Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
