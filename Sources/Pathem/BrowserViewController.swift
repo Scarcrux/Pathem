@@ -147,6 +147,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// True while restoring the saved session, so restore activity doesn't trigger
     /// a (partial) save.
     var isRestoringSession = false
+    private var restoredBrowserSession = false
     /// Persists the restore session, saved workspaces, and named view Styles.
     let windowState = WindowStateStore()
 
@@ -632,7 +633,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         // Restore the last session's tabs/folders (or open initial tabs) now that
         // configurePane + callbacks are set, so each pane is fully wired.
-        restoreSession()
+        restoredBrowserSession = restoreSession()
+        observeAdminMode()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigateFromUser(to: url) }
         sidebar.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
         sidebar.onOpenInOtherPane = { [weak self] url in
@@ -1034,7 +1036,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidAppear()
         installToolbarIfNeeded()
         installUpdateButtonIfNeeded()
-        installAdminBadge()
+        synchronizeAdminBadge(
+            source: restoredBrowserSession ? "browserSessionRestore" : "windowAppearance")
+        restoredBrowserSession = false
         // viewDidLoad applied preferences before the view had a window, so the theme's window
         // background and transparent title bar were never set at launch (only a later theme change
         // reached them). Apply the theme again now that the window exists.

@@ -168,7 +168,7 @@ extension BrowserViewController {
     }
 
     /// Reopen the last session's tabs/folders, or open initial tabs if none.
-    func restoreSession() {
+    func restoreSession() -> Bool {
         isRestoringSession = true
         defer { isRestoringSession = false }
         if demoLayout != nil {  // demo mode: fresh tabs on the fake workspace, never the real session
@@ -179,7 +179,7 @@ extension BrowserViewController {
                 rightTabs.openInitialTab()
                 if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
             }
-            return
+            return false
         }
         if persistsSession, let session = windowState.loadSession(),
             !(session.left.isEmpty && session.right.isEmpty)
@@ -192,10 +192,12 @@ extension BrowserViewController {
             if let pane = (side.activePane ?? leftTabs.activePane) {
                 setActiveSide(side.activePane != nil ? side : leftTabs, pane: pane)
             }
+            return true
         } else {
             leftTabs.openInitialTab()
             rightTabs.openInitialTab()
             if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
+            return false
         }
     }
 

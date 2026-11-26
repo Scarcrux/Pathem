@@ -2986,6 +2986,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Signed macOS 15 VM logs and crash stack confirmed the original unlocked process trapped on an XPC reply queue, then a new locked process correctly classified the rename error. Made Admin XPC callbacks explicitly Sendable and refresh badge visibility from live state when it appears. The offscreen fixture passed all five checks, including background authorization reply delivery and stale visibility reset. Eight focused Admin tests passed. Signed VM replay is pending."
     at = "2026-11-26T10:52:04Z"
 
+  [[mission.comment]]
+    text = "VM reboot reproduced a red Admin indicator with no unlocked session or helper traffic. Locked browsers had been mounting a hidden titlebar accessory. The badge now mounts and unmounts with the live session, with separate window appearance, session restore and notification diagnostics. Offscreen restoration coverage uses the persisted tab session and AppKit frame descriptor. Signed VM requalification remains pending."
+    at = "2026-11-26T11:38:23Z"
+
 [[mission]]
   id = "m-8a8b2b75"
   title = "Android device transfers over the local ADB server"
