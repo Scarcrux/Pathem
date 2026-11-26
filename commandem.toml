@@ -2221,6 +2221,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-25: 0.9.6 features landed on main (unreleased), from Opus-inspired designs: stacked top/bottom panes (6d288d5); always-visible folder tree column (6cc231a) with roots, pins, saved expansion, reveal, drops and pane markers (6255fb4); tab lock, reopen closed tab, MRU switcher and tab groups (acdeaf2); paired folders (a268446); selection commands, selection summary popover and export/print listing (ef82359, b69e4a4, 81b8107); multi-mode find-as-you-type with Find, Filter, Go, command and semantic modes (40be1a2); filtered copy/move/trash with live preview (e0b35cd); macOS platform limits documented (8f988b9); extension SDK phase 1 hardening by Codex (c72a165: disclaimed spawn for third-party helpers, startup self-test, SecStaticCode verification with cdhash pinning, approval UI, isolation limits, protocol v1; still gated off); helper isolation claims corrected (e7a2370). Unverified: live key input for the switcher and find-as-you-type, real Finder drags onto the tree, protected-file refusal for a real extension on a SIP-enabled VM. Queued for Codex: metadata columns, activity log, ADB upgrade, admin mode."
     at = "2026-11-25T19:14:27Z"
 
+  [[mission.comment]]
+    text = "2026-11-25: more 0.9.6 work landed on main by Codex: media metadata columns with caching and sorting (631b9ff; frozen Name column still open), a local searchable activity log with a privacy-page entry (3ed6fe2), the Android ADB upgrade streaming through the local ADB server with real sizes and dates (d0a6d33), and the unprivileged admin-mode foundation: validated typed file requests over a session-bound XPC service with symlink-safe openat (6ecf0c5). Admin helper registration, signed-peer checks, authorization and UI are still in progress."
+    at = "2026-11-26T03:06:23Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -2829,7 +2833,6 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Offscreen AppKit control: at horizontal offset 110, overriding the table cell rectangle returned x=126 while the actual Name view remained at x=16. Moving the actual cell shifted its frame at offset 240, with selection, editing and header behavior still unqualified. Keep this separate from the metadata column work."
     at = "2026-11-25T19:41:53Z"
-# <<< commandem roadmap <<<
 
 [[mission]]
   id = "m-9d3501f4"
@@ -2837,7 +2840,6 @@ missions = ["m-1331afb7", "m-b2532fac"]
   status = "now"
   note = "File operations currently report results only in the moment. Record paths and outcomes locally in a bounded rolling log with a searchable drawer and undo scoped to live history. Verify the engine storage and exercise the drawer with an isolated fixture."
   issue = 0
-# <<< commandem roadmap <<<
 
 [[mission]]
   id = "m-ddc454c8"
@@ -2845,7 +2847,6 @@ missions = ["m-1331afb7", "m-b2532fac"]
   status = "now"
   note = "Enable explicit operations on otherwise inaccessible files through an approved helper. Verify connection identity, per-connection authorization and path safety before adding any privileged launch or key prompt. Keep unprivileged fixture evidence separate from packaged Developer ID acceptance."
   issue = 0
-# <<< commandem roadmap <<<
 
 [[mission]]
   id = "m-8a8b2b75"
