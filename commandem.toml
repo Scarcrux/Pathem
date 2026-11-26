@@ -2982,6 +2982,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Signed macOS 15 VM exposed a root-owned rename denied after the Admin badge appeared. The local nonroot mode-0555 fixture returned NSCocoaErrorDomain:513 -> NSPOSIXErrorDomain:13 and the existing classifier accepted it, with original bytes preserved. Add public domain/code and XPC lifecycle receipts without changing retry behavior. The instrumented VM replay is still needed to identify the failing boundary."
     at = "2026-11-26T10:39:21Z"
 
+  [[mission.comment]]
+    text = "Signed macOS 15 VM logs and crash stack confirmed the original unlocked process trapped on an XPC reply queue, then a new locked process correctly classified the rename error. Made Admin XPC callbacks explicitly Sendable and refresh badge visibility from live state when it appears. The offscreen fixture passed all five checks, including background authorization reply delivery and stale visibility reset. Eight focused Admin tests passed. Signed VM replay is pending."
+    at = "2026-11-26T10:52:04Z"
+
 [[mission]]
   id = "m-8a8b2b75"
   title = "Android device transfers over the local ADB server"

@@ -81,11 +81,11 @@ final class AdminModeController: NSObject {
         peer.remoteObjectInterface = NSXPCInterface(with: AdminFileServiceProtocol.self)
         peer.setCodeSigningRequirement(
             AdminHelperIdentity.signingRequirement(for: AdminHelperIdentity.serviceName))
-        peer.interruptionHandler = { [weak self] in
+        peer.interruptionHandler = { @Sendable [weak self] in
             adminLog.notice("Admin XPC interrupted generation=\(expected, privacy: .public)")
             Task { @MainActor in self?.lockIfCurrent(expected) }
         }
-        peer.invalidationHandler = { [weak self] in
+        peer.invalidationHandler = { @Sendable [weak self] in
             adminLog.notice("Admin XPC invalidated generation=\(expected, privacy: .public)")
             Task { @MainActor in self?.lockIfCurrent(expected) }
         }
@@ -95,7 +95,7 @@ final class AdminModeController: NSObject {
 
         // The running helper prepares its Authorization Services right before accepting requests.
         let version = try await Self.call(peer) { proxy, done in
-            proxy.version { done(.success($0)) }
+            proxy.version { @Sendable version in done(.success(version)) }
         }
         adminLog.notice(
             "Admin XPC version reply version=\(version, privacy: .public) generation=\(expected, privacy: .public)"
@@ -106,9 +106,9 @@ final class AdminModeController: NSObject {
         }.value
         guard generation == expected else { throw CancellationError() }
         let accepted = try await Self.call(peer) { proxy, done in
-            proxy.authorize(proof.externalForm, duration: duration) { value in
-                withExtendedLifetime(proof) { done(.success(value)) }
-            }
+            proxy.authorize(
+                proof.externalForm, duration: duration,
+                reply: Self.authorizationReply(retaining: proof, done: done))
         }
         adminLog.notice(
             "Admin XPC authorization reply accepted=\(accepted, privacy: .public) generation=\(expected, privacy: .public)"
@@ -132,7 +132,7 @@ final class AdminModeController: NSObject {
         let peer = connection
         connection = nil
         if let proxy = peer?.remoteObjectProxy as? AdminFileServiceProtocol {
-            proxy.lockSession {}
+            proxy.lockSession { @Sendable in }
         }
         peer?.invalidate()
         guard isUnlocked else { return }
@@ -177,7 +177,7 @@ final class AdminModeController: NSObject {
         let encoded = try JSONEncoder().encode(request)
         do {
             let result: Data = try await Self.call(connection) { proxy, done in
-                proxy.perform(encoded) { response, error in
+                proxy.perform(encoded) { @Sendable response, error in
                     if let error {
                         done(.failure(error))
                     } else if let response {
@@ -207,6 +207,29 @@ final class AdminModeController: NSObject {
         NotificationCenter.default.post(name: .pathemAdminModeChanged, object: nil)
     }
 
+    // XPC invokes this block on its reply queue. Only the resumed caller may
+    // update MainActor state. Keep the credential alive until the reply arrives.
+    nonisolated private static func authorizationReply(
+        retaining proof: some Sendable, done: @escaping @Sendable (Result<Bool, Error>) -> Void
+    ) -> @Sendable (Bool) -> Void {
+        { @Sendable value in
+            withExtendedLifetime(proof) { done(.success(value)) }
+        }
+    }
+
+    #if DEBUG
+    static func checkBackgroundAuthorizationReply() -> Bool {
+        let received = DispatchSemaphore(value: 0)
+        let reply = authorizationReply(retaining: "fixture credential") { result in
+            if !Thread.isMainThread, case .success(true) = result {
+                received.signal()
+            }
+        }
+        DispatchQueue(label: "pathem.admin.reply-fixture").async { reply(true) }
+        return received.wait(timeout: .now() + .seconds(3)) == .success
+    }
+    #endif
+
     private static func call<Value: Sendable>(
         _ connection: NSXPCConnection,
         _ request: (AdminFileServiceProtocol, @escaping @Sendable (Result<Value, Error>) -> Void) ->
@@ -215,10 +238,10 @@ final class AdminModeController: NSObject {
         try await withCheckedThrowingContinuation { continuation in
             let reply = AdminXPCReply(continuation)
             guard
-                let proxy = connection.remoteObjectProxyWithErrorHandler({
+                let proxy = connection.remoteObjectProxyWithErrorHandler({ @Sendable error in
                     adminLog.error(
-                        "Admin XPC proxy error errors=\(Self.errorChain($0), privacy: .public)")
-                    reply.finish(.failure($0))
+                        "Admin XPC proxy error errors=\(Self.errorChain(error), privacy: .public)")
+                    reply.finish(.failure(error))
                 }) as? AdminFileServiceProtocol
             else {
                 reply.finish(.failure(POSIXError(.ENOTCONN)))

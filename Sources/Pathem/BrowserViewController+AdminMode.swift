@@ -80,6 +80,11 @@ final class AdminBadge: NSTitlebarAccessoryViewController {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    override func viewWillAppear() {
+        super.viewWillAppear()
+        refresh()
+    }
+
     @objc private func refresh() {
         showUnlocked(AdminModeController.shared.isUnlocked)
     }
@@ -96,11 +101,21 @@ final class AdminBadge: NSTitlebarAccessoryViewController {
         let unlocked =
             !badge.isHidden && badge.view.frame.width >= 48
             && badge.view.subviews.first?.layer?.backgroundColor == NSColor.systemRed.cgColor
-        badge.showUnlocked(false)
-        let relocked = badge.isHidden
-        let passed = [startedLocked, unlocked, relocked].filter { $0 }.count
-        print("RESULT: \(passed == 3 ? "PASS" : "FAIL") (\(passed)/3)")
-        return passed == 3
+        // Simulate an accessory appearing with stale visibility. The in-memory
+        // controller still starts locked, as it does after process restoration.
+        badge.viewWillAppear()
+        let discardedStaleVisibility = badge.isHidden
+        let recreatedLocked = AdminBadge().isHidden
+        let backgroundReply = AdminModeController.checkBackgroundAuthorizationReply()
+        let checks = [
+            startedLocked, unlocked, discardedStaleVisibility, recreatedLocked, backgroundReply,
+        ]
+        let passed = checks.filter { $0 }.count
+        print(
+            "ADMIN FIXTURE: recreatedLocked=\(recreatedLocked) staleVisibilityDiscarded=\(discardedStaleVisibility) backgroundReply=\(backgroundReply)"
+        )
+        print("RESULT: \(passed == checks.count ? "PASS" : "FAIL") (\(passed)/\(checks.count))")
+        return passed == checks.count
     }
     #endif
 }
