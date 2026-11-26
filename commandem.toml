@@ -61,38 +61,47 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-5bc3bd41"
     title = "Transient-status/toast channel reusing the per-pane status label (keystone)"
     done = true
 
   [[mission.task]]
+    id = "t-25f9febb"
     title = "Confirm silent successes: Copy Path / Name / Checksum flash a confirmation"
     done = true
 
   [[mission.task]]
+    id = "t-1449a759"
     title = "Consolidate empty-state copy (three phrasings for an empty folder today)"
     done = true
 
   [[mission.task]]
+    id = "t-ce13d3e8"
     title = "Make the permission-denied placeholder actionable (open Full Disk Access); fix FDA guide button hierarchy"
     done = true
 
   [[mission.task]]
+    id = "t-3e47829a"
     title = "Fix themed-accent drift (QuickActions, size bar, transfer progress, AI sparkle, FDA badge)"
     done = true
 
   [[mission.task]]
+    id = "t-a47d62e8"
     title = "Turn meaningful beep dead-ends into messages (transfer running, remote-only op, failed toggle)"
     done = true
 
   [[mission.task]]
+    id = "t-2d025cc4"
     title = "Soften raw/technical strings (ACL row 'Sharing' -> Permissions; curl error; octal 644)"
     done = true
 
   [[mission.task]]
+    id = "t-4b16d3c5"
     title = "Accessibility labels, incrementally (functional image-only glyphs first)"
     done = true
 
   [[mission.task]]
+    id = "t-13977656"
     title = "Close view-parity gaps: tag dots + git badges in grids; honor single-click/hover outside the list"
     done = true
 
@@ -105,18 +114,22 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-fbe30153"
     title = "Optimize social-card.png (610 KB, 4-8x heavier than an OG card needs)"
     done = true
 
   [[mission.task]]
+    id = "t-ceb59bed"
     title = "Show, don't just tell: real screenshots for torrents / terminal / remote (text-only today)"
     done = true
 
   [[mission.task]]
+    id = "t-e5fac79e"
     title = "Honest download story: keep the Star CTA until a notarized build, then wire download + Sparkle appcast"
     done = true
 
   [[mission.task]]
+    id = "t-ad79c6b3"
     title = "Minor SEO/PWA: web app manifest, SVG favicon, sitemap date refresh"
     done = true
 
@@ -128,14 +141,17 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-f611ed13"
     title = "Extract every referenced L() key; prune stale entries"
     done = true
 
   [[mission.task]]
+    id = "t-61af7452"
     title = "Ensure all six locales cover every key"
     done = true
 
   [[mission.task]]
+    id = "t-29680433"
     title = "Add a coverage + plutil lint to the pre-commit hook"
     done = true
 
@@ -148,19 +164,24 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-0b14433d"
     title = "Define the user-testing exit criteria"
     done = true
 
   [[mission.task]]
+    id = "t-435a2027"
     title = "Final manual QA pass; confirm screenshots are current"
 
   [[mission.task]]
+    id = "t-22887043"
     title = "Cut a notarized direct download + EdDSA-signed Sparkle appcast"
 
   [[mission.task]]
+    id = "t-d8309e4a"
     title = "Final pass over README / LICENSE / SECURITY"
 
   [[mission.task]]
+    id = "t-1c747218"
     title = "Flip the repo public so the site starts converting"
 
   [[mission.comment]]
@@ -176,54 +197,67 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-326d98d6"
     title = "Finish dissolving the BrowserViewController god-object (toolbar + split delegate already extracted)"
     done = true
 
   [[mission.task]]
+    id = "t-cbe73c41"
     title = "Torrent standalone parity: send-side PEX, persistent DHT routing table, UPnP-IGD, LEDBAT"
     done = true
 
   [[mission.task]]
+    id = "t-5f5d88fb"
     title = "Enable the gated Swift extension runtime once there is real demand"
     done = true
 
   [[mission.task]]
+    id = "t-650995b4"
     title = "BrowserViewController god-object: extracted transfer + undo/redo plumbing (1578 -> 1442 lines)"
     done = true
 
   [[mission.task]]
+    id = "t-0bec6c42"
     title = "BrowserViewController god-object: extracted rename + trash actions into their own files (1442 -> 1294 lines; cumulative 1578 -> 1294)"
     done = true
 
   [[mission.task]]
+    id = "t-195a247b"
     title = "God-object: extract stateful sub-controllers from BrowserViewController (PreviewPane, SplitLayout, MenuInstaller/LazyMenu) - move state, not just methods (129 stored props shared across 51 extension files)"
     done = true
 
   [[mission.task]]
+    id = "t-1b878b9a"
     title = "Gate the ~1,700 LOC smoke/screenshot/debug harness behind #if DEBUG or a non-shipping target (0 #if DEBUG today; SmokeTest.swift + DebugHooks + 11 screencapture blocks ship in the release binary)"
     done = true
 
   [[mission.task]]
+    id = "t-fd066463"
     title = "BrowserViewController god-object: extracted device-watch + ownership/ACL actions into their own files (1305 -> 1224 lines; cumulative 1578 -> 1224)"
     done = true
 
   [[mission.task]]
+    id = "t-8d316553"
     title = "God-object: moved device-watch STATE (timer + name cache) into an owned DeviceWatcher (129 -> 127 stored props). Remaining 5.6: the higher-coupling clusters (SplitLayout, PreviewPane, MenuInstaller)."
     done = true
 
   [[mission.task]]
+    id = "t-19e89758"
     title = "God-object: extracted navigation/sync/window-title cluster into BrowserViewController+Navigation (1221 -> 1100 lines; commit e03ccd1)"
     done = true
 
   [[mission.task]]
+    id = "t-b3c432d8"
     title = "God-object: extracted external-open/reveal/Photos cluster into BrowserViewController+ExternalOpen (1100 -> 1061 lines)"
     done = true
 
   [[mission.task]]
+    id = "t-2101b8a5"
     title = "God-object: extracted palette/batch-rename/select-by-pattern into BrowserViewController+CommandSurfaces (1061 -> 1026 lines; cumulative 1578 -> 1026)"
     done = true
 
   [[mission.task]]
+    id = "t-d661c845"
     title = "God-object: extracted PreviewPane STATE into an owned PreviewPaneController (view + visibility + width pin + auto-shown flag; 4 stored props -> 1; BrowserViewController 126 stored props). Deps via closures (selectedURL, sidebarWidth) like DeviceWatcher. Harness guards the toggle path: opens docked as a 3rd outerSplit subview, closes clean back to 2. Remaining 5.6: SplitLayout, MenuInstaller/LazyMenu."
     done = true
 
@@ -240,38 +274,47 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-5f0332e2"
     title = "pathem CLI reveal/open contract (pathem reveal <path>, pathem open <dir>) as the seam every integration calls"
     done = true
 
   [[mission.task]]
+    id = "t-dfed794b"
     title = "Reveal in Pathem: a second NSServices item + a select-and-reveal handler"
     done = true
 
   [[mission.task]]
+    id = "t-28681da5"
     title = "Preferences -> Integrations panel: detect installed editors; per-editor Integrate/Preview/Remove; opt-in, backup, reversible, merge-not-clobber, warn if running"
     done = true
 
   [[mission.task]]
+    id = "t-ebd91df8"
     title = "Sublime Text: write a User-package plugin + keymap + side-bar menu (edits its own config)"
     done = true
 
   [[mission.task]]
+    id = "t-42032e8b"
     title = "TextMate + JetBrains: a bundle command / an External Tools entry"
     done = true
 
   [[mission.task]]
+    id = "t-d746cdc4"
     title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
     state = "ask"
 
   [[mission.task]]
+    id = "t-c9aec7d0"
     title = "VS Code/Cursor extension authored + one-click Integrate wired + locally verified; Marketplace publish pending user's publisher account"
     done = true
 
   [[mission.task]]
+    id = "t-232d4c68"
     title = "CI: vscode-v* release workflow packages + publishes the extension (gated on VSCE_PAT/OVSX_PAT)"
     done = true
 
   [[mission.task]]
+    id = "t-140f161b"
     title = "Add a typed open/reveal/preview handoff with bounded inert Jupyter notebook previews"
     done = true
 
@@ -292,22 +335,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-fd985395"
     title = "Photos sidebar location: browse albums / moments / people via PhotoKit (read access + permission prompt)"
     done = true
 
   [[mission.task]]
+    id = "t-eb24a6d6"
     title = "Export / drag assets out to the filesystem (originals via PHAssetResourceManager)"
     done = true
 
   [[mission.task]]
+    id = "t-43c741aa"
     title = "View assets (thumbnails + Quick Look / internal viewer)"
     done = true
 
   [[mission.task]]
+    id = "t-f3a523bb"
     title = "Later: edit back into Photos (PHAssetChangeRequest / adjustment data)"
     done = true
 
   [[mission.task]]
+    id = "t-31b305f8"
     title = "Edit-back safe slice shipped: Remove Location via PHAssetChangeRequest (metadata only, revertible). Full content edit-back (crop/adjustments via PHContentEditingOutput) remains a larger future item."
     done = true
 
@@ -320,14 +368,17 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-6157d055"
     title = "Subject lift / remove background (VNGenerateForegroundInstanceMask) as a quick action + batch"
     done = true
 
   [[mission.task]]
+    id = "t-4747de37"
     title = "Content auto-tagging / classification feeding the on-device organizer + smart folders"
     done = true
 
   [[mission.task]]
+    id = "t-db330853"
     title = "Near-duplicate photo culler (burst/quality scoring atop DuplicateFinder + SemanticDedup)"
     done = true
 
@@ -340,10 +391,12 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-0493d4ac"
     title = "Light image edits: crop / rotate / straighten / resize with save-a-copy, + batch"
     done = true
 
   [[mission.task]]
+    id = "t-c8092eff"
     title = "Media conversion hub (image / video / audio) atop ImageConverter + MediaTools"
     done = true
 
@@ -356,22 +409,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-2f2e464e"
     title = "Metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit"
     done = true
 
   [[mission.task]]
+    id = "t-605b66fd"
     title = "Disk-space + duplicate cleanup as a first-class flow (DirectorySize + DuplicateFinder)"
     done = true
 
   [[mission.task]]
+    id = "t-6a4d027f"
     title = "Rules-based auto-organize on watch folders (AutomationRule)"
     done = true
 
   [[mission.task]]
+    id = "t-e5f0a009"
     title = "Remove Location: lossless in-place GPS strip (kCGImageMetadataShouldExcludeGPS) as a privacy op"
     done = true
 
   [[mission.task]]
+    id = "t-d95868d7"
     title = "Size Browser largest-items view: extracted tested DiskUsage ranker; fixed symlink over-count"
     done = true
 
@@ -384,30 +442,37 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-2b1ea963"
     title = "Live transfer progress: speed/ETA/percent (copyfile streaming) + steady readout"
     done = true
 
   [[mission.task]]
+    id = "t-96995b1b"
     title = "Inline naming in the icon grid; name/rename prompts no longer clip long names"
     done = true
 
   [[mission.task]]
+    id = "t-3bc76243"
     title = "Eject for external USB/Thunderbolt SSDs + hardened heuristic (never system volumes)"
     done = true
 
   [[mission.task]]
+    id = "t-8c95f9c9"
     title = "Configurable torrent download folder + opt-in confirm for inbound magnet/torrent links"
     done = true
 
   [[mission.task]]
+    id = "t-a753d78a"
     title = "Multi-agent correctness/security audit + fixes (URL parsing, copyfile stage, move rollback, retry bound)"
     done = true
 
   [[mission.task]]
+    id = "t-3a1cc969"
     title = "'…' overflow toolbar button with a Theme (appearance + built-in skins) picker"
     done = true
 
   [[mission.task]]
+    id = "t-19e8ef61"
     title = "Stale-build watch: 'Relaunch to Update' when a newer build is installed under a running app"
     done = true
 
@@ -420,26 +485,32 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-7c6dd9e0"
     title = "Lazy visible-range tag decoration + bounded NSCache (stop the full-listing getxattr pass; FileListController.refreshTagsAsync issues up to 1M syscalls + a 1M-key dict to draw ~40 rows)"
     done = true
 
   [[mission.task]]
+    id = "t-b30d4a57"
     title = "Semantic index: build lazily on first search / pref-gate; defer content snippets (SemanticSearchController.ensureIndex reads up to 5000 files' content on every navigation, seconds of CPU+disk whether or not the user searches)"
     done = true
 
   [[mission.task]]
+    id = "t-6a61ff76"
     title = "DuplicateFinder: head-block prefilter before full SHA-256, plus cancellation (two differing same-size 4GB files are both hashed in full today)"
     done = true
 
   [[mission.task]]
+    id = "t-8fada71f"
     title = "Cheap wins: skip the identity-map rebuild when ungrouped; use NLEmbedder.shared instead of a fresh NLEmbedding per index/search; precompute per-entry collation sort keys"
     done = true
 
   [[mission.task]]
+    id = "t-3151fac1"
     title = "Deferred (optional): precompute per-entry collation sort keys -- localizedStandardCompare has no cheap Foundation collation-key equivalent, so it is not a cheap win"
     done = true
 
   [[mission.task]]
+    id = "t-a97d30cc"
     title = "Precomputed sort keys assessed and declined: Foundation exposes no ICU collation-key API, so any precomputed key sorts non-ASCII by codepoint (diverges from localizedStandardCompare and breaks the enumerator contract test). Kept as-is."
     done = true
 
@@ -452,26 +523,32 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-26653b0f"
     title = "Cross-volume move test via hdiutil RAM disk: happy path + rollback when source-remove fails (FileOperations.swift:344-377, the copy-then-delete-source path)"
     done = true
 
   [[mission.task]]
+    id = "t-e5d674e8"
     title = "Redo-of-Replace test + Trash Put-Back ledger / undo-redo re-registration chain test (both untested; the code warns redo-of-replace can trash the restored original)"
     done = true
 
   [[mission.task]]
+    id = "t-02142a0b"
     title = "Near-duplicate keeper-selection test with photo-like fixtures + CopyVerificationError mismatch-cleanup test"
     done = true
 
   [[mission.task]]
+    id = "t-5cfdab8a"
     title = "Deflake DirectoryWatcher.firesWhenAFileIsCreated (poll-until-timeout + re-touch each pass; drop the two fixed sleeps racing the async FSEvents arm)"
     done = true
 
   [[mission.task]]
+    id = "t-6c31570b"
     title = "CI: auto-run build + swift test on PR; add l10n lint + the smoke harness as gates (regressions are caught today only if a human runs make ci)"
     done = true
 
   [[mission.task]]
+    id = "t-61920a51"
     title = "Remaining (lower priority): Trash Put-Back ledger undo/redo smoke check; near-dup keeper-selection test (needs photo-like Vision fixtures); CopyVerificationError mismatch-cleanup test"
     done = true
 
@@ -484,22 +561,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-d52a50ef"
     title = "Detect intra-batch basename collisions + surface outcome.skipped in transfer completions (copying two same-named files silently drops one, no prompt/beep, because the pre-check only compares against the destination)"
     done = true
 
   [[mission.task]]
+    id = "t-8f188f79"
     title = "Metadata editor: collect and present per-item failures instead of try?-swallowing them (MetadataEditorController.swift:257-267 reports only 'Updated N')"
     done = true
 
   [[mission.task]]
+    id = "t-2b09212a"
     title = "Failed Replace: append an explicit 'moved to Trash, could not restore' failure pointing at the trash location (FileOperations.swift:534 swallows the restore failure)"
     done = true
 
   [[mission.task]]
+    id = "t-fec955f7"
     title = "BatchRename phase-2: only claim 'kept as X' when the fallback move actually succeeds (BatchRename.swift:186 lies about the location on a triple failure, hiding the file under a dotfile)"
     done = true
 
   [[mission.task]]
+    id = "t-49ffdacf"
     title = "P3s: temp-file cleanup on replaceItemAt failure (ImageMetadata/MetadataCleaner leak a .tmp); preserve animated-GIF loop count on in-place metadata edit; nil resultingItemURL -> locate the trashed item in .Trash"
     done = true
 
@@ -512,22 +594,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-bbb4fb7d"
     title = "Default confirmInboundTorrents = true (or always confirm the first externally-handed magnet/torrent): today an inbound magnet silently downloads AND seeds/reshares into Downloads with no prompt"
     done = true
 
   [[mission.task]]
+    id = "t-6afb8a67"
     title = "Release gate: fail the build if SUPublicEDKey is still the placeholder; add a CI check that no Sparkle/EdDSA private key is in the tree or logs"
     done = true
 
   [[mission.task]]
+    id = "t-81ab9cef"
     title = "SFTP: surface a 'new host key, accept?' prompt instead of silent StrictHostKeyChecking=accept-new (TOFU MITM window on first connect, which also holds the password)"
     done = true
 
   [[mission.task]]
+    id = "t-e6662baf"
     title = "New-connection dialog: default to an encrypted protocol (sftp/ftps/webdavs) and warn on plaintext FTP/WebDAV (defaults to plain ftp today)"
     done = true
 
   [[mission.task]]
+    id = "t-37204b05"
     title = "Deferred: SFTP new-host-key prompt (accept-new already rejects changed keys; a full known-hosts prompt needs out-of-process helper + UI plumbing)"
     done = true
 
@@ -540,46 +627,57 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-eef72950"
     title = "THE ONE THING: capture a ~10s 1M-row scroll demo (GIF/video) above the fold on the site + README, backed by a reproducible `make gate-a` (the PATHEM_GATE_A path already materializes and scrolls 1M rows; DESIGN.md names this the #1 HN lever, and it is the one launch asset not built)"
     done = true
 
   [[mission.task]]
+    id = "t-59226eaf"
     title = "First-run 'Load demo workspace' tour reusing DemoWorkspace.build (the polished fake workspace behind the marketing screenshots is wired only to a screenshot env var today, so a stranger's first launch is a bare home folder behind the FDA nag)"
     done = true
 
   [[mission.task]]
+    id = "t-37a2e910"
     title = "Batch rename depth: saved presets + a date/EXIF/{token} vocabulary ({date}, {counter}, {parent}, {exif.taken}) - the exact feature power users benchmark against NameMangler / A Better Finder Rename"
     done = true
 
   [[mission.task]]
+    id = "t-35fbd1d6"
     title = "Grouped duplicate-resolve UX: keep one / trash the set + a reclaimable-space total (detection across DuplicateFinder/SemanticDedup/NearDuplicatePhotos is done; results dump to a flat list instead of the Gemini/dupeGuru grouped resolve flow)"
     done = true
 
   [[mission.task]]
+    id = "t-55fbe2ef"
     title = "Polish: surface buried differentiators (Shelf -> 'Drop Stack', Reclaim-space); a real list-row VoiceOver pass (size/kind/date + the unlabeled custom-drawn icon/gallery/column/tree cells); a native-speaker l10n quality pass on the top-20 visible strings"
     state = "ask"
 
   [[mission.task]]
+    id = "t-408adbb2"
     title = "make gate-a target + reproducible 1M-row benchmark surfaced above the fold in README (the scroll GIF/video capture itself remains, a screen-recording step)"
     done = true
 
   [[mission.task]]
+    id = "t-12b264dd"
     title = "Follow-ups: batch-rename saved presets (config-as-data); the actual scroll-GIF recording + placement above the fold (make gate-a-demo tooling is in place, needs Screen Recording permission)"
     done = true
 
   [[mission.task]]
+    id = "t-35a9b79c"
     title = "List-row VoiceOver: announces name + kind + size + date (was name-only). Remaining 16.5: custom-drawn icon/gallery/column/tree cell labels; Shelf resurface; native-speaker l10n pass"
     done = true
 
   [[mission.task]]
+    id = "t-d5f90c96"
     title = "Enriched VoiceOver label (name+kind+size+date) shared across list/icon/column views via FileAXLabel. Remaining 16.5: tree/gallery cell labels; native-speaker l10n pass; Shelf resurface"
     done = true
 
   [[mission.task]]
+    id = "t-6337bcfa"
     title = "a11y sweep complete: all 5 file views (list/icon/column/gallery/tree) speak name+kind+size+date. Saved batch-rename presets shipped (RenamePresetStore). Remaining: native-speaker l10n pass; the scroll-GIF recording (make gate-a-demo)"
     done = true
 
   [[mission.task]]
+    id = "t-25b953fa"
     title = "Shelf renamed to 'Drop Stack' (market-recognized name) across commands/menus/panel + 6 locales; docs/PRE_PUBLIC.md written (post-audit state + owner-action items)"
     done = true
 
@@ -616,22 +714,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-ab2da9f8"
     title = "Nav-button drops (drag #1, buttons half): up = drop-to-move into parent; spring-load up/back/forward mid-drag"
     done = true
 
   [[mission.task]]
+    id = "t-c00fb1a3"
     title = "Multiple selected folders show a combined calculated size in the selection summary (#3)"
     done = true
 
   [[mission.task]]
+    id = "t-d08c4a81"
     title = "Pane content 'pushes up' with only a few files: reproduce, then fix the async layout nudge (#5)"
     done = true
 
   [[mission.task]]
+    id = "t-8d6ecc16"
     title = "Transfer 'queue you cant cancel': confirm remote Cancel All truly terminates jobs; surface the Transfers window (local moves dont queue) (#-transfer)"
     done = true
 
   [[mission.task]]
+    id = "t-0cbf52fe"
     title = "End-to-end feature testing with a screenshotting harness: drive real flows, capture, assert (#6)"
     done = true
 
@@ -716,18 +819,22 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-1f9b1bc1"
     title = "Route local-to-iCloud moves using the ubiquitous destination folder"
     done = true
 
   [[mission.task]]
+    id = "t-fac8323f"
     title = "Exercise iCloud-to-iCloud, iCloud-to-local, and local-to-iCloud in the real-window harness"
     done = true
 
   [[mission.task]]
+    id = "t-ca9dedd6"
     title = "Verify payload bytes and delayed source absence across iCloud boundaries"
     done = true
 
   [[mission.task]]
+    id = "t-4df420da"
     title = "Reproduce and verify an evicted online-only iCloud item on device"
     done = true
 
@@ -912,46 +1019,57 @@ missions = ["m-1331afb7", "m-b2532fac"]
   issue = 0
 
   [[mission.task]]
+    id = "t-34846afe"
     title = "Hermetic cross-volume move plus disk-image attach/eject product gate"
     done = true
 
   [[mission.task]]
+    id = "t-8e01a469"
     title = "Hermetic FTP and SFTP CRUD through the real out-of-process providers"
     done = true
 
   [[mission.task]]
+    id = "t-f8ae42a7"
     title = "Accessibility-tree assertions plus Full Disk Access and permission-state probes"
     done = true
 
   [[mission.task]]
+    id = "t-a736d621"
     title = "Generated shortcut and drag/drop destination coverage matrix"
     done = true
 
   [[mission.task]]
+    id = "t-1e05b419"
     title = "Spotlight indexing and large/provider-backed tree opt-in gate"
     done = true
 
   [[mission.task]]
+    id = "t-abcb2a75"
     title = "Public DHT, NAT-PMP/UPnP, and third-party torrent interoperability opt-in gates"
     done = true
 
   [[mission.task]]
+    id = "t-36303891"
     title = "Physical iOS/USB/network-share verification runner with explicit PASS/SKIP/FAIL"
     done = true
 
   [[mission.task]]
+    id = "t-35dfedc4"
     title = "Older supported macOS compatibility workflow without increasing normal PR quota"
     done = true
 
   [[mission.task]]
+    id = "t-50e49101"
     title = "Interactive shell and arbitrary external-tool boundary checks"
     done = true
 
   [[mission.task]]
+    id = "t-4cb0a11a"
     title = "Human localization, VoiceOver, and exploratory UX sign-off checklist"
     done = true
 
   [[mission.task]]
+    id = "t-cb98bff0"
     title = "Unified make e2e-env report that never turns missing hardware or credentials into a pass"
     done = true
 
