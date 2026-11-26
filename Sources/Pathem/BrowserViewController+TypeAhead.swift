@@ -52,7 +52,8 @@ extension TypeAheadController {
 
 extension BrowserViewController {
     /// Render the bar in each mode over the demo Downloads folder, printing the state each time.
-    func runTypeAheadShots(into directory: String, done: @escaping () -> Void) {
+    func runTypeAheadShots(into directory: String, done: @escaping @MainActor @Sendable () -> Void)
+    {
         guard let pane = activePane else { return done() }
         let bar = pane.typeAhead
         let root = pane.currentURL.deletingLastPathComponent().path
@@ -82,7 +83,9 @@ extension BrowserViewController {
             }
             delay += 1.2
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.3, execute: done)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.3) {
+            Task { @MainActor in done() }
+        }
     }
 }
 #endif

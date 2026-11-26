@@ -2807,6 +2807,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "0.9.6 input acceptance: keyboard DEBUG hook posts NSEvents through AppKit, 17/17 after the switcher derives Control from the triggering event. The initial 13/16 run failed both release-to-commit cases and quick-tap no-flash, with Find passing. Finder-shaped drop DEBUG hook 6/6 through the real outline delegates, transfer and undo; writes two file URLs and the legacy list, with Option represented by the copy-only source mask. Config root refusals 4/4. Run serially via test/e2e/run.sh --input-delivery. Physical CGEvent and Finder drags remain untested on this host."
     at = "2026-11-26T19:57:20Z"
 
+  [[mission.comment]]
+    text = "The 0.9.6 gate found a Swift 6 Sendable warning in the DEBUG Type Ahead screenshot completion. It already ran on the main dispatch queue and its only caller exits; no wrong-executor runtime trap was established. Make the callback explicitly MainActor and Sendable, and invoke it through a MainActor task after the delay. The fresh warning gate reports zero new or unparsed diagnostics without changing the baseline."
+    at = "2026-11-26T20:01:46Z"
+
 [[mission]]
   id = "m-c67d643a"
   title = "Theme customization and community gallery"
