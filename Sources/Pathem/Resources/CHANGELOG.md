@@ -5,6 +5,18 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.6 - 2026-11-26
+- Stack the two panes top and bottom (View > Stack Panes Vertically), and show an always-visible folder tree with multiple roots, pinned folders, Reveal in Folder Tree and drop targets.
+- Tabs can be locked, closed tabs can be reopened, Control-Tab switches between recent tabs, and sets of tabs can be saved as groups.
+- Paired folders: browse two related folder trees side by side and keep the other pane in step.
+- Find as you type: start typing in a folder to jump to a file. Prefix with / or ~ to go to a path, > to run a command, or ? for semantic search.
+- Copy, move or trash only the files that match a filter, with a live preview of what will be affected.
+- New selection commands (invert, same extension, same kind, compare with the other pane), a selection summary by kind, and Export or Print Listing.
+- New list columns for photos, audio and video: dimensions, date taken, camera, duration, artist, album, pages, codec and bit rate.
+- An Activity log of file operations, kept only on your Mac, with Reveal and Undo.
+- Admin Mode: unlock with your administrator password to rename, move or delete files you don't own. Every admin operation is recorded in the Activity log.
+- Android browsing over ADB now shows real sizes and dates and streams transfers with progress.
+
 ## 0.9.5 - 2026-11-25
 - Themes for everyone: open Settings, Appearance, Themes… to browse the community gallery as a grid of cards, filter it by Light or Dark, and install a theme in one click. The gallery is downloaded only when you open it.
 - 27 community themes at launch, including six with their own icon sets: Folio, Gilt Lacquer, Gumdrop, Neon Circuit, Spun Sugar and Dracula.
