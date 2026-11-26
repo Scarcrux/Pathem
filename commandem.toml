@@ -2978,6 +2978,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Integrated the signed-peer helper, explicit Settings enrollment, a timed Authorization Services session, locked/unlocked badge, typed file operations and permission-denied browser retries. The local Swift suite, offscreen badge and refusal probes passed. The release verifier rejects an ad-hoc helper and the exact client requirement accepts the installed signed app on disk. Signed helper acceptance and real System Settings enrollment remain open and require owner approval."
     at = "2026-11-26T03:10:24Z"
 
+  [[mission.comment]]
+    text = "Signed macOS 15 VM exposed a root-owned rename denied after the Admin badge appeared. The local nonroot mode-0555 fixture returned NSCocoaErrorDomain:513 -> NSPOSIXErrorDomain:13 and the existing classifier accepted it, with original bytes preserved. Add public domain/code and XPC lifecycle receipts without changing retry behavior. The instrumented VM replay is still needed to identify the failing boundary."
+    at = "2026-11-26T10:39:21Z"
+
 [[mission]]
   id = "m-8a8b2b75"
   title = "Android device transfers over the local ADB server"

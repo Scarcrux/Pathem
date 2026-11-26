@@ -26,6 +26,39 @@ import Testing
                 BulkEnumerator.EnumerationError.openFailed(path: "/fixture", errno: EACCES)))
     }
 
+    @Test(.enabled(if: geteuid() != 0))
+    func realRenameInReadOnlyDirectoryReportsPermissionFailure() throws {
+        let fm = FileManager.default
+        let directory = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try fm.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer {
+            _ = chmod(directory.path, 0o700)
+            try? fm.removeItem(at: directory)
+        }
+        let source = directory.appendingPathComponent("original")
+        let dest = directory.appendingPathComponent("renamed")
+        try Data("fixture".utf8).write(to: source)
+        try #require(chmod(directory.path, 0o555) == 0)
+        let renameResult = Result {
+            try FileOperations.rename("original", to: "renamed", in: directory)
+        }
+        switch renameResult {
+        case .success:
+            Issue.record("The read-only directory unexpectedly allowed a rename")
+        case .failure(let error):
+            var chain: [String] = []
+            var current: NSError? = error as NSError
+            while let entry = current {
+                chain.append("\(entry.domain):\(entry.code)")
+                current = entry.userInfo[NSUnderlyingErrorKey] as? NSError
+            }
+            print("ADMIN RENAME FIXTURE: \(chain.joined(separator: " -> "))")
+            #expect(AdminFileRequest.isPermissionFailure(error))
+        }
+        #expect(try Data(contentsOf: source) == Data("fixture".utf8))
+        #expect(!fm.fileExists(atPath: dest.path))
+    }
+
     @Test func signedPeerRequirementsParseAndAuthorizationRuleFailsClosed() throws {
         for identifier in [AdminHelperIdentity.appIdentifier, AdminHelperIdentity.serviceName] {
             var requirement: SecRequirement?

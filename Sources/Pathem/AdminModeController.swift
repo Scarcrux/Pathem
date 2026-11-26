@@ -1,6 +1,9 @@
 import AppKit
+import OSLog
 import PathemEngine
 import ServiceManagement
+
+private let adminLog = Logger(subsystem: "com.scarcrux.pathem", category: "admin")
 
 extension Notification.Name {
     static let pathemAdminModeChanged = Notification.Name("pathem.adminModeChanged")
@@ -73,13 +76,19 @@ final class AdminModeController: NSObject {
         let expected = generation
         let peer = NSXPCConnection(
             machServiceName: AdminHelperIdentity.serviceName, options: .privileged)
+        adminLog.notice(
+            "Unlock created privileged XPC connection generation=\(expected, privacy: .public)")
         peer.remoteObjectInterface = NSXPCInterface(with: AdminFileServiceProtocol.self)
         peer.setCodeSigningRequirement(
             AdminHelperIdentity.signingRequirement(for: AdminHelperIdentity.serviceName))
         peer.interruptionHandler = { [weak self] in
+            adminLog.notice("Admin XPC interrupted generation=\(expected, privacy: .public)")
             Task { @MainActor in self?.lockIfCurrent(expected) }
         }
-        peer.invalidationHandler = peer.interruptionHandler
+        peer.invalidationHandler = { [weak self] in
+            adminLog.notice("Admin XPC invalidated generation=\(expected, privacy: .public)")
+            Task { @MainActor in self?.lockIfCurrent(expected) }
+        }
         peer.resume()
         var retained = false
         defer { if !retained { peer.invalidate() } }
@@ -88,6 +97,9 @@ final class AdminModeController: NSObject {
         let version = try await Self.call(peer) { proxy, done in
             proxy.version { done(.success($0)) }
         }
+        adminLog.notice(
+            "Admin XPC version reply version=\(version, privacy: .public) generation=\(expected, privacy: .public)"
+        )
         guard version == 1, generation == expected else { throw POSIXError(.EPROTO) }
         let proof = try await Task.detached(priority: .userInitiated) {
             try AdminAuthorizationCredential()
@@ -98,6 +110,9 @@ final class AdminModeController: NSObject {
                 withExtendedLifetime(proof) { done(.success(value)) }
             }
         }
+        adminLog.notice(
+            "Admin XPC authorization reply accepted=\(accepted, privacy: .public) generation=\(expected, privacy: .public)"
+        )
         guard accepted, generation == expected else { throw POSIXError(.EACCES) }
 
         connection = peer
@@ -132,10 +147,31 @@ final class AdminModeController: NSObject {
     /// A failed regular operation must have returned a permission errno. No other error
     /// triggers a privileged request, and a successful regular operation needs no request.
     func mayRetry(_ error: Error) -> Bool {
-        isUnlocked && AdminFileRequest.isPermissionFailure(error)
+        let permissionFailure = AdminFileRequest.isPermissionFailure(error)
+        let retry = isUnlocked && permissionFailure
+        let chain = Self.errorChain(error)
+        adminLog.notice(
+            "Admin retry decision retry=\(retry, privacy: .public) unlocked=\(self.isUnlocked, privacy: .public) connected=\(self.connection != nil, privacy: .public) permissionFailure=\(permissionFailure, privacy: .public) errors=\(chain, privacy: .public)"
+        )
+        return retry
+    }
+
+    nonisolated private static func errorChain(_ error: Error) -> String {
+        var chain: [String] = []
+        var visited = Set<ObjectIdentifier>()
+        var current: NSError? = error as NSError
+        while let entry = current, visited.insert(ObjectIdentifier(entry)).inserted {
+            chain.append("\(entry.domain):\(entry.code)")
+            current = entry.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return chain.joined(separator: " -> ")
     }
 
     func perform(_ request: AdminFileRequest) async throws -> Data {
+        let operation = request.operation.rawValue
+        adminLog.notice(
+            "Admin perform guard operation=\(operation, privacy: .public) unlocked=\(self.isUnlocked, privacy: .public) connected=\(self.connection != nil, privacy: .public) generation=\(self.generation, privacy: .public)"
+        )
         guard isUnlocked, let connection else { throw POSIXError(.EACCES) }
         try request.validate()
         let encoded = try JSONEncoder().encode(request)
@@ -180,6 +216,8 @@ final class AdminModeController: NSObject {
             let reply = AdminXPCReply(continuation)
             guard
                 let proxy = connection.remoteObjectProxyWithErrorHandler({
+                    adminLog.error(
+                        "Admin XPC proxy error errors=\(Self.errorChain($0), privacy: .public)")
                     reply.finish(.failure($0))
                 }) as? AdminFileServiceProtocol
             else {
