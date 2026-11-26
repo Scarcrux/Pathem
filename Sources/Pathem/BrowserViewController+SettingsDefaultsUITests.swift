@@ -130,15 +130,13 @@ extension BrowserViewController {
         )? {
             if browser.settingsPanel == nil { browser.showPreferences() }
             guard let panel = browser.settingsPanel else { return nil }
-            let tables = descendants(panel, as: NSTableView.self)
+            // Extensions is gated, so the mounted sidebar can show fewer than all Pane cases.
             guard
-                let sidebar = tables.first(where: {
-                    $0.numberOfRows == SettingsWindowController.Pane.allCases.count
-                })
+                let sidebar = descendants(panel, as: NSTableView.self).compactMap({
+                    $0.delegate as? SettingsSidebarController
+                }).first
             else { return nil }
-            sidebar.selectRowIndexes(IndexSet(integer: 2), byExtendingSelection: false)
-            sidebar.delegate?.tableViewSelectionDidChange?(
-                Notification(name: NSTableView.selectionDidChangeNotification, object: sidebar))
+            sidebar.select(key: SettingsWindowController.Pane.layout.rawValue)
             browser.view.layoutSubtreeIfNeeded()
             let popups = descendants(panel, as: NSPopUpButton.self)
             guard

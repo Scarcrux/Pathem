@@ -1210,15 +1210,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let visibleCount = others.count + 1
         let sumVisible = name.width + others.reduce(CGFloat(0)) { $0 + $1.width }
         if tableView.frame.width > clipWidth + 0.5 {
-            measuredChrome = (max(0, tableView.frame.width - sumVisible), visibleCount)  // true overflow: exact
+            measuredChrome = (max(0, tableView.frame.width - sumVisible), visibleCount)
         }
-        let overhead: CGFloat
-        if let m = measuredChrome, m.columns == visibleCount {
-            overhead = m.width  // chrome grows with column count, so only reuse a matching measurement
-        } else {
-            overhead = 32 + tableView.intercellSpacing.width * CGFloat(max(0, visibleCount - 1))
+        // AppKit quantizes the column rectangles separately: an exact sum of
+        // fractional widths can still overflow. Budget one point per column
+        // for that rounding; genuinely too-narrow panes still hit their floors.
+        let available = clipWidth - columnChrome(visibleCount: visibleCount) - CGFloat(visibleCount)
+        let needsShrink = sumVisible > available
+        func shouldResize(_ column: NSTableColumn, to width: CGFloat) -> Bool {
+            abs(column.width - width) > 0.5 || (needsShrink && column.width > width)
         }
-        let available = clipWidth - overhead
         let wantedOthers = others.reduce(CGFloat(0)) { $0 + wanted($1) }
 
         adjustingColumns = true
@@ -1226,9 +1227,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         if available - wantedOthers >= name.minWidth {
             // Roomy: every value column at its wanted width, Name takes the rest.
-            for col in others where abs(col.width - wanted(col)) > 0.5 { col.width = wanted(col) }
+            for col in others where shouldResize(col, to: wanted(col)) { col.width = wanted(col) }
             let target = available - wantedOthers
-            if abs(name.width - target) > 0.5 { name.width = target }
+            if shouldResize(name, to: target) { name.width = target }
             return
         }
         // Tight: Name at its floor; squeeze the value columns toward their floors in
@@ -1240,9 +1241,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let t = give > 0 ? max(0, min(1, (remaining - sumFloors) / give)) : 0
         for col in others {
             let target = floorOf(col) + (wanted(col) - floorOf(col)) * t
-            if abs(col.width - target) > 0.5 { col.width = target }
+            if shouldResize(col, to: target) { col.width = target }
         }
-        if abs(name.width - name.minWidth) > 0.5 { name.width = name.minWidth }
+        if shouldResize(name, to: name.minWidth) { name.width = name.minWidth }
     }
 
     /// The widths the user (or the defaults) asked for, keyed by column id; compression
@@ -1256,6 +1257,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// aren't mistaken for user drags.
     private var adjustingColumns = false
 
+    private func columnChrome(visibleCount: Int) -> CGFloat {
+        let estimated = 32 + tableView.intercellSpacing.width * CGFloat(max(0, visibleCount - 1))
+        guard let measuredChrome, measuredChrome.columns == visibleCount else { return estimated }
+        // While resizing, the document frame can still reflect the previous column
+        // layout. An undershoot leaves a sliver of real overflow and a legacy scroller.
+        return max(estimated, measuredChrome.width)
+    }
+
     /// PATHEM_SMOKE: how fully the visible columns (plus chrome) fill the clip after a
     /// fit. ~1.0 = exact fit, > 1 = genuine overflow (scrollbar), well under 1 = the
     /// tiny-columns regression.
@@ -1263,12 +1272,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         fitColumns()
         let visible = tableView.tableColumns.filter { !$0.isHidden }
         let sum = visible.reduce(CGFloat(0)) { $0 + $1.width }
-        let overhead: CGFloat
-        if let m = measuredChrome, m.columns == visible.count {
-            overhead = m.width
-        } else {
-            overhead = 32 + tableView.intercellSpacing.width * CGFloat(max(0, visible.count - 1))
-        }
+        let overhead = columnChrome(visibleCount: visible.count)
         let clip = scrollView.contentView.bounds.width
         return clip > 0 ? (sum + overhead) / clip : 0
     }

@@ -2811,6 +2811,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "The 0.9.6 gate found a Swift 6 Sendable warning in the DEBUG Type Ahead screenshot completion. It already ran on the main dispatch queue and its only caller exits; no wrong-executor runtime trap was established. Make the callback explicitly MainActor and Sendable, and invoke it through a MainActor task after the delay. The fresh warning gate reports zero new or unparsed diagnostics without changing the baseline."
     at = "2026-11-26T20:01:46Z"
 
+  [[mission.comment]]
+    text = "0.9.6 release-gate triage on 55be2bb. Reproduced background menus 337/342: the expected list omitted intended Pin to Folder Tree in all five views. Reproduced Settings 3/4: enumerated Pane cases include Extensions, which is gated out of the actual sidebar. Locate the mounted Settings sidebar by delegate, select Layout by key, and retain control checks. Reproduced matrix 1191/1192: after the dark List preview+terminal round trip the right pane outer frame recovered, but its legacy horizontal scroller stayed visible and took 17 clip points. Runtime trace captured fitted column widths above budget after transient padding was underestimated. Clamp measured padding to the inset estimate and budget fractional column layout rounding. A clamp-only attempt corrected the original cell but exposed two custom-sidebar cells; final focused matrix 1192/1192, baseline unchanged. Focused background menus 342/342 and Settings 1908/1908."
+    at = "2026-11-26T20:23:20Z"
+
+  [[mission.comment]]
+    text = "Full local make ci exited 0 after the three release-gate fixes: 15 XCTest and 1085 Swift Testing tests, debug E2E 71 pass/1 existing cached-pixel skip/0 fail, packaged E2E 18/18, and zero new warnings. Layout baseline unchanged."
+    at = "2026-11-26T20:33:27Z"
+
 [[mission]]
   id = "m-c67d643a"
   title = "Theme customization and community gallery"

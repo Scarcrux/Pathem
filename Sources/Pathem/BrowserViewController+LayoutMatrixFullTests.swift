@@ -118,6 +118,15 @@ extension BrowserViewController {
                     && pane.debugMatrixTagsReady()
             }
         }
+        func listScrollerReceipt(_ pane: PaneController) -> String {
+            guard let table = pane.keyView as? NSTableView, let scroll = table.enclosingScrollView
+            else { return "not-a-table" }
+            let columns = table.tableColumns.filter { !$0.isHidden }.map {
+                "\($0.identifier.rawValue)=\($0.width)"
+            }
+            return
+                "style=\(scroll.scrollerStyle.rawValue) horizontalHidden=\(String(describing: scroll.horizontalScroller?.isHidden)) scroll=\(scroll.frame.size) clip=\(scroll.contentSize) document=\(table.frame.size) columns=\(columns)"
+        }
         func stableLayout() -> Bool {
             var previous: [NSRect] = []
             var unchanged = 0
@@ -257,6 +266,9 @@ extension BrowserViewController {
                     desiredSelection, expectedSelection)
                 delivered = delivered && setupSelectionDelivered
                 let beforeFrames = frames()
+                let beforeScroller =
+                    right.viewMode == .list && cell.panel != "none"
+                    ? listScrollerReceipt(right) : ""
                 let baseline = viewport()
                 var selectionKept = true
                 var viewportKept = baseline != nil
@@ -360,9 +372,15 @@ extension BrowserViewController {
                     "before=\(String(describing: baseline)) after=\(String(describing: viewport())) decorationUpdates=\(decorations.count) decorationViewportKept=\(decorationsKeptViewport)"
                 )
                 if cell.panel != "none" {
+                    let afterFrames = frames()
+                    let restored = LayoutMatrixGeometry.sameFrames(beforeFrames, afterFrames)
+                    let scrollers =
+                        !restored && !beforeScroller.isEmpty
+                        ? " scrollerBefore=[\(beforeScroller)] scrollerAfter=[\(listScrollerReceipt(right))]"
+                        : ""
                     check(
-                        label, 8, LayoutMatrixGeometry.sameFrames(beforeFrames, frames()),
-                        outerSplit, "before=\(beforeFrames) after=\(frames())")
+                        label, 8, restored,
+                        outerSplit, "before=\(beforeFrames) after=\(afterFrames)\(scrollers)")
                 } else {
                     print("LAYOUTMATRIX: EXEMPT \(label) check8 no-panel-toggle")
                 }

@@ -76,8 +76,9 @@ extension BrowserViewController {
         }
         // What every view's empty-space menu shows for a local folder on the boot volume.
         let expectedEmptySpaceIDs = [
-            "files.getInfo", "files.reveal", "files.newFolder", "files.newFile", "files.copyPath",
-            "files.copyName", "files.paste", "@view", "@arrange", "@sort", "view.options",
+            "files.getInfo", "files.reveal", "files.pinToFolderTree", "files.newFolder",
+            "files.newFile", "files.copyPath", "files.copyName", "files.paste",
+            "@view", "@arrange", "@sort", "view.options",
         ]
         let sampleOnly = ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_SAMPLE_ONLY"] == "1"
         func actionEnabled(_ entry: NSMenuItem) -> Bool {
