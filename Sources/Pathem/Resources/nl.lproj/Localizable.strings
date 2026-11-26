@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "Ontgrendel de telefoon en sta USB-foutopsporing voor deze Mac toe.";
 "device.androidOffline" = "De telefoon is offline. Sluit de kabel opnieuw aan en ontgrendel de telefoon.";
 "device.androidNotFound" = "Het Android-apparaat is niet meer verbonden. Controleer de kabel en USB-foutopsporing.";
+
+"admin.auditHint" = "Beheertaken worden altijd opgeslagen in het lokale activiteitenlogboek.";
+"admin.badge" = "Beheer";
+"admin.duration" = "Tijd zonder vergrendeling in minuten";
+"admin.lock" = "Vergrendel beheerdersmodus";
+"admin.ownerHint" = "Stel voor de geselecteerde onderdelen de eigenaar en eventueel de groep in.";
+"admin.remove" = "Verwijder beheerassistent";
+"admin.setup" = "Configureer beheerassistent";
+"admin.setupHint" = "Configureer de beheerassistent in Instellingen en keur deze goed bij Inloggen.";
+"admin.unknownOwner" = "Onbekende eigenaar of groep";
+"admin.unlock" = "Ontgrendel beheerdersmodus…";
+"admin.used" = "Beheerdersmodus gebruikt voor %@";

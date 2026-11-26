@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "Déverrouillez le téléphone et autorisez le débogage USB pour ce Mac.";
 "device.androidOffline" = "Le téléphone est hors ligne. Rebranchez le câble, puis déverrouillez le téléphone.";
 "device.androidNotFound" = "L’appareil Android n’est plus connecté. Vérifiez le câble et le débogage USB.";
+
+"admin.auditHint" = "Les opérations d’administration sont toujours consignées dans le journal d’activité local.";
+"admin.badge" = "Admin";
+"admin.duration" = "Durée de déverrouillage en minutes";
+"admin.lock" = "Verrouiller le mode administrateur";
+"admin.ownerHint" = "Définissez le propriétaire et, si besoin, le groupe des éléments sélectionnés.";
+"admin.remove" = "Supprimer l’assistant d’administration";
+"admin.setup" = "Configurer l’assistant d’administration";
+"admin.setupHint" = "Configurez l’assistant dans Réglages, puis autorisez-le dans Ouverture.";
+"admin.unknownOwner" = "Propriétaire ou groupe inconnu";
+"admin.unlock" = "Déverrouiller le mode administrateur…";
+"admin.used" = "Mode administrateur utilisé pour %@";

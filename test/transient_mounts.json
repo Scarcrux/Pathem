@@ -16,7 +16,7 @@
     },
     {
       "id": "m03",
-      "site": "Sources/Pathem/BrowserViewController+Permissions.swift:48:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController+Permissions.swift:68:30:presentSheet",
       "filename": false,
       "group": 1,
       "content_change": false
@@ -184,7 +184,7 @@
     },
     {
       "id": "m27",
-      "site": "Sources/Pathem/InfoInspectorController.swift:214:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/InfoInspectorController.swift:231:9:makeKeyAndOrderFront",
       "filename": true,
       "group": 4,
       "content_change": true
@@ -359,7 +359,7 @@
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:2179:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:2223:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false
@@ -443,7 +443,7 @@
     },
     {
       "id": "m64",
-      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:117:32:ask",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:128:32:ask",
       "filename": false,
       "group": 8,
       "caller": "emptyTrash",
@@ -453,7 +453,7 @@
     },
     {
       "id": "m65",
-      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:209:36:ask",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:220:36:ask",
       "filename": true,
       "group": 9,
       "caller": "trashSelection",
@@ -463,7 +463,7 @@
     },
     {
       "id": "m66",
-      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:239:32:ask",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:250:32:ask",
       "filename": false,
       "group": 9,
       "caller": "trashSelection",
@@ -473,7 +473,7 @@
     },
     {
       "id": "m67",
-      "site": "Sources/Pathem/BrowserViewController+CommandRegistry.swift:273:13:showWindow",
+      "site": "Sources/Pathem/BrowserViewController+CommandRegistry.swift:287:13:showWindow",
       "filename": false,
       "group": 9,
       "content_change": false

@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "Sblocca il telefono e consenti il debug USB per questo Mac.";
 "device.androidOffline" = "Il telefono non è in linea. Ricollega il cavo e sblocca il telefono.";
 "device.androidNotFound" = "Il dispositivo Android non è più collegato. Controlla il cavo e il debug USB.";
+
+"admin.auditHint" = "Le operazioni di amministrazione sono sempre salvate nel registro attività locale.";
+"admin.badge" = "Admin";
+"admin.duration" = "Durata dello sblocco in minuti";
+"admin.lock" = "Blocca modalità amministratore";
+"admin.ownerHint" = "Imposta il proprietario e, facoltativamente, il gruppo degli elementi selezionati.";
+"admin.remove" = "Rimuovi assistente amministratore";
+"admin.setup" = "Configura assistente amministratore";
+"admin.setupHint" = "Configura l’assistente in Impostazioni, poi approvalo in Elementi login.";
+"admin.unknownOwner" = "Proprietario o gruppo sconosciuto";
+"admin.unlock" = "Sblocca modalità amministratore…";
+"admin.used" = "Modalità amministratore usata per %@";

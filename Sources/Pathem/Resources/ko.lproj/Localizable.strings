@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "휴대전화의 잠금을 해제하고 이 Mac의 USB 디버깅을 허용하십시오.";
 "device.androidOffline" = "휴대전화가 오프라인입니다. 케이블을 다시 연결하고 잠금을 해제하십시오.";
 "device.androidNotFound" = "Android 기기가 연결되어 있지 않습니다. 케이블과 USB 디버깅을 확인하십시오.";
+
+"admin.auditHint" = "관리자 작업은 항상 로컬 활동 로그에 기록됩니다.";
+"admin.badge" = "관리자";
+"admin.duration" = "잠금 해제 시간(분)";
+"admin.lock" = "관리자 모드 잠그기";
+"admin.ownerHint" = "선택한 항목의 소유자와, 필요한 경우 그룹을 설정합니다.";
+"admin.remove" = "관리자 도우미 제거";
+"admin.setup" = "관리자 도우미 설정";
+"admin.setupHint" = "설정에서 관리자 도우미를 설정하고 로그인 항목에서 승인하십시오.";
+"admin.unknownOwner" = "알 수 없는 소유자 또는 그룹";
+"admin.unlock" = "관리자 모드 잠금 해제…";
+"admin.used" = "%@에 관리자 모드 사용";

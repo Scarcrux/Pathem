@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "スマートフォンのロックを解除し、この Mac の USB デバッグを許可してください。";
 "device.androidOffline" = "スマートフォンがオフラインです。ケーブルをつなぎ直してロックを解除してください。";
 "device.androidNotFound" = "Android デバイスが接続されていません。ケーブルと USB デバッグを確認してください。";
+
+"admin.auditHint" = "管理者操作は常にローカルのアクティビティログに記録されます。";
+"admin.badge" = "管理者";
+"admin.duration" = "ロック解除時間（分）";
+"admin.lock" = "管理者モードをロック";
+"admin.ownerHint" = "選択項目の所有者と、必要に応じてグループを設定します。";
+"admin.remove" = "管理者ヘルパーを削除";
+"admin.setup" = "管理者ヘルパーを設定";
+"admin.setupHint" = "設定で管理者ヘルパーを設定し、ログイン項目で許可してください。";
+"admin.unknownOwner" = "不明な所有者またはグループ";
+"admin.unlock" = "管理者モードのロックを解除…";
+"admin.used" = "%@ に管理者モードを使用しました";

@@ -2227,3 +2227,15 @@
 "device.androidUnauthorized" = "Unlock the phone and allow USB debugging for this Mac.";
 "device.androidOffline" = "The phone is offline. Unplug and reconnect the cable, then unlock the phone.";
 "device.androidNotFound" = "The Android device is no longer connected. Check the cable and USB debugging.";
+
+"admin.auditHint" = "Admin operations are always recorded in the local activity log.";
+"admin.badge" = "Admin";
+"admin.duration" = "Unlock duration in minutes";
+"admin.lock" = "Lock Admin Mode";
+"admin.ownerHint" = "Set the owner and optionally the group for the selected items.";
+"admin.remove" = "Remove Admin Helper";
+"admin.setup" = "Set Up Admin Helper";
+"admin.setupHint" = "Set up the Admin Helper in Settings, then approve it in Login Items.";
+"admin.unknownOwner" = "Unknown owner or group";
+"admin.unlock" = "Unlock Admin Mode…";
+"admin.used" = "Used Admin Mode for %@";

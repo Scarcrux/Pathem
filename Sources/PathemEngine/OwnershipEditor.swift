@@ -24,9 +24,41 @@ public enum OwnershipEditor {
         return Ownership(owner: owner, group: group)
     }
 
+    public static func userID(_ name: String) -> UInt32? {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !name.utf8.contains(0) else { return nil }
+        if let id = UInt32(name), id != .max { return id }
+        var record = passwd()
+        var result: UnsafeMutablePointer<passwd>?
+        var buffer = [CChar](repeating: 0, count: 16_384)
+        return buffer.withUnsafeMutableBufferPointer {
+            guard getpwnam_r(name, &record, $0.baseAddress, $0.count, &result) == 0,
+                result != nil
+            else { return nil }
+            return record.pw_uid
+        }
+    }
+
+    public static func groupID(_ name: String) -> UInt32? {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !name.utf8.contains(0) else { return nil }
+        if let id = UInt32(name), id != .max { return id }
+        var record = group()
+        var result: UnsafeMutablePointer<group>?
+        var buffer = [CChar](repeating: 0, count: 16_384)
+        return buffer.withUnsafeMutableBufferPointer {
+            guard getgrnam_r(name, &record, $0.baseAddress, $0.count, &result) == 0,
+                result != nil
+            else { return nil }
+            return record.gr_gid
+        }
+    }
+
     /// A `sudo chown` command for the terminal route. `owner` (and optional `group`) is applied to
     /// every path; recursive adds `-R`. Paths and names are shell-quoted. Empty owner yields "".
-    public static func sudoChownCommand(owner: String, group: String?, recursive: Bool, paths: [String]) -> String {
+    public static func sudoChownCommand(
+        owner: String, group: String?, recursive: Bool, paths: [String]
+    ) -> String {
         let ownerName = owner.trimmingCharacters(in: .whitespaces)
         guard !ownerName.isEmpty, !paths.isEmpty else { return "" }
         var spec = quote(ownerName)

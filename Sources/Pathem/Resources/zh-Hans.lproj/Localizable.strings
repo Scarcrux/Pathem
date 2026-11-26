@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "解锁手机，并允许这台 Mac 进行 USB 调试。";
 "device.androidOffline" = "手机已离线。请重新连接线缆，然后解锁手机。";
 "device.androidNotFound" = "Android 设备已断开连接。请检查线缆和 USB 调试设置。";
+
+"admin.auditHint" = "管理员操作始终记录在本地活动日志中。";
+"admin.badge" = "管理员";
+"admin.duration" = "解锁时长（分钟）";
+"admin.lock" = "锁定管理员模式";
+"admin.ownerHint" = "设置所选项目的所有者，也可设置群组。";
+"admin.remove" = "移除管理员辅助工具";
+"admin.setup" = "设置管理员辅助工具";
+"admin.setupHint" = "在设置中配置管理员辅助工具，然后在登录项中批准。";
+"admin.unknownOwner" = "未知的所有者或群组";
+"admin.unlock" = "解锁管理员模式…";
+"admin.used" = "已对 %@ 使用管理员模式";

@@ -103,6 +103,20 @@ verify_app() {
 	else
 		fail "A11 third-party notices missing from the app"
 	fi
+    local admin_id="com.scarcrux.pathem.admin-helper"
+    local admin_plist="$app/Contents/Library/LaunchDaemons/$admin_id.plist"
+    local admin_path="Contents/MacOS/pathem-admin-helper"
+    local requirement
+    requirement='anchor apple generic and identifier "'"$admin_id"'" and certificate leaf[subject.OU] = "'"$team"'" and certificate leaf[field.1.2.840.113635.100.6.1.13] exists'
+    if [[ "$team" == "K466Z7J2AS" && -x "$app/$admin_path" ]] \
+        && [[ "$(/usr/libexec/PlistBuddy -c 'Print :Label' "$admin_plist" 2>/dev/null)" == "$admin_id" ]] \
+        && [[ "$(/usr/libexec/PlistBuddy -c 'Print :BundleProgram' "$admin_plist" 2>/dev/null)" == "$admin_path" ]] \
+        && [[ "$(/usr/libexec/PlistBuddy -c "Print :MachServices:$admin_id" "$admin_plist" 2>/dev/null)" == "true" ]] \
+        && codesign --verify --strict "-R=$requirement" "$app/$admin_path" 2>/dev/null; then
+        pass "A12 Admin helper launch declaration and exact Developer ID signing requirement"
+    else
+        fail "A12 Admin helper launch declaration or exact Developer ID signing requirement failed"
+    fi
 }
 
 verify_signature() {

@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "解鎖手機，並允許這部 Mac 進行 USB 偵錯。";
 "device.androidOffline" = "手機已離線。請重新連接傳輸線，再解鎖手機。";
 "device.androidNotFound" = "Android 裝置已中斷連線。請檢查傳輸線和 USB 偵錯設定。";
+
+"admin.auditHint" = "管理員操作一律記錄在本機活動記錄中。";
+"admin.badge" = "管理員";
+"admin.duration" = "解鎖時間（分鐘）";
+"admin.lock" = "鎖定管理員模式";
+"admin.ownerHint" = "設定所選項目的擁有者，也可設定群組。";
+"admin.remove" = "移除管理員輔助工具";
+"admin.setup" = "設定管理員輔助工具";
+"admin.setupHint" = "在設定中配置管理員輔助工具，然後在登入項目中核准。";
+"admin.unknownOwner" = "未知的擁有者或群組";
+"admin.unlock" = "解鎖管理員模式…";
+"admin.used" = "已對 %@ 使用管理員模式";

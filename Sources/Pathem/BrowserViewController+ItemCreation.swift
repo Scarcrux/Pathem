@@ -51,14 +51,51 @@ extension BrowserViewController {
             registerNewItemUndo(
                 name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
         } catch {
-            presentFailures(
-                [
-                    FileOperations.Failure(
-                        name: L("bvc.newFolderVerb", "New Folder"),
-                        reason: error.localizedDescription)
-                ],
-                title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
+            let directory = pane.currentURL
+            let base = prefs.effectiveNewFolderName
+            if AdminModeController.isSupported, AdminModeController.shared.mayRetry(error) {
+                Task { @MainActor [weak self, weak pane] in
+                    guard let self, let pane else { return }
+                    do {
+                        // The privileged mkdir is exclusive. Choose a different name if the
+                        // caller cannot read the existing names or another operation won the race.
+                        for number in 1...100 {
+                            let name = number == 1 ? base : "\(base) \(number)"
+                            let target = directory.appendingPathComponent(name)
+                            let request = AdminFileRequest(
+                                operation: .createDirectory, source: target.path)
+                            do {
+                                guard try await self.retryAsAdmin(request, after: error) != nil
+                                else { break }
+                                if pane.currentURL == directory, !pane.isRemote {
+                                    pane.reloadIfShowingListing()
+                                    pane.selectWhenListed(name) { [weak self] in
+                                        self?.renameSelection()
+                                    }
+                                }
+                                return
+                            } catch let conflict as NSError
+                                where conflict.domain == NSPOSIXErrorDomain
+                                && conflict.code == Int(EEXIST)
+                            {
+                                continue
+                            }
+                        }
+                        self.reportNewFolderFailure(error)
+                    } catch {
+                        self.reportNewFolderFailure(error)
+                    }
+                }
+            } else {
+                reportNewFolderFailure(error)
+            }
         }
+    }
+
+    private func reportNewFolderFailure(_ error: Error) {
+        presentFailures(
+            [.init(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+            title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
     }
 
     /// Move the current selection into a fresh folder here, in one undoable action (Finder's

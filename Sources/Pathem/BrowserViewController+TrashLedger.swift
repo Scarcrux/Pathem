@@ -87,9 +87,20 @@ extension BrowserViewController {
             guard choice == 0 else { return }
             var failures: [FileOperations.Failure] = []
             for url in urls {
-                do { try FileManager.default.removeItem(at: url) } catch {
+                do {
+                    try FileManager.default.removeItem(at: url)
+                } catch {
+                    var failure = error
+                    do {
+                        let request = AdminFileRequest(operation: .delete, source: url.path)
+                        if try await self.retryAsAdmin(request, after: error) != nil {
+                            self.trashOrigins[url.path] = nil
+                            continue
+                        }
+                    } catch { failure = error }
                     failures.append(
-                        .init(name: url.lastPathComponent, reason: error.localizedDescription))
+                        .init(name: url.lastPathComponent, reason: failure.localizedDescription))
+                    continue
                 }
                 self.trashOrigins[url.path] = nil
             }
@@ -261,6 +272,45 @@ extension BrowserViewController {
         }
         #endif
         let result = FileOperations.trash(urls: urls)
+        if AdminModeController.isSupported, AdminModeController.shared.isUnlocked,
+            result.failures.contains(where: { $0.adminRetry != nil })
+        {
+            transferInFlight = true
+            Task { @MainActor in
+                defer { self.transferInFlight = false }
+                var trashed = result.trashed
+                var failures: [FileOperations.Failure] = []
+                for failure in result.failures {
+                    guard let request = failure.adminRetry, AdminModeController.shared.isUnlocked
+                    else {
+                        failures.append(failure)
+                        continue
+                    }
+                    do {
+                        let response = try await AdminModeController.shared.perform(request)
+                        let path = try JSONDecoder().decode(String.self, from: response)
+                        trashed.append(
+                            .init(
+                                original: URL(fileURLWithPath: request.source),
+                                trashed: URL(fileURLWithPath: path)))
+                        self.activePane?.flashStatus(
+                            String(format: L("admin.used", "Used Admin Mode for %@"), failure.name))
+                    } catch {
+                        failures.append(
+                            .init(name: failure.name, reason: error.localizedDescription))
+                    }
+                }
+                self.finishLocalTrash(urls, result: (trashed, failures))
+            }
+            return
+        }
+        finishLocalTrash(urls, result: result)
+    }
+
+    private func finishLocalTrash(
+        _ urls: [URL],
+        result: (trashed: [FileOperations.Trashed], failures: [FileOperations.Failure])
+    ) {
         reloadBothSides()  // the trashed files may have lived in either visible folder
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
         recordTrashOrigins(result.trashed)  // remember where each came from, for Put Back

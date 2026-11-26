@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "Entsperre das Telefon und erlaube USB-Debugging für diesen Mac.";
 "device.androidOffline" = "Das Telefon ist offline. Stecke das Kabel erneut ein und entsperre das Telefon.";
 "device.androidNotFound" = "Das Android-Gerät ist nicht mehr verbunden. Prüfe das Kabel und USB-Debugging.";
+
+"admin.auditHint" = "Admin-Vorgänge stehen immer im lokalen Aktivitätsprotokoll.";
+"admin.badge" = "Admin";
+"admin.duration" = "Entsperrdauer in Minuten";
+"admin.lock" = "Admin-Modus sperren";
+"admin.ownerHint" = "Lege den Eigentümer und optional die Gruppe für die ausgewählten Objekte fest.";
+"admin.remove" = "Admin-Hilfsprogramm entfernen";
+"admin.setup" = "Admin-Hilfsprogramm einrichten";
+"admin.setupHint" = "Richte das Admin-Hilfsprogramm in den Einstellungen ein und erlaube es unter Anmeldeobjekte.";
+"admin.unknownOwner" = "Unbekannter Eigentümer oder unbekannte Gruppe";
+"admin.unlock" = "Admin-Modus entsperren…";
+"admin.used" = "Admin-Modus für %@ verwendet";

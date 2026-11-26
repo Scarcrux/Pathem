@@ -35,9 +35,9 @@ final class OperationLogger: @unchecked Sendable {
     }
 
     func record(_ record: OperationRecord) {
-        guard enabled, let log else { return }
+        guard record.admin || enabled, let log else { return }
         queue.async {
-            guard self.enabled, log.append(record) else { return }
+            guard record.admin || self.enabled, log.append(record) else { return }
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .pathemActivityLogChanged, object: nil)
             }

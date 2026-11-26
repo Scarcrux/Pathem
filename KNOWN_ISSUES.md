@@ -99,9 +99,11 @@ fault. Each entry says what Pathem does and what it cannot change.
   it. Prompts for Desktop, Documents, Downloads, removable disks and network volumes
   come from macOS, and Pathem cannot answer or suppress them.
 - **System Integrity Protection.** macOS does not let any app change protected system
-  locations. Pathem has no privileged mode yet, so changing a file you do not own fails
-  with a permission error; Change Owner types a `sudo` command into the embedded
-  terminal for you to review and run.
+  locations. In a signed build, you can set up the Admin Helper in Settings and approve
+  it in Login Items. Unlock Admin Mode for a short session to let supported file operations
+  retry ordinary permission failures. Admin Mode cannot bypass SIP or Full Disk Access.
+  The helper uses the user’s home Trash, so an elevated Trash operation on another volume
+  may fail without removing the original.
 - **Devices.** iPhone and iPad need the device unlocked and trusted. Android MTP is not
   supported (see Connections and devices above).
 - **Search depends on Spotlight in two places.** Searching This Mac and the smart

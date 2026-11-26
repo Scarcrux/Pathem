@@ -2834,12 +2834,20 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Offscreen AppKit control: at horizontal offset 110, overriding the table cell rectangle returned x=126 while the actual Name view remained at x=16. Moving the actual cell shifted its frame at offset 240, with selection, editing and header behavior still unqualified. Keep this separate from the metadata column work."
     at = "2026-11-25T19:41:53Z"
 
+  [[mission.comment]]
+    text = "Nine media columns landed as 631b9ff. Focused Swift checks passed 48/48, native list/sort delivery passed 211/211, and normal commit hooks passed after the WAVE header fix. Horizontal Name pinning remains open because relayout does not move the actual AppKit cell when frameOfCell alone is overridden."
+    at = "2026-11-25T21:16:25Z"
+
 [[mission]]
   id = "m-9d3501f4"
   title = "Activity drawer and local operation log"
   status = "now"
   note = "File operations currently report results only in the moment. Record paths and outcomes locally in a bounded rolling log with a searchable drawer and undo scoped to live history. Verify the engine storage and exercise the drawer with an isolated fixture."
   issue = 0
+
+  [[mission.comment]]
+    text = "Activity landed as 3ed6fe2. Normal hooks passed, offscreen drawer 3/3, and config refusals 2/2. Search, live undo-token checks and rotating storage are verified. Audit direct operation callers that do not use the shared Browser transfer and Trash paths."
+    at = "2026-11-25T21:16:26Z"
 
 [[mission]]
   id = "m-ddc454c8"
@@ -2848,10 +2856,18 @@ missions = ["m-1331afb7", "m-b2532fac"]
   note = "Enable explicit operations on otherwise inaccessible files through an approved helper. Verify connection identity, per-connection authorization and path safety before adding any privileged launch or key prompt. Keep unprivileged fixture evidence separate from packaged Developer ID acceptance."
   issue = 0
 
+  [[mission.comment]]
+    text = "Integrated the signed-peer helper, explicit Settings enrollment, a timed Authorization Services session, locked/unlocked badge, typed file operations and permission-denied browser retries. The local Swift suite, offscreen badge and refusal probes passed. The release verifier rejects an ad-hoc helper and the exact client requirement accepts the installed signed app on disk. Signed helper acceptance and real System Settings enrollment remain open and require owner approval."
+    at = "2026-11-26T03:10:24Z"
+
 [[mission]]
   id = "m-8a8b2b75"
   title = "Android device transfers over the local ADB server"
   status = "now"
   note = "The CLI listing only supplies names. Use native sync framing in the signed pathem-adb helper for sizes, modification dates and progress. Verify protocol framing, device state, cancellation and destination preservation on a loopback fake server. Match setup instructions to USB debugging and platform-tools."
   issue = 0
+
+  [[mission.comment]]
+    text = "Android landed as d0a6d33 with normal hooks, 28 focused loopback checks and 54 combined checks after rebase. The built helper exchanged bytes and reported progress against a fake device. The shell publication was modeled; a real USB device and a signed package remain unverified."
+    at = "2026-11-25T21:16:26Z"
 # <<< commandem roadmap <<<

@@ -1,7 +1,7 @@
 {
   "sites": [
     {
-      "site": "Sources/Pathem/BrowserViewController+Transfers.swift:93:28:ask",
+      "site": "Sources/Pathem/BrowserViewController+Transfers.swift:135:28:ask",
       "coverage": "core",
       "reason": "TS-F1 repaired in 3e1c19a: Keep Both for All is Return default; Replace All remains click-only. Original bytes preserved by one/two-clash native fixture tests."
     },
@@ -11,7 +11,7 @@
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only."
     },
     {
-      "site": "Sources/Pathem/PathemApp.swift:420:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/PathemApp.swift:425:9:makeKeyAndOrderFront",
       "coverage": "task2",
       "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },

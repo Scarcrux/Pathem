@@ -2176,3 +2176,15 @@
 "device.androidUnauthorized" = "Desbloquea el teléfono y permite la depuración USB para este Mac.";
 "device.androidOffline" = "El teléfono está sin conexión. Vuelve a conectar el cable y desbloquea el teléfono.";
 "device.androidNotFound" = "El dispositivo Android ya no está conectado. Comprueba el cable y la depuración USB.";
+
+"admin.auditHint" = "Las operaciones de administración se guardan siempre en el registro de actividad local.";
+"admin.badge" = "Admin";
+"admin.duration" = "Duración del desbloqueo en minutos";
+"admin.lock" = "Bloquear el modo administrador";
+"admin.ownerHint" = "Define el propietario y, opcionalmente, el grupo de los elementos seleccionados.";
+"admin.remove" = "Eliminar el asistente de administración";
+"admin.setup" = "Configurar el asistente de administración";
+"admin.setupHint" = "Configura el asistente en Ajustes y autorízalo en Ítems de inicio de sesión.";
+"admin.unknownOwner" = "Propietario o grupo desconocido";
+"admin.unlock" = "Desbloquear el modo administrador…";
+"admin.used" = "Se usó el modo administrador para %@";

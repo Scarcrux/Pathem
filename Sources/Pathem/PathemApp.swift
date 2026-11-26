@@ -78,6 +78,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
             || launchEnvironment["PATHEM_ACTIVITY_TEST"] != nil
+            || launchEnvironment["PATHEM_ADMIN_MODE_TEST"] != nil
             || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
             || launchEnvironment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
             || launchEnvironment["PATHEM_COMMUNITY_GALLERY_TEST"] != nil
@@ -100,6 +101,10 @@ enum PathemApp {
             }
         }
         #if DEBUG
+        if launchEnvironment["PATHEM_ADMIN_MODE_TEST"] != nil {
+            _ = NSApplication.shared
+            exit(AdminBadge.runFixture() ? 0 : 1)
+        }
         if launchEnvironment["PATHEM_ACTIVITY_TEST"] != nil {
             _ = NSApplication.shared
             exit(ActivityDrawerController.runFixture() ? 0 : 1)
@@ -2154,6 +2159,11 @@ enum PathemApp {
         let toolsItem = NSMenuItem()
         mainMenu.addItem(toolsItem)
         let toolsMenu = NSMenu(title: L("menu.tools", "Tools"))
+        if AdminModeController.isSupported {
+            toolsMenu.addItem(commandItem(L("admin.unlock", "Unlock Admin Mode…"), "admin.unlock"))
+            toolsMenu.addItem(commandItem(L("admin.lock", "Lock Admin Mode"), "admin.lock"))
+            toolsMenu.addItem(.separator())
+        }
         toolsItem.submenu = toolsMenu
         toolsMenu.addItem(commandItem("Process Viewer", "tools.processViewer"))
         toolsMenu.addItem(commandItem("Torrents", "tools.torrents"))

@@ -39,29 +39,71 @@ extension BrowserViewController {
             return
         }
         transferInFlight = true  // so Quit warns mid-transfer
-        transferRunner.run(
-            urls: urls, into: destination, move: move, resolution: resolution,
-            verify: !move && prefs.verifyCopies, over: view.window
-        ) { [weak self] outcome, bytes, canceled in
-            self?.transferInFlight = false
+        let verify = !move && prefs.verifyCopies
+        func finish(_ outcome: FileOperations.Outcome, _ bytes: Int64?, _ canceled: Bool) {
+            transferInFlight = false
             // Surface skipped items centrally (every transfer path funnels through here), so a
             // Skip resolution or a name clash never silently drops files with no feedback.
             if !outcome.skipped.isEmpty {
-                self?.activePane?.flashStatus(
+                activePane?.flashStatus(
                     String(
                         format: L(
                             "bvc.transferSkipped", "%d item(s) skipped (name already in use)"),
                         outcome.skipped.count))
             }
-            let previous = self?.actionHistory.undoStack.last?.id
+            let previous = actionHistory.undoStack.last?.id
             completion(outcome)
-            let latest = self?.actionHistory.undoStack.last?.id
+            let latest = actionHistory.undoStack.last?.id
             Self.recordActivity(
                 move ? "move" : "copy", sources: urls, destination: destination,
                 completed: outcome.performed.count, failures: outcome.failures,
                 skipped: outcome.skipped.count, bytes: bytes, canceled: canceled,
                 undo: latest == previous ? nil : latest)
         }
+        transferRunner.run(
+            urls: urls, into: destination, move: move, resolution: resolution,
+            verify: verify, over: view.window
+        ) { outcome, bytes, canceled in
+            guard !verify, !canceled, AdminModeController.isSupported,
+                AdminModeController.shared.isUnlocked,
+                outcome.failures.contains(where: { $0.adminRetry != nil })
+            else { return finish(outcome, bytes, canceled) }
+            Task { @MainActor in
+                let resolved = await self.retryTransfersAsAdmin(outcome)
+                finish(resolved, nil, canceled)
+            }
+        }
+    }
+
+    private func retryTransfersAsAdmin(_ attempted: FileOperations.Outcome) async
+        -> FileOperations.Outcome
+    {
+        var resolved = attempted
+        resolved.failures = []
+        for failure in attempted.failures {
+            guard let request = failure.adminRetry, let target = request.destination,
+                AdminModeController.shared.isUnlocked
+            else {
+                resolved.failures.append(failure)
+                continue
+            }
+            do {
+                _ = try await AdminModeController.shared.perform(request)
+                let source = URL(fileURLWithPath: request.source)
+                resolved.performed.append(
+                    FileOperations.Performed(
+                        action: request.operation == .move ? .moved : .copied,
+                        source: source, destination: URL(fileURLWithPath: target)))
+                activePane?.flashStatus(
+                    String(
+                        format: L("admin.used", "Used Admin Mode for %@"), source.lastPathComponent)
+                )
+            } catch {
+                resolved.failures.append(
+                    .init(name: failure.name, reason: error.localizedDescription))
+            }
+        }
+        return resolved
     }
 
     /// Drop any source that is the destination folder itself or an ancestor of it, so a transfer

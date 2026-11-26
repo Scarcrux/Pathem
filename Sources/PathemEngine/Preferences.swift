@@ -137,6 +137,7 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Verify each copied file by SHA-256 after copying (slower: re-reads both files). Off by
     /// default. Applies to copies only; a move leaves no source to compare against.
     public var keepActivityLog: Bool
+    public var adminSessionMinutes: Int
     public var verifyCopies: Bool
     /// Dragging items between folders moves them by default (hold Command to copy).
     /// Off selects copy instead (hold Command to move).
@@ -233,7 +234,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
-        keepActivityLog: Bool = true,
+        keepActivityLog: Bool = true, adminSessionMinutes: Int = 5,
         dragMovesByDefault: Bool = true, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, torrentDownloadPath: String = "",
         confirmInboundTorrents: Bool = true, showHiddenByDefault: Bool = false,
@@ -324,6 +325,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.conflictDefault = conflictDefault
         self.verifyCopies = verifyCopies
         self.keepActivityLog = keepActivityLog
+        self.adminSessionMinutes = adminSessionMinutes
         self.dragMovesByDefault = dragMovesByDefault
     }
 
@@ -390,6 +392,9 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .downloadSuggestionsEnabled) ?? false
         conflictDefault =
             (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
+        adminSessionMinutes =
+            try c.decodeIfPresent(Int.self, forKey: .adminSessionMinutes)
+            ?? d.adminSessionMinutes
         keepActivityLog =
             try c.decodeIfPresent(Bool.self, forKey: .keepActivityLog) ?? d.keepActivityLog
         verifyCopies = try c.decodeIfPresent(Bool.self, forKey: .verifyCopies) ?? d.verifyCopies

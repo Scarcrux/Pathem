@@ -1071,7 +1071,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // flags sending a non-Sendable self into MainActor.run); the blocking enumeration + sort
         // runs on a detached task that captures only Sendable values (dir, fmt, includeHidden).
         Task { [weak self] in
-            let outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated)
+            var outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated)
             {
                 do {
                     var entries = try BulkEnumerator().entries(
@@ -1092,6 +1092,34 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     return .failure(error)
                 }
             }.value
+            if case .failure(let error) = outcome,
+                self?.canApplyListing(for: dir, generation: generation) == true,
+                AdminModeController.isSupported, AdminModeController.shared.mayRetry(error)
+            {
+                do {
+                    let elevated = try await AdminModeController.shared.perform(
+                        AdminFileRequest(operation: .list, source: dir.path))
+                    let rows = try JSONDecoder().decode([AdminDirectoryEntry].self, from: elevated)
+                    if AdminModeController.shared.isUnlocked {
+                        let entries = rows.compactMap { row -> FileEntry? in
+                            guard
+                                includeHidden
+                                    || (!row.name.hasPrefix(".")
+                                        && row.attributes.flags & UInt32(UF_HIDDEN) == 0)
+                                    || (showLibrary && row.name == "Library")
+                            else { return nil }
+                            let folder = row.attributes.mode & S_IFMT == S_IFDIR
+                            return FileEntry(
+                                name: row.name, isDirectory: folder,
+                                size: folder ? 0 : row.attributes.size,
+                                modificationDate: row.attributes.modified)
+                        }
+                        outcome = .success(fmt.sorted(entries))
+                    }
+                } catch {
+                    // Normal denied folders retain the existing Full Disk Access hint.
+                }
+            }
             // Apply only if still the same listing (see canApplyListing). directoryURL was
             // already set synchronously above, so drag works even if this completion is dropped.
             guard let self, self.canApplyListing(for: dir, generation: generation) else { return }

@@ -59,7 +59,7 @@ import Testing
                     connection.remoteObjectProxyWithErrorHandler { _ in
                         continuation.resume(returning: false)
                     } as! AdminFileServiceProtocol
-                proxy.authorize(Data(repeating: value, count: 32)) {
+                proxy.authorize(Data(repeating: value, count: 32), duration: 300) {
                     continuation.resume(returning: $0)
                 }
             }

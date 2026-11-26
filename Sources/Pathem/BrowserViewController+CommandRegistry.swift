@@ -124,6 +124,20 @@ extension BrowserViewController {
         add("activity.toggle", L("activity.toggle", "Toggle Activity")) { [weak self] in
             self?.toggleActivityDrawer()
         }
+        add(
+            "admin.unlock", L("admin.unlock", "Unlock Admin Mode…"),
+            enabled: {
+                AdminModeController.isSupported
+                    && !AdminModeController.shared.isUnlocked
+                    && !AdminModeController.shared.isUnlocking
+            }
+        ) { [weak self] in self?.unlockAdminMode() }
+        add(
+            "admin.lock", L("admin.lock", "Lock Admin Mode"),
+            enabled: {
+                AdminModeController.isSupported && AdminModeController.shared.isUnlocked
+            }
+        ) { AdminModeController.shared.lock() }
         add("commander.toggle", L("bvc.cmd.commanderMode", "Commander Mode")) { [weak self] in
             self?.toggleCommander()
         }

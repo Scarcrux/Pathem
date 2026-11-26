@@ -58,7 +58,24 @@ final class InfoInspectorController: NSObject {
         do {
             try FileInfo.setLocked(sender.state == .on, on: url)
         } catch {
-            reportToggleFailure(sender, error)
+            if AdminModeController.isSupported, AdminModeController.shared.mayRetry(error) {
+                let locked = sender.state == .on
+                sender.isEnabled = false
+                Task { @MainActor in
+                    defer { sender.isEnabled = true }
+                    do {
+                        _ = try await AdminModeController.shared.perform(
+                            AdminFileRequest(
+                                operation: .setFlags, source: url.path,
+                                flags: locked ? UInt32(UF_IMMUTABLE) : 0,
+                                flagMask: UInt32(UF_IMMUTABLE)))
+                    } catch {
+                        if self.inspectedURL == url { self.reportToggleFailure(sender, error) }
+                    }
+                }
+            } else {
+                reportToggleFailure(sender, error)
+            }
         }
     }
 
@@ -291,11 +308,24 @@ final class InfoInspectorController: NSObject {
             // the read-only symbolic string (remote panes, dataless placeholders).
             if let mode = info.posixMode, !info.isDataless, urls[0].isFileURL {
                 let url = urls[0]
-                let editor = PermissionsEditorView(mode: mode) { newMode in
+                let editor = PermissionsEditorView(mode: mode) { [weak self] newMode in
                     do {
                         try FileInfo.setPosixMode(newMode, on: url)
                         return true
                     } catch {
+                        if AdminModeController.isSupported,
+                            AdminModeController.shared.mayRetry(error)
+                        {
+                            Task { @MainActor [weak self] in
+                                do {
+                                    _ = try await AdminModeController.shared.perform(
+                                        AdminFileRequest(
+                                            operation: .setPermissions, source: url.path,
+                                            mode: newMode))
+                                    if self?.inspectedURL == url { self?.configure([url]) }
+                                } catch { NSSound.beep() }
+                            }
+                        }
                         return false
                     }
                 }
@@ -347,6 +377,29 @@ final class InfoInspectorController: NSObject {
                     let hash = await Task.detached { try? FileHasher.hash(url) }.value
                     guard self.inspectedURL == url else { return }  // inspector moved on
                     hashField.stringValue = hash ?? L("info.unavailable", "unavailable")
+                }
+            }
+        } else if urls.count == 1, AdminModeController.isSupported,
+            AdminModeController.shared.isUnlocked
+        {
+            let url = urls[0]
+            titleLabel.stringValue = url.lastPathComponent
+            let status = addField(
+                L("info.permissionsLabel", "Permissions"), L("info.unavailable", "unavailable"))
+            do {
+                _ = try FileManager.default.attributesOfItem(atPath: url.path)
+            } catch {
+                if AdminModeController.shared.mayRetry(error) {
+                    Task { @MainActor [weak self] in
+                        guard
+                            let payload = try? await AdminModeController.shared.perform(
+                                AdminFileRequest(operation: .attributes, source: url.path)),
+                            let info = try? JSONDecoder().decode(
+                                AdminFileAttributes.self, from: payload),
+                            self?.inspectedURL == url, AdminModeController.shared.isUnlocked
+                        else { return }
+                        status.stringValue = FileInfo.rwxString(info.mode)
+                    }
                 }
             }
         } else {

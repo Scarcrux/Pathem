@@ -42,6 +42,9 @@ Artifact verification. Before any upload, the built app and DMG must pass
 - A11 `Contents/Resources` holds `THIRD_PARTY_NOTICES.md` (SwiftTerm, Sparkle and the theme
   palettes section) and the `Credits.html` the About window shows, generated from it. Controls: the installed 3c65e5a build fails both A10
   and A11; a fresh `package.sh` build passes both.
+- A12 The bundled Admin Helper has the expected launchd label, executable path, and Mach service.
+  Its Developer ID signature satisfies the exact helper identifier and Team ID that the app
+  checks before connecting. This check reads the artifact without registering a daemon.
 - A7 The DMG's EdDSA signature verifies against the `SUPublicEDKey` inside the built app
   (not just the source plist), so installed copies can accept the update.
 - A8 The appcast enclosure carries that exact signature, the DMG's byte length, and the

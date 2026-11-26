@@ -93,6 +93,7 @@ let package = Package(
         // stays out of the app (crash isolation, not a TCC boundary). Bundled + signed by package.sh.
         .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
         .executableTarget(name: "pathem-adb", dependencies: ["PathemEngine"]),
+        .executableTarget(name: "pathem-admin-helper", dependencies: ["PathemEngine"]),
 
         // The `pathem` CLI: the stable reveal/open seam for Finder-handoff integrations. Resolves a
         // path and asks the app to act on it via the pathem:// URL scheme. Bundled by package.sh as

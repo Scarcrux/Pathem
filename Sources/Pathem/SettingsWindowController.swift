@@ -277,7 +277,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func build(_ pane: Pane) -> NSView {
         switch pane {
         case .general:
-            return form([
+            let controls: [NSView] = [
                 check(
                     L("prefs.showHiddenByDefault", "Show hidden files in every folder"),
                     \.showHiddenByDefault),
@@ -340,7 +340,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
                 folderHandlerControl(),
                 magnetHandlerControl(),
-            ])
+            ]
+            return form(
+                controls + (AdminModeController.isSupported ? [adminSettingsControls()] : []))
         case .appearance:
             return form([
                 labeled(L("prefs.themeLabel", "Skin"), themeControl()),
@@ -776,6 +778,48 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         stack.orientation = .horizontal
         stack.spacing = 8
         return stack
+    }
+
+    private func adminSettingsControls() -> NSView {
+        let install = NSButton(
+            title: L("admin.setup", "Set Up Admin Helper"), target: self,
+            action: #selector(setUpAdminHelper))
+        let remove = NSButton(
+            title: L("admin.remove", "Remove Admin Helper"), target: self,
+            action: #selector(removeAdminHelper))
+        let buttons = NSStackView(views: [install, remove])
+        let caption = hint(
+            L("admin.auditHint", "Admin operations are always recorded in the local activity log."))
+        let duration = NSPopUpButton()
+        for minutes in [1, 2, 5, 10, 15] {
+            duration.addItem(withTitle: String(minutes))
+            duration.lastItem?.tag = minutes
+        }
+        duration.selectItem(withTag: prefs.adminSessionMinutes)
+        duration.target = self
+        duration.action = #selector(adminDurationChanged(_:))
+        let timeout = labeled(L("admin.duration", "Unlock duration in minutes"), duration)
+        let stack = NSStackView(views: [buttons, timeout, caption])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        return stack
+    }
+
+    @objc private func adminDurationChanged(_ sender: NSPopUpButton) {
+        prefs.adminSessionMinutes = sender.selectedTag()
+        onChange?(prefs)
+    }
+
+    @objc private func setUpAdminHelper() {
+        Task { @MainActor in
+            do { try await AdminModeController.shared.setUp() } catch { NSSound.beep() }
+        }
+    }
+
+    @objc private func removeAdminHelper() {
+        Task { @MainActor in
+            do { try await AdminModeController.shared.remove() } catch { NSSound.beep() }
+        }
     }
 
     private func hint(_ text: String) -> NSView {

@@ -13,10 +13,15 @@ public enum FileOperations {
         public let name: String
         public let reason: String
         public let incompleteMove: MoveIncompleteError?
-        public init(name: String, reason: String, incompleteMove: MoveIncompleteError? = nil) {
+        public let adminRetry: AdminFileRequest?
+        public init(
+            name: String, reason: String, incompleteMove: MoveIncompleteError? = nil,
+            adminRetry: AdminFileRequest? = nil
+        ) {
             self.name = name
             self.reason = reason
             self.incompleteMove = incompleteMove
+            self.adminRetry = adminRetry
         }
     }
 
@@ -274,7 +279,10 @@ public enum FileOperations {
                 }
             } catch {
                 failures.append(
-                    Failure(name: source.lastPathComponent, reason: error.localizedDescription))
+                    Failure(
+                        name: source.lastPathComponent, reason: error.localizedDescription,
+                        adminRetry: AdminFileRequest.isPermissionFailure(error)
+                            ? AdminFileRequest(operation: .trash, source: source.path) : nil))
             }
         }
         return (trashed, failures)
@@ -801,10 +809,20 @@ public enum FileOperations {
                 break
             } catch {
                 progress.completedBytes = base  // a failed item contributes nothing to the bar
+                let retry: AdminFileRequest?
+                if !published, replacedOriginal == nil, !(error is MoveIncompleteError),
+                    AdminFileRequest.isPermissionFailure(error)
+                {
+                    retry = AdminFileRequest(
+                        operation: action == .moved ? .move : .copy, source: from.path,
+                        destination: to.path)
+                } else {
+                    retry = nil
+                }
                 outcome.failures.append(
                     Failure(
                         name: name, reason: error.localizedDescription,
-                        incompleteMove: error as? MoveIncompleteError))
+                        incompleteMove: error as? MoveIncompleteError, adminRetry: retry))
             }
             progress.completedItems = index + 1
             report(progress)

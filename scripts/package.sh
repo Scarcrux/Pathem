@@ -63,7 +63,8 @@ archBinDirs=()  # per-arch bin dirs, so out-of-process helpers can be lipo'd acr
 frameworkBinDir=""
 # Out-of-process helpers bundled next to the app: the iOS-device (AFC) client and the
 # torrent daemon. Both keep risky parsing / network code out of the Full-Disk-Access process.
-helperNames=(pathem-afc pathem-adb pathem-torrentd pathem-cli pathem-ext-launch)
+adminService="com.scarcrux.pathem.admin-helper"
+helperNames=(pathem-afc pathem-adb pathem-torrentd pathem-cli pathem-ext-launch pathem-admin-helper)
 for arch in $ARCHS; do
 	echo "    building $arch"
 	swift build --build-system native -c "$CONFIG" --arch "$arch" --jobs "$SWIFT_BUILD_JOBS"
@@ -94,6 +95,14 @@ for helper in "${helperNames[@]}"; do
 		cp "${parts[0]}" "$APP/Contents/MacOS/$helper"
 	fi
 done
+# Service Management registers this only after the user chooses Set Up Admin Helper.
+[[ -x "$APP/Contents/MacOS/pathem-admin-helper" ]] || {
+    echo "error: built Admin helper is missing" >&2
+    exit 1
+}
+mkdir -p "$APP/Contents/Library/LaunchDaemons"
+cp "$ROOT/Packaging/$adminService.plist" "$APP/Contents/Library/LaunchDaemons/"
+
 # Embed linked frameworks (Sparkle) and point the binary at them, or the app
 # can't launch outside the build tree. Note: we deliberately do not ship
 # SwiftTerm's resource bundle (only Shaders.metal for its optional Metal
@@ -175,7 +184,12 @@ resourceBundleInApp="$APP/Contents/Resources/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundleInApp" ]] && codesign "${signargs[@]}" "$resourceBundleInApp"
 # Sign the nested helpers before the app (inside-out), like the frameworks.
 for helper in "${helperNames[@]}"; do
-	[[ -f "$APP/Contents/MacOS/$helper" ]] && codesign "${signargs[@]}" "$APP/Contents/MacOS/$helper"
+    [[ -f "$APP/Contents/MacOS/$helper" ]] || continue
+    if [[ "$helper" == "pathem-admin-helper" ]]; then
+        codesign "${signargs[@]}" --identifier "$adminService" "$APP/Contents/MacOS/$helper"
+    else
+        codesign "${signargs[@]}" "$APP/Contents/MacOS/$helper"
+    fi
 done
 # Only the app itself carries entitlements (Packaging/Pathem.entitlements explains each one).
 codesign "${signargs[@]}" --entitlements "$ROOT/Packaging/$APP_NAME.entitlements" "$APP"

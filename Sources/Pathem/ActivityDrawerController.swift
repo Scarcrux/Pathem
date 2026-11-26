@@ -255,7 +255,9 @@ final class ActivityDrawerController: NSObject, NSTableViewDataSource, NSTableVi
         let text: String
         switch col {
         case .time: text = timeFormatter.string(from: record.time)
-        case .operation: text = Self.operationTitle(record.operation)
+        case .operation:
+            let operation = Self.operationTitle(record.operation)
+            text = record.admin ? "\(L("admin.badge", "Admin")) · \(operation)" : operation
         case .items: text = String(record.itemCount)
         case .location: text = Self.locationText(record)
         case .result: text = Self.resultText(record)

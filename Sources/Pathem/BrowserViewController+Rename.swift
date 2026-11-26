@@ -118,13 +118,40 @@ extension BrowserViewController {
             // may re-sort the row, but must not move the user's viewport.
             pane.selectWhenListed(trimmed)
         } catch {
-            let failure = FileOperations.Failure(
-                name: entry.name, reason: error.localizedDescription)
-            Self.recordActivity(
-                "rename", sources: [source], destination: destination,
-                completed: 0, failures: [failure])
-            presentFailures([failure], title: L("bvc.renameFailed", "Rename failed"))
+            if AdminModeController.isSupported, AdminModeController.shared.mayRetry(error) {
+                Task { @MainActor in
+                    do {
+                        let request = AdminFileRequest(
+                            operation: .rename, source: source.path, destination: destination.path)
+                        if try await self.retryAsAdmin(request, after: error) != nil {
+                            if pane.currentURL == directory || pane.isShowingSmartResults {
+                                pane.reloadIfShowingListing()
+                                pane.selectWhenListed(trimmed)
+                            }
+                            return
+                        }
+                        self.reportLocalRenameFailure(
+                            entry.name, source: source, destination: destination, error: error)
+                    } catch {
+                        self.reportLocalRenameFailure(
+                            entry.name, source: source, destination: destination, error: error)
+                    }
+                }
+                return
+            }
+            reportLocalRenameFailure(
+                entry.name, source: source, destination: destination, error: error)
         }
+    }
+
+    private func reportLocalRenameFailure(
+        _ name: String, source: URL, destination: URL, error: Error
+    ) {
+        let failure = FileOperations.Failure(name: name, reason: error.localizedDescription)
+        Self.recordActivity(
+            "rename", sources: [source], destination: destination, completed: 0, failures: [failure]
+        )
+        presentFailures([failure], title: L("bvc.renameFailed", "Rename failed"))
     }
 
     func registerRenameUndo(from current: String, to original: String, in directory: URL) {
