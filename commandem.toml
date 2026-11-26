@@ -2343,6 +2343,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-25: more 0.9.6 work landed on main by Codex: media metadata columns with caching and sorting (631b9ff; frozen Name column still open), a local searchable activity log with a privacy-page entry (3ed6fe2), the Android ADB upgrade streaming through the local ADB server with real sizes and dates (d0a6d33), and the unprivileged admin-mode foundation: validated typed file requests over a session-bound XPC service with symlink-safe openat (6ecf0c5). Admin helper registration, signed-peer checks, authorization and UI are still in progress."
     at = "2026-11-26T03:06:23Z"
 
+  [[mission.comment]]
+    text = "2026-11-26: Admin Mode verified end to end on a clean macOS 15.7.7 VM (SIP on) with a Developer ID-signed test build. Three bugs were found and fixed on the way, each convicted by logs: (1) a Swift 6 isolation trap in the XPC reply handler crashed the app right after unlock (crash report: dispatch_assert_queue in AdminModeController.unlock), fixed with Sendable callbacks that hop to the MainActor; (2) a stale Admin badge restored in a locked process, fixed so the badge derives only from the live session; (3) authd denied the helper's re-check because the right used the zero-timeout authenticate-admin rule (credential expired 0.006 > 0), fixed with an explicit rule (user, admin group, shared, 300 s timeout) that migrates older definitions. Final run: locked launch with no badge, signed-peer accept, authorization accepted, badge on unlock, rename retried through the helper and completed as root, relaunch locked, no crash. Unlock failures now show a self-describing message."
+    at = "2026-11-26T19:45:08Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
