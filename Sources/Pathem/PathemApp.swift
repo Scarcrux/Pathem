@@ -75,6 +75,8 @@ enum PathemApp {
             launchEnvironment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_OPENER_UI_TEST"] != nil
+            || launchEnvironment["PATHEM_LIVE_KEYS_UI_TEST"] != nil
+            || launchEnvironment["PATHEM_FINDER_TREE_DROP_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
             || launchEnvironment["PATHEM_ACTIVITY_TEST"] != nil
@@ -453,6 +455,23 @@ enum PathemApp {
         }
         if ProcessInfo.processInfo.environment["PATHEM_FILE_SEARCH_TEST"] != nil {
             browser.runFileSearchUIAutomation()
+        }
+        let liveKeys = launchEnvironment["PATHEM_LIVE_KEYS_UI_TEST"] != nil
+        let finderTreeDrop = launchEnvironment["PATHEM_FINDER_TREE_DROP_UI_TEST"] != nil
+        if liveKeys || finderTreeDrop {
+            guard liveKeys != finderTreeDrop, let demoLayout else {
+                print("RESULT: FAIL select exactly one input delivery hook with PATHEM_DEMO=1")
+                exit(64)
+            }
+            Task { @MainActor in
+                if liveKeys {
+                    await browser.runLiveKeyInputUIAutomation(demo: demoLayout, window: window)
+                } else {
+                    await browser.runFinderTreeDropUIAutomation(demo: demoLayout, window: window)
+                }
+            }
+            app.run()
+            return
         }
         if ProcessInfo.processInfo.environment["PATHEM_FINDER_UI_TEST"] != nil {
             browser.runFinderUIAutomation()

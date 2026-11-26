@@ -44,7 +44,8 @@ final class TabSwitcherController {
         else { return }
         self.entries = entries
         selection = start
-        releaseCommits = NSEvent.modifierFlags.contains(.control)
+        releaseCommits = (NSApp.currentEvent?.modifierFlags ?? NSEvent.modifierFlags).contains(
+            .control)
         installMonitor()
         let present = { [weak self] in
             guard let self, self.isOpen, let window else { return }
@@ -168,6 +169,9 @@ final class TabSwitcherController {
             NSPoint(x: frame.midX - width / 2, y: frame.midY - height / 2 + frame.height * 0.1))
         window.addChildWindow(panel, ordered: .above)
         panel.orderFront(nil)
+        #if DEBUG
+        debugPresentationCount += 1
+        #endif
         self.panel = panel
         refreshRows()
     }
@@ -266,6 +270,7 @@ final class TabSwitcherController {
     /// The panel's content view, for the in-process render hook.
     var debugContentView: NSView? { panel?.contentView }
     var debugPanel: NSPanel? { panel }
+    private(set) var debugPresentationCount = 0
     func debugSelectNext() {
         selection?.advance(reverse: false)
         refreshRows()

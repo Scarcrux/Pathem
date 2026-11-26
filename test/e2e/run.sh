@@ -10,6 +10,7 @@
 #
 # Usage:
 #   test/e2e/run.sh              # fast: against the debug `swift build` binary
+#   test/e2e/run.sh --input-delivery # only the two scripted keyboard and Finder-shaped drop probes
 #   test/e2e/run.sh --packaged   # against the signed .app from package.sh (also checks
 #                                # the bundle is complete: catches packaging regressions
 #                                # like the missing-resource-bundle launch crash)
@@ -176,7 +177,7 @@ configuration_root_guard_probe() {
   local flags=(PATHEM_RELEASE_TEST)
   if [[ $# -gt 0 ]]; then flags=("$@"); fi
   for flag in "${flags[@]}"; do
-    case "$flag" in PATHEM_CONTENT_PREFS_UI_TEST|PATHEM_SETTINGS_DEFAULTS_UI_TEST|PATHEM_OPENER_UI_TEST|PATHEM_SIDEBAR_TRANSFER_UI_TEST|PATHEM_FILE_SEARCH_TEST|PATHEM_ACTIVITY_TEST|PATHEM_ADMIN_MODE_TEST|PATHEM_LAYOUT_MATRIX_TEST|PATHEM_TRANSIENT_SURFACES_TEST|PATHEM_RELEASE_TEST) ;; *) printf 'RESULT: FAIL unknown guard flag\n'; return 2 ;; esac
+    case "$flag" in PATHEM_CONTENT_PREFS_UI_TEST|PATHEM_SETTINGS_DEFAULTS_UI_TEST|PATHEM_OPENER_UI_TEST|PATHEM_LIVE_KEYS_UI_TEST|PATHEM_FINDER_TREE_DROP_UI_TEST|PATHEM_SIDEBAR_TRANSFER_UI_TEST|PATHEM_FILE_SEARCH_TEST|PATHEM_ACTIVITY_TEST|PATHEM_ADMIN_MODE_TEST|PATHEM_LAYOUT_MATRIX_TEST|PATHEM_TRANSIENT_SURFACES_TEST|PATHEM_RELEASE_TEST) ;; *) printf 'RESULT: FAIL unknown guard flag\n'; return 2 ;; esac
     out="$(env -u PATHEM_CONFIG_DIR "$flag=1" "$BIN" 2>&1)"; command_status=$?
     if [[ "$command_status" != 64 || "$out" != 'RESULT: FAIL configuration test requires an isolated temporary config root' ]]; then
       printf 'RESULT: FAIL missing configuration root refusal for %s (exit %s)\n' "$flag" "$command_status"; return 1
@@ -291,9 +292,20 @@ if [[ $PACKAGED == 1 ]]; then
   [[ $fail -eq 0 ]]
   exit
 else
-  swift build --build-system native --jobs "${COMMANDEM_SWIFT_JOBS:-2}" >/tmp/pathem_e2e_build.log 2>&1 \
-    || { echo "${red}swift build failed${rst}"; tail -8 /tmp/pathem_e2e_build.log; exit 1; }
+  swift build --build-system native --jobs "${COMMANDEM_SWIFT_JOBS:-2}" >"$E2E_SCRATCH/build.log" 2>&1 \
+    || { echo "${red}swift build failed${rst}"; tail -8 "$E2E_SCRATCH/build.log"; exit 1; }
   BIN="$(swift build --build-system native --jobs "${COMMANDEM_SWIFT_JOBS:-2}" --show-bin-path)/Pathem"
+fi
+
+if [[ "${1:-}" == "--input-delivery" ]]; then
+  scenario "AppKit key input" 'RESULT: PASS' env PATHEM_DEMO=1 \
+    PATHEM_CONFIG_DIR="$E2E_SCRATCH/keys-config" PATHEM_DEMO_ROOT="$E2E_SCRATCH/keys-demo" PATHEM_LIVE_KEYS_UI_TEST=1 "$BIN"
+  scenario "Finder-shaped folder-tree drop" 'RESULT: PASS' env PATHEM_DEMO=1 \
+    PATHEM_CONFIG_DIR="$E2E_SCRATCH/drop-config" PATHEM_DEMO_ROOT="$E2E_SCRATCH/drop-demo" PATHEM_FINDER_TREE_DROP_UI_TEST=1 "$BIN"
+  assert "input delivery demo roots removed" test ! -e "$E2E_SCRATCH/keys-demo" -a ! -e "$E2E_SCRATCH/drop-demo"
+  echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"
+  [[ $fail -eq 0 ]]
+  exit
 fi
 
 echo "==> Scenarios"
@@ -317,7 +329,7 @@ scenario "offscreen Admin badge" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRA
 scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=1 "$BIN"
 scenario "background view + arrange menus" 'RESULT: PASS' env PATHEM_BACKGROUND_UI_TEST=1 "$BIN"
 scenario "sidebar paste + drag preferences" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/sidebar-transfer-config" PATHEM_SIDEBAR_TRANSFER_UI_TEST=1 "$BIN"
-scenario "configuration-root refusal guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN" PATHEM_CONTENT_PREFS_UI_TEST PATHEM_SETTINGS_DEFAULTS_UI_TEST PATHEM_OPENER_UI_TEST PATHEM_SIDEBAR_TRANSFER_UI_TEST PATHEM_FILE_SEARCH_TEST PATHEM_ACTIVITY_TEST PATHEM_ADMIN_MODE_TEST PATHEM_LAYOUT_MATRIX_TEST PATHEM_TRANSIENT_SURFACES_TEST PATHEM_RELEASE_TEST
+scenario "configuration-root refusal guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN" PATHEM_CONTENT_PREFS_UI_TEST PATHEM_SETTINGS_DEFAULTS_UI_TEST PATHEM_OPENER_UI_TEST PATHEM_LIVE_KEYS_UI_TEST PATHEM_FINDER_TREE_DROP_UI_TEST PATHEM_SIDEBAR_TRANSFER_UI_TEST PATHEM_FILE_SEARCH_TEST PATHEM_ACTIVITY_TEST PATHEM_ADMIN_MODE_TEST PATHEM_LAYOUT_MATRIX_TEST PATHEM_TRANSIENT_SURFACES_TEST PATHEM_RELEASE_TEST
 scenario "pane configuration + real tabs" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/content-prefs-config" PATHEM_CONTENT_PREFS_UI_TEST=1 "$BIN"
 scenario "gallery rules + initial defaults" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/gallery-prefs-config" PATHEM_CONTENT_PREFS_UI_TEST=1 PATHEM_CONTENT_PREFS_GALLERY_SAMPLE=1 "$BIN"
 scenario "settings defaults + startup stores" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/settings-defaults-config" PATHEM_SETTINGS_DEFAULTS_UI_TEST=1 "$BIN"
