@@ -70,6 +70,18 @@
     "Sources/Pathem/TransientSurfaceSample.swift": 10
   },
   "sites": {
+    "Sources/Pathem/BrowserViewController+AdminMode.swift:52:27:presentSheet": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+AdminMode.swift:42:29:NSAlert"
+      ],
+      "reason": "Plain failure sheet identifying why explicit Admin Mode unlock failed. OK only.",
+      "coverage_status": "Source review only. Signed VM authorization and failure presentation require a native retest."
+    },
     "Sources/Pathem/BrowserViewController+Transfers.swift:135:28:ask": {
       "class": "A",
       "kind": "popover",

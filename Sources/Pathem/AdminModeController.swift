@@ -9,6 +9,14 @@ extension Notification.Name {
     static let pathemAdminModeChanged = Notification.Name("pathem.adminModeChanged")
 }
 
+enum AdminUnlockError: LocalizedError {
+    case helperRejectedCredential
+
+    var errorDescription: String? {
+        L("admin.authorizationRejected", "The Admin Helper could not verify the authorization.")
+    }
+}
+
 /// The UI never attempts an elevated operation unless someone explicitly unlocked this session.
 @MainActor
 final class AdminModeController: NSObject {
@@ -113,7 +121,8 @@ final class AdminModeController: NSObject {
         adminLog.notice(
             "Admin XPC authorization reply accepted=\(accepted, privacy: .public) generation=\(expected, privacy: .public)"
         )
-        guard accepted, generation == expected else { throw POSIXError(.EACCES) }
+        guard generation == expected else { throw CancellationError() }
+        guard accepted else { throw AdminUnlockError.helperRejectedCredential }
 
         connection = peer
         retained = true

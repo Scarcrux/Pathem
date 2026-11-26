@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "不明な所有者またはグループ";
 "admin.unlock" = "管理者モードのロックを解除…";
 "admin.used" = "%@ に管理者モードを使用しました";
+
+"admin.authorizationDenied" = "macOS が管理者認証を拒否しました";
+"admin.unlockFailed" = "管理者モードのロックを解除できませんでした";
+"admin.authorizationRejected" = "管理者ヘルパーが認証を確認できませんでした。";

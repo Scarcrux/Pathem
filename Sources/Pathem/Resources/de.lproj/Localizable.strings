@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "Unbekannter Eigentümer oder unbekannte Gruppe";
 "admin.unlock" = "Admin-Modus entsperren…";
 "admin.used" = "Admin-Modus für %@ verwendet";
+
+"admin.authorizationDenied" = "macOS hat die Administratorautorisierung verweigert";
+"admin.unlockFailed" = "Der Admin-Modus konnte nicht entsperrt werden";
+"admin.authorizationRejected" = "Das Admin-Hilfsprogramm konnte die Autorisierung nicht überprüfen.";

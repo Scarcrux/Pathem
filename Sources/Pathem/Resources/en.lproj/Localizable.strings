@@ -2239,3 +2239,7 @@
 "admin.unknownOwner" = "Unknown owner or group";
 "admin.unlock" = "Unlock Admin Mode…";
 "admin.used" = "Used Admin Mode for %@";
+
+"admin.authorizationDenied" = "macOS denied the administrator authorization";
+"admin.unlockFailed" = "Could not unlock Admin Mode";
+"admin.authorizationRejected" = "The Admin Helper could not verify the authorization.";

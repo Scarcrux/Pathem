@@ -29,22 +29,35 @@ public enum AdminHelperIdentity {
 
 public enum AdminAuthorization {
     public static let rightName = "com.scarcrux.pathem.admin"
-    static let defaultRule = "authenticate-admin"
+    // This system-wide rule uses the default five-minute Admin duration. The
+    // per-connection session uses the selected duration and destroys the app's
+    // authorization reference immediately after the handshake.
+    static let credentialTimeout = 300
+    static var expectedRule: [String: Any] {
+        [
+            "class": "user", "group": "admin", "shared": true,
+            "timeout": credentialTimeout, "authenticate-user": true,
+            "allow-root": false, "session-owner": false,
+        ]
+    }
 
-    /// Called only by the already-approved, signed launch daemon. Fail closed if a right
-    /// with this name already exists with a different definition.
+    /// Called only by the already-approved, signed launch daemon. Migrate the
+    /// old Pathem rule in place and preserve any unrecognized policy.
     public static func ensureRightInstalled() -> Bool {
         guard geteuid() == 0,
             AdminHelperIdentity.currentProcessMatches(AdminHelperIdentity.serviceName)
         else { return false }
-        if let definition = rightDefinition() { return isExpectedRule(definition) }
+        if let definition = rightDefinition() {
+            if isExpectedRule(definition) { return true }
+            guard isLegacyRule(definition) else { return false }
+        }
         var authorization: AuthorizationRef?
         guard AuthorizationCreate(nil, nil, [], &authorization) == errAuthorizationSuccess,
             let authorization
         else { return false }
         defer { AuthorizationFree(authorization, []) }
         let result = AuthorizationRightSet(
-            authorization, rightName, defaultRule as CFString,
+            authorization, rightName, expectedRule as CFDictionary,
             "Allow Pathem to perform administrator file operations." as CFString, nil, nil)
         guard result == errAuthorizationSuccess, let definition = rightDefinition() else {
             return false
@@ -75,9 +88,21 @@ public enum AdminAuthorization {
     }
 
     static func isExpectedRule(_ definition: [String: Any]) -> Bool {
+        definition["class"] as? String == "user"
+            && definition["group"] as? String == "admin"
+            && definition["shared"] as? Bool == true
+            && definition["timeout"] as? Int == credentialTimeout
+            && definition["authenticate-user"] as? Bool == true
+            && definition["allow-root"] as? Bool == false
+            && definition["session-owner"] as? Bool == false
+            && definition["rule"] == nil
+            && definition["mechanisms"] == nil
+    }
+
+    static func isLegacyRule(_ definition: [String: Any]) -> Bool {
         guard definition["class"] as? String == "rule" else { return false }
-        return definition["rule"] as? [String] == [defaultRule]
-            || definition["rule"] as? String == defaultRule
+        return definition["rule"] as? [String] == ["authenticate-admin"]
+            || definition["rule"] as? String == "authenticate-admin"
     }
 
     fileprivate static func copyRight(
@@ -110,6 +135,7 @@ public final class AdminAuthorizationCredential: @unchecked Sendable {
         do {
             let granted = AdminAuthorization.copyRight(
                 reference, [.extendRights, .interactionAllowed])
+            if granted == errAuthorizationCanceled { throw CancellationError() }
             guard granted == errAuthorizationSuccess else {
                 throw NSError(domain: NSOSStatusErrorDomain, code: Int(granted))
             }

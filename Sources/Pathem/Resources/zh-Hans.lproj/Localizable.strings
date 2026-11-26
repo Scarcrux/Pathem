@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "未知的所有者或群组";
 "admin.unlock" = "解锁管理员模式…";
 "admin.used" = "已对 %@ 使用管理员模式";
+
+"admin.authorizationDenied" = "macOS 拒绝了管理员授权";
+"admin.unlockFailed" = "无法解锁管理员模式";
+"admin.authorizationRejected" = "管理员辅助程序无法验证授权。";

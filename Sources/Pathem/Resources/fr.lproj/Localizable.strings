@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "Propriétaire ou groupe inconnu";
 "admin.unlock" = "Déverrouiller le mode administrateur…";
 "admin.used" = "Mode administrateur utilisé pour %@";
+
+"admin.authorizationDenied" = "macOS a refusé l’autorisation administrateur";
+"admin.unlockFailed" = "Impossible de déverrouiller le mode administrateur";
+"admin.authorizationRejected" = "L’assistant administrateur n’a pas pu vérifier l’autorisation.";

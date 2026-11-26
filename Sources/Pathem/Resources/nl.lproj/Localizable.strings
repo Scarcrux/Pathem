@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "Onbekende eigenaar of groep";
 "admin.unlock" = "Ontgrendel beheerdersmodus…";
 "admin.used" = "Beheerdersmodus gebruikt voor %@";
+
+"admin.authorizationDenied" = "macOS heeft de beheerdersautorisatie geweigerd";
+"admin.unlockFailed" = "Kon de beheerdersmodus niet ontgrendelen";
+"admin.authorizationRejected" = "De beheerdershelper kon de autorisatie niet verifiëren.";

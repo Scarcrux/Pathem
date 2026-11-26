@@ -38,9 +38,18 @@ extension BrowserViewController {
         }
         Task { @MainActor in
             do { try await admin.unlock(minutes: prefs.adminSessionMinutes) } catch {
-                if !(error is CancellationError) {
-                    self.activePane?.flashStatus(error.localizedDescription, isError: true)
-                }
+                guard !(error is CancellationError), view.window?.isVisible == true else { return }
+                let alert = NSAlert()
+                alert.alertStyle = .warning
+                let systemDenied =
+                    error is AdminUnlockError || (error as NSError).domain == NSOSStatusErrorDomain
+                alert.messageText =
+                    systemDenied
+                    ? L("admin.authorizationDenied", "macOS denied the administrator authorization")
+                    : L("admin.unlockFailed", "Could not unlock Admin Mode")
+                alert.informativeText = error.localizedDescription
+                alert.addButton(withTitle: L("common.ok", "OK"))
+                _ = await presentSheet(alert)
             }
         }
     }

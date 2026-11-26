@@ -2990,6 +2990,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "VM reboot reproduced a red Admin indicator with no unlocked session or helper traffic. Locked browsers had been mounting a hidden titlebar accessory. The badge now mounts and unmounts with the live session, with separate window appearance, session restore and notification diagnostics. Offscreen restoration coverage uses the persisted tab session and AppKit frame descriptor. Signed VM requalification remains pending."
     at = "2026-11-26T11:38:23Z"
 
+  [[mission.comment]]
+    text = "The signed macOS 15 run confirmed the stale badge and XPC crash fixes. authd then reported that the legacy authenticate-admin credential expired after 6 ms at timeout 0. The helper now migrates the known legacy entry to an explicit administrator-only rule with a five-minute credential timeout and still validates the right non-interactively. A failed unlock presents the reason in a sheet. Existing authorization DB migration and privileged rename await the signed VM rerun."
+    at = "2026-11-26T11:55:51Z"
+
 [[mission]]
   id = "m-8a8b2b75"
   title = "Android device transfers over the local ADB server"

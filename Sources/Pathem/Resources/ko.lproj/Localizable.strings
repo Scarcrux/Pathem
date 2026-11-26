@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "알 수 없는 소유자 또는 그룹";
 "admin.unlock" = "관리자 모드 잠금 해제…";
 "admin.used" = "%@에 관리자 모드 사용";
+
+"admin.authorizationDenied" = "macOS가 관리자 인증을 거부했습니다";
+"admin.unlockFailed" = "관리자 모드를 잠금 해제할 수 없습니다";
+"admin.authorizationRejected" = "관리자 도우미가 인증을 확인하지 못했습니다.";

@@ -70,15 +70,30 @@ import Testing
                     == errSecSuccess)
             _ = try #require(requirement)
         }
+        let legacy: [String: Any] = ["class": "rule", "rule": ["authenticate-admin"]]
+        #expect(AdminAuthorization.isLegacyRule(legacy))
+        #expect(AdminAuthorization.isLegacyRule(["class": "rule", "rule": "authenticate-admin"]))
+        #expect(!AdminAuthorization.isExpectedRule(legacy))
         #expect(
-            AdminAuthorization.isExpectedRule(["class": "rule", "rule": ["authenticate-admin"]]))
-        #expect(
-            !AdminAuthorization.isExpectedRule(["class": "allow", "rule": ["authenticate-admin"]]))
-        #expect(!AdminAuthorization.isExpectedRule(["class": "rule", "rule": ["allow"]]))
-        #expect(
-            !AdminAuthorization.isExpectedRule([
+            !AdminAuthorization.isLegacyRule([
                 "class": "rule", "rule": ["authenticate-admin", "allow"],
             ]))
+        #expect(
+            !AdminAuthorization.isLegacyRule(["class": "allow", "rule": ["authenticate-admin"]]))
+
+        let expected = AdminAuthorization.expectedRule
+        #expect(AdminAuthorization.isExpectedRule(expected))
+        #expect(!AdminAuthorization.isLegacyRule(expected))
+        let invalidValues: [(String, Any)] = [
+            ("class", "allow"), ("group", "staff"), ("timeout", 0), ("timeout", 900),
+            ("shared", false), ("authenticate-user", false), ("allow-root", true),
+            ("session-owner", true), ("rule", "allow"), ("mechanisms", ["builtin:entitled"]),
+        ]
+        for (key, value) in invalidValues {
+            var invalid = expected
+            invalid[key] = value
+            #expect(!AdminAuthorization.isExpectedRule(invalid), "Unexpected match for \(key)")
+        }
         #expect(!AdminAuthorization.verify(Data()))
     }
 

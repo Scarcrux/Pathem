@@ -2188,3 +2188,7 @@
 "admin.unknownOwner" = "Proprietario o gruppo sconosciuto";
 "admin.unlock" = "Sblocca modalità amministratore…";
 "admin.used" = "Modalità amministratore usata per %@";
+
+"admin.authorizationDenied" = "macOS ha negato l’autorizzazione amministratore";
+"admin.unlockFailed" = "Impossibile sbloccare la modalità amministratore";
+"admin.authorizationRejected" = "L’assistente amministratore non ha potuto verificare l’autorizzazione.";
