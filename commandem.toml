@@ -2351,6 +2351,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "0.9.6 (build 30) published and verified from outside: the feed serves 0.9.6/30, the downloaded DMG passes the signature, notarization and Gatekeeper checks (A9), the mounted app passes A1-A6 and A10-A12, the EdDSA signature verifies (A7) and every appcast item is signed (A8). Release gate: 71 GUI checks passed, 1 skipped; 18 packaged checks passed. Site bumped to 0.9.6 (35 MB DMG); the theme gallery is unchanged."
     at = "2026-11-26T20:51:04Z"
 
+  [[mission.comment]]
+    text = "pathem.app wordmark now uses the gold em (#f5b041 dark, #9a5b00 light) to match scarcrux.com's product-name accent, which is sampled from the app icon's gold P. Verified in headless Chrome renders in both modes."
+    at = "2026-11-27T13:58:38Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
