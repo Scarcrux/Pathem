@@ -6,7 +6,7 @@
     "cwebp": "1.6.0",
     "sips": "sips-316"
   },
-  "pageSha256": "e5c88a5f7a6a644050fc76144c9c0d3dcca5b19da377a11f26e11ab7faba15fc",
+  "pageSha256": "5e7c54c8c408fc787e0e2e2209e0a9a676a2f46be019e759905ef08a115d4e4e",
   "images": [
     {
       "theme": "anthracite",
@@ -603,5 +603,5 @@
       "inputSha256": "601c004ab18269d3d7734df0a67634efb3984ffffdc2b7bb25722f92e535f0cc"
     }
   ],
-  "updated": "2026-11-25"
+  "updated": "2026-11-27"
 }

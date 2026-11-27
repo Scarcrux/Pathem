@@ -143,7 +143,10 @@
   .brand { display: flex; align-items: center; gap: .6rem; letter-spacing: -.01em; }
   .brand img { width: 30px; height: 30px; border-radius: 7px; box-shadow: 0 2px 8px var(--shadow); }
   .wm { font-size: 1.12rem; font-weight: 750; }
-  .wm i { color: var(--accent); font-style: normal; }
+  .wm i { color: #f5b041; font-style: normal; }
+  @media (prefers-color-scheme: light) { .wm i { color: #9a5b00; } }
+  :root[data-theme="light"] .wm i { color: #9a5b00; }
+  :root[data-theme="dark"] .wm i { color: #f5b041; }
   .nav-links { display: flex; align-items: center; gap: 1.6rem; }
   .nav-links a { color: var(--muted); font-size: .92rem; }
   .nav-links a:hover { color: var(--text); text-decoration: none; }
